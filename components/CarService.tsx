@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Car, MapPin, User, Calendar, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Car, MapPin, User, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { CarRecord } from '../types';
 
 interface CarServiceProps {

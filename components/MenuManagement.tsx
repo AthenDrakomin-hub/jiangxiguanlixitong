@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Wand2, Loader2, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker } from 'lucide-react';
 import { Dish, Category, Ingredient, DishIngredient } from '../types';
-import { generateDishDetails } from '../services/geminiService';
 
 // dnd-kit imports
 import {
@@ -160,7 +158,6 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
 
   const [selectedIngredientId, setSelectedIngredientId] = useState<string>('');
   const [ingredientQty, setIngredientQty] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -299,28 +296,6 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
       ...prev,
       ingredients: prev.ingredients?.filter((_, i) => i !== index)
     }));
-  };
-
-  const handleAIGenerate = async () => {
-    if (!formData.name) {
-      alert("Please enter a name first. 请先输入菜品名称");
-      return;
-    }
-    setIsGenerating(true);
-    const details = await generateDishDetails(formData.name);
-    setIsGenerating(false);
-    
-    if (details) {
-      setFormData(prev => ({
-        ...prev,
-        description: details.description,
-        price: details.suggestedPrice * 8.2, // Convert approximate RMB to PHP
-        category: details.category as Category,
-        spiciness: details.spiciness
-      }));
-    } else {
-      alert("Failed to generate. Check API Key. 生成失败。");
-    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -510,15 +485,6 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                         className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
                         placeholder="e.g. Spicy Tofu"
                       />
-                      <button
-                        type="button"
-                        onClick={handleAIGenerate}
-                        disabled={isGenerating || !formData.name}
-                        className="px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors disabled:opacity-50 flex items-center gap-2"
-                        title="AI Generate"
-                      >
-                         {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Wand2 size={18} />}
-                      </button>
                     </div>
                   </div>
 

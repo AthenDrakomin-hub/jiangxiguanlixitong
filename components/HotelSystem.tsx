@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
-import { BedDouble, Utensils, Search, CheckCircle2, X, Plus, User, Coffee, Receipt, ChefHat } from 'lucide-react';
-import { HotelRoom, Dish, OrderItem, Category, Order, OrderStatus } from '../types';
+import { Utensils, X, Plus, User, Receipt, ChefHat } from 'lucide-react';
+import { HotelRoom, Dish, OrderItem, Order, OrderStatus, HotelRoomStatus } from '../types';
 
 interface HotelSystemProps {
   rooms: HotelRoom[];
@@ -26,7 +25,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
 
   const toggleRoomStatus = () => {
     if (!selectedRoom) return;
-    const newStatus = selectedRoom.status === 'Vacant' ? 'Occupied' : 'Vacant';
+    const newStatus: HotelRoomStatus = selectedRoom.status === 'Vacant' ? 'Occupied' : 'Vacant';
     const guestName = newStatus === 'Vacant' ? undefined : (selectedRoom.guestName || '临时客人');
     
     const newOrders = newStatus === 'Vacant' ? [] : selectedRoom.orders;
@@ -77,7 +76,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
 
         return {
           ...r,
-          status: 'Occupied',
+          status: 'Occupied' as HotelRoomStatus,
           orders: updatedOrders,
           guestName: r.guestName || '点餐客人 Guest'
         };

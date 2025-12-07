@@ -147,7 +147,6 @@ const App: React.FC = () => {
     const prevPending = prevOrders.filter(o => o.status === OrderStatus.PENDING).length;
 
     if (orders.length > prevOrders.length && currentPending > prevPending) {
-        const newOrderIds = new Set(orders.map(o => o.id));
         const oldOrderIds = new Set(prevOrders.map(o => o.id));
         const brandNewOrders = orders.filter(o => !oldOrderIds.has(o.id) && o.status === OrderStatus.PENDING);
         

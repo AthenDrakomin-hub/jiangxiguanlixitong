@@ -1,14 +1,13 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area, PieChart, Pie, Cell, Legend 
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Wallet, DollarSign, Plus, 
-  ArrowUpRight, ArrowDownRight, Calendar, Tag, Download, ClipboardCheck, X
+  ArrowUpRight, ArrowDownRight, Download, ClipboardCheck, X
 } from 'lucide-react';
-import { Order, OrderStatus, Expense, ExpenseCategory, PaymentMethod } from '../types';
+import { Order, OrderStatus, Expense, ExpenseCategory } from '../types';
 
 interface FinanceSystemProps {
   orders: Order[];
@@ -308,7 +307,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({ orders, expenses, setExpe
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {expenseCategoryData.map((entry, index) => (
+                  {expenseCategoryData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

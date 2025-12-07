@@ -1,11 +1,6 @@
-
 import { Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, ApiResponse } from '../types';
 import { loadData, saveData } from './storage';
 import { INITIAL_DISHES, INITIAL_ORDERS, INITIAL_EXPENSES, INITIAL_INVENTORY, INITIAL_KTV_ROOMS, INITIAL_SIGN_BILL_ACCOUNTS, INITIAL_HOTEL_ROOMS } from './mockData';
-
-const API_DELAY_MS = 300; 
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Helper to wrap response
 const success = <T>(data: T): ApiResponse<T> => ({

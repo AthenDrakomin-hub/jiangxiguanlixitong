@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, ChefHat, Clock, History, Receipt, ArrowLeft, Home, Menu as MenuIcon } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, History, Receipt, Home } from 'lucide-react';
 import { Dish, Category, Order, OrderStatus, OrderItem, OrderSource } from '../types';
 
 interface CustomerOrderProps {

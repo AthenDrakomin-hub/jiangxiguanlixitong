@@ -4,7 +4,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?logo=vite)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
-[![Powered by Gemini](https://img.shields.io/badge/AI-Google%20Gemini-8E75B2?logo=google-bard)](https://deepmind.google/technologies/gemini/)
 
 专为菲律宾（Pasay City）华人酒店打造的综合管理后台。集成了餐饮点餐、KTV 包厢管理、客房送餐、超市零售、用车调度及财务库存管理于一体的全业务生态系统。
 
@@ -23,7 +22,6 @@
 *   **H5 顾客端**: 顾客扫码即可进入手机点餐界面（类 App 体验），自动识别桌号/房号。
 *   **KDS 后厨显示**: 厨师专用看板，实时同步订单状态（待制作 -> 烹饪中 -> 出餐）。
 *   **二维码中心**: 一键生成所有房间、桌台及外卖的专属二维码，支持批量打印。
-*   **AI 智能菜单**: 集成 Google Gemini，自动生成菜品描述、翻译及定价建议。
 
 ### 💰 财务与库存
 *   **本地化财务**: 支持 **10% 服务费** 自动计算，实时 **RMB/PHP 汇率** 换算。
@@ -39,7 +37,6 @@
 *   **UI 框架**: Tailwind CSS + Lucide Icons
 *   **图表库**: Recharts (数据可视化)
 *   **拖拽库**: @dnd-kit (菜单排序)
-*   **AI SDK**: @google/genai (Gemini 2.5 Flash)
 *   **数据持久化**: 
     *   **Local**: 浏览器 LocalStorage (默认)
     *   **Cloud**: GitHub Repository (作为数据库) 或 AWS S3
@@ -52,15 +49,7 @@
 npm install
 ```
 
-### 2. 配置环境变量
-
-在项目根目录创建 `.env` 文件（可选，用于 AI 功能）：
-
-```env
-API_KEY=your_google_gemini_api_key
-```
-
-### 3. 启动开发服务器
+### 2. 启动开发服务器
 
 ```bash
 npm run dev

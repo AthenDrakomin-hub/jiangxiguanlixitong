@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { QrCode, Printer, BedDouble, Utensils, Mic2, Rocket, ExternalLink, Info } from 'lucide-react';
+import React, { useState } from 'react';
+import { QrCode, Printer, BedDouble, Utensils, Mic2, Rocket, ExternalLink } from 'lucide-react';
 import { HotelRoom, KTVRoom } from '../types';
 
 interface QRCodeManagerProps {

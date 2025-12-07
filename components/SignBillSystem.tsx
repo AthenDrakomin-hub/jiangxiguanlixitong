@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { FileSignature, Plus, Search, Edit2, Wallet, HandCoins, UserCheck, Phone, X, ArrowDownRight, Banknote, Smartphone, QrCode, CircleDollarSign, CreditCard } from 'lucide-react';
+import { FileSignature, Plus, Search, Edit2, Wallet, HandCoins, UserCheck, Phone, X, ArrowDownRight } from 'lucide-react';
 import { SignBillAccount, PaymentMethod } from '../types';
 
 interface SignBillSystemProps {

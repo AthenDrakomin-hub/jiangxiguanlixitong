@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, AlertTriangle, PackageCheck, PackageX, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, AlertTriangle, PackageCheck, PackageX } from 'lucide-react';
 import { Ingredient } from '../types';
 
 interface InventoryManagementProps {
