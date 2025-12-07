@@ -7,11 +7,11 @@ export enum OrderStatus {
   COOKING = '烹饪中', // 厨房制作中
   SERVED = '已上菜',  // 服务员已送达
   PAID = '已支付',    // 结账完成 (Legacy/Digital)
-  COMPLETED = '已完成', // 订单结束 (Takeout/Supermarket done)
+  COMPLETED = '已完成', // 订单结束 (Takeout done)
   CANCELLED = '已取消'
 }
 
-export type OrderSource = 'LOBBY' | 'ROOM_SERVICE' | 'KTV' | 'TAKEOUT' | 'SUPERMARKET';
+export type OrderSource = 'LOBBY' | 'ROOM_SERVICE' | 'KTV' | 'TAKEOUT';
 
 export type PaymentMethod = 'CASH' | 'WECHAT' | 'ALIPAY' | 'USDT' | 'GCASH' | 'MAYA' | 'UNIONPAY' | 'CREDIT_CARD' | 'SIGN_BILL';
 
@@ -168,7 +168,7 @@ export interface SystemSettings {
     categories?: string[]; // Dynamic categories
 }
 
-export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer';
+export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'car';
 
 // Standardized API Response Wrapper
 export interface ApiResponse<T> {
@@ -218,15 +218,4 @@ export interface CarRecord {
   driver: string;
   status: 'Scheduled' | 'Completed' | 'Cancelled';
   date: string; // ISO string
-}
-
-// Supermarket / Retail Types
-export interface Product {
-  id: string;
-  name: string;
-  barcode: string;
-  category: string;
-  price: number;
-  stock: number;
-  imageUrl?: string;
 }

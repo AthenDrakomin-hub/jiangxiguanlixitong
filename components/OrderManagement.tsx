@@ -29,9 +29,9 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
     
     setOrders(prev => prev.map(o => {
         if (o.id === activeOrderId) {
-            // Logic: Takeout/Retail -> Completed immediately. Dine-in -> Served (keep on table/active list).
-            const isTakeoutOrRetail = o.source === 'TAKEOUT' || o.source === 'SUPERMARKET';
-            const nextStatus = isTakeoutOrRetail ? OrderStatus.COMPLETED : OrderStatus.SERVED;
+            // Logic: Takeout -> Completed immediately. Dine-in -> Served (keep on table/active list).
+            const isTakeout = o.source === 'TAKEOUT';
+            const nextStatus = isTakeout ? OrderStatus.COMPLETED : OrderStatus.SERVED;
             
             // Auto-print receipt on payment
             const paidOrder = { ...o, status: nextStatus, paymentMethod: method };

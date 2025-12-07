@@ -1,5 +1,5 @@
 
-import { Category, Dish, Order, OrderStatus, Expense, ExpenseCategory, Ingredient, KTVRoom, SignBillAccount, HotelRoom } from '../types';
+import { Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom } from '../types';
 
 // 1. Menu: Start Empty
 export const INITIAL_DISHES: Dish[] = [];
@@ -25,7 +25,6 @@ export const INITIAL_KTV_ROOMS: KTVRoom[] = [
 export const INITIAL_SIGN_BILL_ACCOUNTS: SignBillAccount[] = [];
 
 // 7. Hotel Rooms: Generate room numbers (infrastructure), but ensure they are Vacant
-// Logic: 82xx (2F) and 83xx (3F), skipping numbers with '4'
 const generateHotelRooms = (): HotelRoom[] => {
   const rooms: HotelRoom[] = [];
   

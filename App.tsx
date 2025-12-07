@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
-import { Page, Dish, Order, OrderStatus, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom } from './types';
+import { Page, Dish, Order, OrderStatus, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, OrderItem, DishIngredient, CarRecord } from './types';
 import { DataAPI } from './services/api';
 import { Loader2, Cloud, Menu } from 'lucide-react';
 import { getStorageSettings } from './services/storage';
@@ -84,7 +84,7 @@ const App: React.FC = () => {
   const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
   const [signBillAccounts, setSignBillAccounts] = useState<SignBillAccount[]>([]);
   const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
-  const [carRecords, setCarRecords] = useState<any[]>([]); 
+  const [carRecords, setCarRecords] = useState<CarRecord[]>([]);
   
   // Global Settings State
   const [systemSettings, setSystemSettings] = useState<any>({
@@ -249,10 +249,10 @@ const App: React.FC = () => {
         // Logic to deduct ingredients
         const deductions = new Map<string, number>();
 
-        order.items.forEach(item => {
+        order.items.forEach((item: OrderItem) => {
            const dish = dishes.find(d => d.id === item.dishId);
            if (dish && dish.ingredients) {
-              dish.ingredients.forEach(ing => {
+              dish.ingredients.forEach((ing: DishIngredient) => {
                  const currentDeduction = deductions.get(ing.ingredientId) || 0;
                  deductions.set(ing.ingredientId, currentDeduction + (ing.quantity * item.quantity));
               });
@@ -318,7 +318,8 @@ const App: React.FC = () => {
               return <InventoryManagement inventory={inventory} setInventory={setInventory} />;
             case 'settings':
               return <Settings onSettingsChange={handleSettingsUpdate} />;
-            // Add other missing case like 'car' service if needed in sidebar logic
+            case 'car':
+              return <CarService records={carRecords} setRecords={setCarRecords} />;
             default:
               return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} />;
           }

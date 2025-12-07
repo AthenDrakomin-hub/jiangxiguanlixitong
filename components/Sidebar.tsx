@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Settings, LogOut, UtensilsCrossed, CircleDollarSign, Package, Mic2, FileSignature, X, BedDouble, QrCode, ChefHat, Cloud, HardDrive, Wifi, WifiOff } from 'lucide-react';
+import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Settings, LogOut, UtensilsCrossed, CircleDollarSign, Package, Mic2, FileSignature, X, BedDouble, QrCode, ChefHat, Cloud, HardDrive, Car } from 'lucide-react';
 import { Page } from '../types';
 import { getStorageSettings } from '../services/storage';
 
@@ -90,6 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
           <MenuButton id="menu" label="菜单管理" icon={MenuIcon} />
           <MenuButton id="inventory" label="库存管理" icon={Package} />
           <MenuButton id="signbill" label="签单挂账" icon={FileSignature} />
+          <MenuButton id="car" label="用车服务" icon={Car} />
           <MenuButton id="finance" label="财务报表" icon={CircleDollarSign} />
           <MenuButton id="settings" label="系统设置" icon={Settings} />
         </div>

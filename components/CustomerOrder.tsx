@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, History, Receipt, Home, CreditCard, Banknote, Smartphone, QrCode, Wallet, CircleDollarSign, Loader2, ArrowLeft, Wifi, Phone, Send, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, History, Receipt, Home, Banknote, Smartphone, QrCode, Wallet, Loader2, ArrowLeft, Wifi, Phone, Send, CheckCircle2 } from 'lucide-react';
 import { Dish, Order, OrderStatus, OrderItem, OrderSource, PaymentMethod, SystemSettings } from '../types';
 
 interface CustomerOrderProps {
