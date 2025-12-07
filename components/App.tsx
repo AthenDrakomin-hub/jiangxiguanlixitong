@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import Sidebar from './components/Sidebar';
-import Login from './components/Login';
 import { Page, Dish, Order, OrderStatus, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom } from './types';
 import { DataAPI } from './services/api';
 import { Loader2, Cloud, Menu } from 'lucide-react';
@@ -20,7 +19,6 @@ const QRCodeManager = lazy(() => import('./components/QRCodeManager'));
 const KitchenDisplay = lazy(() => import('./components/KitchenDisplay'));
 const CustomerOrder = lazy(() => import('./components/CustomerOrder'));
 const Settings = lazy(() => import('./components/Settings'));
-const CarService = lazy(() => import('./components/CarService')); 
 
 // Notification sound URL
 const NOTIFICATION_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
@@ -69,9 +67,6 @@ const App: React.FC = () => {
     return 'dashboard';
   });
 
-  // Auth State
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loadingText, setLoadingText] = useState('系统初始化中... / Initializing');
@@ -84,7 +79,6 @@ const App: React.FC = () => {
   const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
   const [signBillAccounts, setSignBillAccounts] = useState<SignBillAccount[]>([]);
   const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
-  const [carRecords, setCarRecords] = useState<any[]>([]); 
   
   // Global Settings State
   const [systemSettings, setSystemSettings] = useState<any>({
@@ -98,18 +92,6 @@ const App: React.FC = () => {
       },
       categories: ['热菜', '凉菜', '汤羹', '主食', '酒水', '特色菜']
   });
-
-  // Check Auth on Mount
-  useEffect(() => {
-    const sessionAuth = sessionStorage.getItem('jx_auth');
-    if (sessionAuth === 'true') {
-      setIsAuthenticated(true);
-    }
-    // Note: Customer page does not require auth
-    if (currentPage === 'customer') {
-      setIsAuthenticated(true);
-    }
-  }, [currentPage]);
 
   // Initial Data Load
   useEffect(() => {
@@ -142,10 +124,8 @@ const App: React.FC = () => {
       }
     };
 
-    if (isAuthenticated || currentPage === 'customer') {
-        initData();
-    }
-  }, [isAuthenticated, currentPage]);
+    initData();
+  }, []);
 
   // --- Optimized Persistence Layer (Debounced) ---
   const saveDishesStatus = useDebouncedAutoSave('dishes', dishes, DataAPI.Menu.save, 1000, !isLoading);
@@ -276,15 +256,6 @@ const App: React.FC = () => {
      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
   };
 
-  const handleLoginSuccess = () => {
-    sessionStorage.setItem('jx_auth', 'true');
-    setIsAuthenticated(true);
-  };
-
-  if (!isAuthenticated && currentPage !== 'customer') {
-    return <Login onLogin={handleLoginSuccess} />;
-  }
-
   const renderContent = () => {
     return (
       <Suspense fallback={
@@ -318,7 +289,6 @@ const App: React.FC = () => {
               return <InventoryManagement inventory={inventory} setInventory={setInventory} />;
             case 'settings':
               return <Settings onSettingsChange={handleSettingsUpdate} />;
-            // Add other missing case like 'car' service if needed in sidebar logic
             default:
               return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} />;
           }

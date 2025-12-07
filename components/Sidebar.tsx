@@ -1,6 +1,8 @@
-import React from 'react';
-import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Settings, LogOut, UtensilsCrossed, CircleDollarSign, Package, Mic2, FileSignature, X, BedDouble, QrCode, ChefHat } from 'lucide-react';
+
+import React, { useEffect, useState } from 'react';
+import { LayoutDashboard, Menu as MenuIcon, ClipboardList, Settings, LogOut, UtensilsCrossed, CircleDollarSign, Package, Mic2, FileSignature, X, BedDouble, QrCode, ChefHat, Cloud, HardDrive, Wifi, WifiOff } from 'lucide-react';
 import { Page } from '../types';
+import { getStorageSettings } from '../services/storage';
 
 interface SidebarProps {
   currentPage: Page;
@@ -10,6 +12,14 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onClose }) => {
+  const [connectionType, setConnectionType] = useState<'local' | 'cloud'>('local');
+  
+  // Check connection type on mount
+  useEffect(() => {
+    const settings = getStorageSettings();
+    setConnectionType(settings.type === 'local' ? 'local' : 'cloud');
+  }, []);
+
   const handleOpenCustomerH5 = () => {
     try {
       const url = new URL(window.location.href);
@@ -49,8 +59,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
              <UtensilsCrossed size={24} className="text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-wider">江西饭店</h1>
-            <p className="text-xs text-slate-400">Jiangxi Hotel Admin</p>
+            <h1 className="text-lg font-bold tracking-wider">后端管理</h1>
+            <p className="text-xs text-slate-400">Backend System</p>
           </div>
         </div>
         <button 
@@ -76,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
         {/* Group 2: Back Office Management */}
         <div>
           <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-3 pt-4 border-t border-slate-800">后台管理 Admin</div>
-          <MenuButton id="qrcode" label="二维码 QR" icon={QrCode} />
+          <MenuButton id="qrcode" label="二维码 QR (H5)" icon={QrCode} />
           <MenuButton id="menu" label="菜单管理" icon={MenuIcon} />
           <MenuButton id="inventory" label="库存管理" icon={Package} />
           <MenuButton id="signbill" label="签单挂账" icon={FileSignature} />
@@ -86,13 +96,26 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
 
       </nav>
 
+      {/* Connection Status Indicator */}
+      <div className="px-4 pb-2">
+         <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border ${
+            connectionType === 'cloud' ? 'bg-emerald-900/30 border-emerald-800 text-emerald-400' : 'bg-slate-800 border-slate-700 text-slate-400'
+         }`}>
+            {connectionType === 'cloud' ? <Cloud size={14} /> : <HardDrive size={14} />}
+            <span className="flex-1">
+               {connectionType === 'cloud' ? 'Data Synced' : 'Local Storage'}
+            </span>
+            {connectionType === 'cloud' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>}
+         </div>
+      </div>
+
       <div className="p-4 border-t border-slate-700 space-y-2">
         <button 
           onClick={handleOpenCustomerH5}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-emerald-400 hover:bg-slate-800 hover:text-emerald-300 transition-colors border border-dashed border-slate-600"
         >
           <div className="text-xl">📱</div>
-          <span className="font-medium text-sm">打开顾客端 H5</span>
+          <span className="font-medium text-sm">H5 顾客端 (View)</span>
         </button>
         
         <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors">

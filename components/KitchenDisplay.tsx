@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ChefHat, Clock, CheckCircle2, AlertTriangle, LogOut } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
@@ -75,7 +76,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
     <div className="h-[calc(100vh-2rem)] flex flex-col">
        <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-             <ChefHat size={32} /> 后厨显示系统 (KDS)
+             <ChefHat size={32} /> Kitchen Display (KDS)
           </h2>
           <div className="flex items-center gap-4">
              <div className="text-white/80 font-mono text-xl">
@@ -86,7 +87,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg border border-white/20 transition-colors"
              >
                <LogOut size={18} />
-               <span>退出 / Exit</span>
+               <span>Exit / Lumabas</span>
              </button>
           </div>
        </div>
@@ -96,7 +97,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
           <div className="bg-slate-800/50 rounded-2xl p-4 flex flex-col border border-slate-700/50">
              <div className="flex justify-between items-center mb-4 px-2">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                   <span className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></span> 待制作 (Pending)
+                   <span className="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></span> Pending / Naghihintay
                 </h3>
                 <span className="bg-slate-700 text-white px-3 py-1 rounded-full text-sm font-bold">{pendingOrders.length}</span>
              </div>
@@ -106,7 +107,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
                       key={order.id} 
                       order={order} 
                       nextStatus={OrderStatus.COOKING} 
-                      buttonText="开始制作" 
+                      buttonText="Start Cooking / Simulan" 
                       colorClass="#f97316"
                       onStatusChange={onStatusChange}
                    />
@@ -114,7 +115,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
                 {pendingOrders.length === 0 && (
                    <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50">
                       <Clock size={64} />
-                      <p className="mt-4 text-xl">暂无待制作订单</p>
+                      <p className="mt-4 text-xl">No pending orders / Walang order</p>
                    </div>
                 )}
              </div>
@@ -124,7 +125,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
           <div className="bg-slate-800/50 rounded-2xl p-4 flex flex-col border border-slate-700/50">
              <div className="flex justify-between items-center mb-4 px-2">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                   <span className="w-3 h-3 bg-blue-500 rounded-full"></span> 制作中 (Cooking)
+                   <span className="w-3 h-3 bg-blue-500 rounded-full"></span> Cooking / Nagluluto
                 </h3>
                 <span className="bg-slate-700 text-white px-3 py-1 rounded-full text-sm font-bold">{cookingOrders.length}</span>
              </div>
@@ -134,7 +135,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
                       key={order.id} 
                       order={order} 
                       nextStatus={OrderStatus.SERVED} 
-                      buttonText="完成出餐" 
+                      buttonText="Serve / I-serve" 
                       colorClass="#3b82f6"
                       onStatusChange={onStatusChange}
                    />
@@ -142,7 +143,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({ orders, onStatusChange,
                  {cookingOrders.length === 0 && (
                    <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50">
                       <ChefHat size={64} />
-                      <p className="mt-4 text-xl">灶台空闲中</p>
+                      <p className="mt-4 text-xl">Kitchen Idle</p>
                    </div>
                 )}
              </div>

@@ -1,12 +1,13 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, History, Receipt, Home } from 'lucide-react';
-import { Dish, Category, Order, OrderStatus, OrderItem, OrderSource } from '../types';
+import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, History, Receipt, Home, CreditCard, Banknote, Smartphone, QrCode, Wallet, CircleDollarSign, Loader2, ArrowLeft, Wifi, Phone, Send, CheckCircle2 } from 'lucide-react';
+import { Dish, Order, OrderStatus, OrderItem, OrderSource, PaymentMethod, SystemSettings } from '../types';
 
 interface CustomerOrderProps {
   dishes: Dish[];
   orders: Order[]; // Passed down to check history
   onPlaceOrder: (order: Order) => void;
-  systemSettings?: any;
+  systemSettings?: SystemSettings;
 }
 
 const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOrder, systemSettings }) => {
@@ -14,12 +15,19 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
   const [activeTab, setActiveTab] = useState<'MENU' | 'ORDERS'>('MENU');
   
   // Menu State
-  const [activeCategory, setActiveCategory] = useState<Category | 'All'>('All');
+  const [activeCategory, setActiveCategory] = useState<string>('All');
   const [cart, setCart] = useState<{ dish: Dish; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successOrderData, setSuccessOrderData] = useState<{id: string, method: PaymentMethod, total: number} | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Payment State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [cashAmountTendered, setCashAmountTendered] = useState<string>('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Location State
   const [tableId, setTableId] = useState('');
@@ -27,9 +35,22 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
   const [showTableSelector, setShowTableSelector] = useState(false);
 
   // Settings
-  const storeName = systemSettings?.storeInfo?.name || '江西饭店 Jiangxi Hotel';
+  const storeInfo = systemSettings?.storeInfo;
+  const storeName = storeInfo?.name || '江西饭店 (Jinjiang Star Hotel)';
   const exchangeRate = systemSettings?.exchangeRate || 8.2;
   const serviceChargeRate = systemSettings?.serviceChargeRate || 0.10;
+  
+  // Dynamic categories from settings
+  const categories = ['All', ...(systemSettings?.categories || [])];
+
+  // Default payment settings if not configured
+  const paymentConfig = systemSettings?.payment || {
+    enabledMethods: ['CASH'],
+    aliPayEnabled: false,
+    weChatEnabled: false,
+    gCashEnabled: true,
+    mayaEnabled: true
+  };
 
   // Initialize from URL Params
   useEffect(() => {
@@ -53,8 +74,6 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
     return 'LOBBY';
   };
 
-  // Group dishes
-  const categories = ['All', ...Object.values(Category)];
   const displayedDishes = dishes.filter(d => {
     const matchesCategory = activeCategory === 'All' || d.category === activeCategory;
     const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -97,7 +116,28 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
   const totalAmount = subTotal + serviceCharge;
   const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleSubmit = () => {
+  // Payment Handlers
+  const handleInitiateCheckout = () => {
+    setIsCartOpen(false);
+    setIsPaymentModalOpen(true);
+    setSelectedPaymentMethod(null);
+    setCashAmountTendered('');
+  };
+
+  const handleConfirmPayment = () => {
+    if (!selectedPaymentMethod) return;
+
+    setIsProcessingPayment(true);
+
+    // Simulation of payment API latency
+    setTimeout(() => {
+        finalizeOrder(selectedPaymentMethod);
+        setIsProcessingPayment(false);
+        setIsPaymentModalOpen(false);
+    }, 2000);
+  };
+
+  const finalizeOrder = (method: PaymentMethod) => {
     if (cart.length === 0 || !tableId) return;
 
     const orderItems: OrderItem[] = cart.map(c => ({
@@ -107,26 +147,50 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
       price: c.dish.price
     }));
 
+    // If CASH, we note the change.
+    // Order status: For Digital, we can assume PAID. For CASH, technically user hands cash to waiter or pays at counter.
+    // Since "Pay before order" usually implies the transaction is secured, we mark digital as PAID.
+    // For Cash, we mark as PENDING but with paymentMethod attached, so staff knows to collect.
+    
+    let finalStatus = OrderStatus.PENDING;
+    let finalNotes = notes;
+
+    if (method === 'CASH') {
+        finalStatus = OrderStatus.PENDING; // Staff needs to verify/collect cash
+        if (cashAmountTendered) {
+             const tender = parseFloat(cashAmountTendered);
+             const change = tender - totalAmount;
+             finalNotes = `${notes ? notes + ' | ' : ''}Pay with ${tender}, Change: ${change.toFixed(0)}`;
+        }
+    } else {
+        finalStatus = OrderStatus.PAID; // Digital payments assumed successful
+    }
+
+    const orderId = `WEB-${Date.now().toString().slice(-6)}`;
     const newOrder: Order = {
-      id: `WEB-${Date.now().toString().slice(-6)}`,
+      id: orderId,
       tableNumber: tableId,
       source: getOrderSource(tableId),
       items: orderItems,
-      status: OrderStatus.PENDING,
+      status: finalStatus,
       totalAmount: totalAmount, 
       createdAt: new Date().toISOString(),
-      notes: notes || 'Mobile Order 手机点餐'
+      notes: finalNotes || 'Mobile Order',
+      paymentMethod: method
     };
 
     onPlaceOrder(newOrder);
     setCart([]);
-    setIsCartOpen(false);
     setNotes('');
+    
+    setSuccessOrderData({ id: orderId, method: method, total: totalAmount });
     setShowSuccess(true);
+    
     setTimeout(() => {
        setShowSuccess(false);
+       setSuccessOrderData(null);
        setActiveTab('ORDERS'); // Switch to history tab
-    }, 2000);
+    }, 4000);
   };
 
   // Render Functions
@@ -182,15 +246,36 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
      )
   }
 
-  if (showSuccess) {
+  if (showSuccess && successOrderData) {
+    const isDigital = successOrderData.method !== 'CASH';
     return (
-      <div className="fixed inset-0 bg-green-500 z-50 flex flex-col items-center justify-center text-white p-6 text-center animate-fade-in">
+      <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in ${isDigital ? 'bg-emerald-600' : 'bg-orange-500'} text-white`}>
          <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm animate-bounce">
-            <UtensilsCrossed size={48} />
+            {isDigital ? <CheckCircle2 size={48} /> : <UtensilsCrossed size={48} />}
          </div>
-         <h2 className="text-3xl font-bold mb-2">Order Sent!</h2>
-         <p className="opacity-90 mb-1">下单成功！后厨正在制作中。</p>
-         <p className="text-sm opacity-75">Location: {tableId}</p>
+         <h2 className="text-3xl font-bold mb-2">{isDigital ? 'Payment Successful!' : 'Order Placed!'}</h2>
+         <p className="text-xl font-medium opacity-90 mb-1">{isDigital ? '支付成功' : '下单成功'}</p>
+         <p className="opacity-80 mb-6 max-w-xs leading-relaxed">
+            {isDigital 
+               ? 'Thank you! Your order has been confirmed.' 
+               : 'Please wait for staff to collect payment.'} <br/>
+            {isDigital ? '订单已确认，后厨正在制作。' : '请等待服务员前来确认。'}
+         </p>
+         
+         <div className="bg-white/10 rounded-xl p-4 w-full max-w-xs backdrop-blur-md border border-white/20">
+            <div className="flex justify-between text-sm mb-2">
+               <span className="opacity-75">Order ID</span>
+               <span className="font-mono font-bold">#{successOrderData.id.slice(-6)}</span>
+            </div>
+            <div className="flex justify-between text-sm mb-2">
+               <span className="opacity-75">Amount</span>
+               <span className="font-bold">₱{successOrderData.total.toFixed(0)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+               <span className="opacity-75">Location</span>
+               <span className="font-bold">{tableId}</span>
+            </div>
+         </div>
       </div>
     );
   }
@@ -200,20 +285,49 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
       
       {/* Top Banner (Only on Menu Tab) */}
       {activeTab === 'MENU' && (
-        <div className="relative h-40 bg-slate-800 shrink-0">
-           <img src="https://picsum.photos/800/400?random=restaurant" className="w-full h-full object-cover opacity-60" alt="Banner" />
-           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-           <div className="absolute bottom-4 left-4 right-4 text-white">
-              <h1 className="text-xl font-bold leading-tight shadow-sm">{storeName}</h1>
-              <div className="flex items-center gap-2 mt-1 text-xs opacity-90">
-                 <span className="bg-red-600 px-2 py-0.5 rounded font-bold">Open</span>
-                 <span className="flex items-center gap-1"><MapPin size={10} /> Pasay City</span>
+        <div className="relative bg-slate-800 shrink-0 pb-6">
+           <div className="absolute inset-0 overflow-hidden opacity-60">
+              <img src="https://picsum.photos/800/400?random=restaurant" className="w-full h-full object-cover" alt="Banner" />
+           </div>
+           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
+           
+           <div className="relative z-10 p-5 pt-8 text-white">
+              <h1 className="text-xl font-bold leading-tight shadow-sm mb-3">{storeName}</h1>
+              <div className="space-y-1.5 text-xs opacity-90">
+                 <div className="flex items-start gap-2">
+                    <MapPin size={14} className="mt-0.5 shrink-0 text-red-400" /> 
+                    <span>{storeInfo?.address}</span>
+                 </div>
+                 {storeInfo?.wifiSsid && (
+                     <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <Wifi size={14} className="text-blue-400" />
+                            <span>WiFi: {storeInfo.wifiSsid}</span>
+                        </div>
+                        {storeInfo.wifiPassword && <span>Pass: {storeInfo.wifiPassword}</span>}
+                     </div>
+                 )}
+                 <div className="flex items-center gap-4">
+                     {storeInfo?.phone && (
+                        <div className="flex items-center gap-2">
+                            <Phone size={14} className="text-green-400" />
+                            <span>{storeInfo.phone}</span>
+                        </div>
+                     )}
+                     {storeInfo?.telegram && (
+                        <div className="flex items-center gap-2">
+                            <Send size={14} className="text-sky-400" />
+                            <span>{storeInfo.telegram}</span>
+                        </div>
+                     )}
+                 </div>
               </div>
            </div>
+           
            {/* Table ID Badge */}
            <div 
              onClick={() => !isFixedLocation && setShowTableSelector(true)}
-             className="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold border border-white/30 flex items-center gap-1 cursor-pointer"
+             className="absolute top-4 right-4 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold border border-white/30 flex items-center gap-1 cursor-pointer z-20"
            >
               <MapPin size={12} /> {tableId}
            </div>
@@ -279,7 +393,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
                              <div className="flex justify-between items-end mt-1">
                                 <div>
                                    <div className="font-bold text-red-600 text-lg">₱{dish.price}</div>
-                                   <div className="text-[10px] text-slate-400">≈ ¥{(dish.price / exchangeRate).toFixed(0)}</div>
+                                   <div className="text--[10px] text-slate-400">≈ ¥{(dish.price / exchangeRate).toFixed(0)}</div>
                                 </div>
                                 {inCartQty > 0 ? (
                                   <div className="flex items-center gap-3 bg-slate-50 rounded-full px-1 py-1 border border-slate-200 shadow-inner">
@@ -330,6 +444,11 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
                                  <span className="text-slate-500">₱{item.price * item.quantity}</span>
                               </div>
                            ))}
+                           {order.paymentMethod === 'CASH' && order.status === OrderStatus.PENDING && (
+                              <div className="mt-2 bg-yellow-50 text-yellow-800 text-xs p-2 rounded">
+                                 Wait for staff to collect cash. 等待服务员收款。
+                              </div>
+                           )}
                            <div className="pt-3 mt-2 border-t border-slate-50 flex justify-between items-center">
                               <span className="text-sm font-bold text-slate-600">Total</span>
                               <span className="text-lg font-bold text-slate-800">₱{order.totalAmount}</span>
@@ -343,7 +462,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
       </div>
 
       {/* Floating Cart Bar (Only Menu Tab) */}
-      {activeTab === 'MENU' && cart.length > 0 && (
+      {activeTab === 'MENU' && cart.length > 0 && !isCartOpen && !isPaymentModalOpen && (
          <div className="fixed bottom-24 left-4 right-4 max-w-md mx-auto z-30">
             <button 
                onClick={() => setIsCartOpen(true)}
@@ -388,8 +507,8 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
          </button>
       </div>
 
-      {/* Cart Modal / Bottom Sheet */}
-      {isCartOpen && (
+      {/* Cart Bottom Sheet */}
+      {isCartOpen && !isPaymentModalOpen && (
          <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 duration-300">
                <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 backdrop-blur">
@@ -447,20 +566,210 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
                         <span>Total 合计</span>
                         <span>₱{totalAmount.toFixed(0)}</span>
                      </div>
-                     <div className="text-right text-xs text-slate-400">
-                        ≈ ¥{(totalAmount / exchangeRate).toFixed(0)}
-                     </div>
                   </div>
                   
                   <button 
-                     onClick={handleSubmit}
+                     onClick={handleInitiateCheckout}
                      className="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-lg hover:bg-red-700 shadow-xl shadow-red-200 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
                   >
-                     Place Order 下单
+                     Checkout 去支付
                   </button>
                </div>
             </div>
          </div>
+      )}
+
+      {/* Payment Selection Modal */}
+      {isPaymentModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/80 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+           <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10">
+              
+              {/* Payment Header */}
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                 <button onClick={() => setIsPaymentModalOpen(false)} className="p-2 -ml-2 text-slate-400 hover:text-slate-600">
+                    <ArrowLeft size={20} />
+                 </button>
+                 <h3 className="font-bold text-slate-800 text-lg">Cashier 收银台</h3>
+                 <div className="w-8"></div>
+              </div>
+
+              {/* Payment Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                 
+                 {/* Amount Display */}
+                 <div className="text-center mb-8">
+                    <p className="text-slate-500 text-sm mb-1">Total Amount 应付金额</p>
+                    <div className="text-4xl font-bold text-slate-900">₱{totalAmount.toFixed(0)}</div>
+                 </div>
+
+                 {!selectedPaymentMethod ? (
+                   /* Method Selector */
+                   <div className="space-y-3">
+                      <p className="text-sm font-bold text-slate-700 mb-2">Select Payment Method 选择支付方式</p>
+                      
+                      {/* Cash (Always Available) */}
+                      <button onClick={() => setSelectedPaymentMethod('CASH')} className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-green-500 hover:bg-green-50 transition-all text-left group">
+                         <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform"><Banknote size={24} /></div>
+                         <div className="flex-1">
+                            <div className="font-bold text-slate-800">Cash 现金支付</div>
+                            <div className="text-xs text-slate-400">Pay at counter / table</div>
+                         </div>
+                         <ChevronRight size={18} className="text-slate-300" />
+                      </button>
+
+                      {/* GCash */}
+                      {paymentConfig.gCashEnabled && (
+                        <button onClick={() => setSelectedPaymentMethod('GCASH')} className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all text-left group">
+                           <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white group-hover:scale-110 transition-transform"><Wallet size={24} /></div>
+                           <div className="flex-1">
+                              <div className="font-bold text-slate-800">GCash</div>
+                              <div className="text-xs text-slate-400">E-Wallet</div>
+                           </div>
+                           <ChevronRight size={18} className="text-slate-300" />
+                        </button>
+                      )}
+
+                      {/* Maya */}
+                      {paymentConfig.mayaEnabled && (
+                        <button onClick={() => setSelectedPaymentMethod('MAYA')} className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-green-500 hover:bg-green-50 transition-all text-left group">
+                           <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white group-hover:scale-110 transition-transform"><Wallet size={24} /></div>
+                           <div className="flex-1">
+                              <div className="font-bold text-slate-800">Maya</div>
+                              <div className="text-xs text-slate-400">E-Wallet</div>
+                           </div>
+                           <ChevronRight size={18} className="text-slate-300" />
+                        </button>
+                      )}
+
+                      {/* Alipay */}
+                      {paymentConfig.aliPayEnabled && (
+                        <button onClick={() => setSelectedPaymentMethod('ALIPAY')} className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-blue-400 hover:bg-blue-50 transition-all text-left group">
+                           <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform"><Smartphone size={24} /></div>
+                           <div className="flex-1">
+                              <div className="font-bold text-slate-800">Alipay 支付宝</div>
+                              <div className="text-xs text-slate-400">RMB Payment</div>
+                           </div>
+                           <ChevronRight size={18} className="text-slate-300" />
+                        </button>
+                      )}
+
+                       {/* WeChat */}
+                       {paymentConfig.weChatEnabled && (
+                        <button onClick={() => setSelectedPaymentMethod('WECHAT')} className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-500 hover:bg-emerald-50 transition-all text-left group">
+                           <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform"><QrCode size={24} /></div>
+                           <div className="flex-1">
+                              <div className="font-bold text-slate-800">WeChat 微信支付</div>
+                              <div className="text-xs text-slate-400">RMB Payment</div>
+                           </div>
+                           <ChevronRight size={18} className="text-slate-300" />
+                        </button>
+                      )}
+                   </div>
+                 ) : (
+                    /* Specific Method Process */
+                    <div className="animate-in fade-in slide-in-from-right-4">
+                       
+                       {selectedPaymentMethod === 'CASH' ? (
+                          <div className="space-y-6">
+                             <div className="bg-green-50 border border-green-100 p-4 rounded-xl text-center">
+                                <Banknote className="mx-auto text-green-600 mb-2" size={32} />
+                                <h4 className="font-bold text-green-800">Cash Payment</h4>
+                                <p className="text-xs text-green-700">Please prepare your cash.</p>
+                             </div>
+
+                             <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2">How much will you pay with?</label>
+                                <div className="relative">
+                                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₱</span>
+                                   <input 
+                                      type="number" 
+                                      autoFocus
+                                      value={cashAmountTendered}
+                                      onChange={(e) => setCashAmountTendered(e.target.value)}
+                                      className="w-full pl-10 pr-4 py-4 text-2xl font-bold border-2 border-slate-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all"
+                                      placeholder="e.g. 1000"
+                                   />
+                                </div>
+                                {/* Quick Amounts */}
+                                <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+                                   {[500, 1000].map(amt => (
+                                      <button 
+                                        key={amt}
+                                        onClick={() => setCashAmountTendered(amt.toString())}
+                                        className="px-4 py-2 bg-slate-100 rounded-lg font-bold text-slate-600 hover:bg-slate-200"
+                                      >
+                                        ₱{amt}
+                                      </button>
+                                   ))}
+                                   <button 
+                                      onClick={() => setCashAmountTendered(totalAmount.toFixed(0))}
+                                      className="px-4 py-2 bg-slate-100 rounded-lg font-bold text-slate-600 hover:bg-slate-200"
+                                   >
+                                      Exact
+                                   </button>
+                                </div>
+                             </div>
+
+                             {cashAmountTendered && !isNaN(parseFloat(cashAmountTendered)) && (
+                                <div className="flex justify-between items-center p-4 bg-slate-50 rounded-xl">
+                                   <span className="text-slate-500 font-medium">Change Due 找零</span>
+                                   <span className={`text-xl font-bold ${parseFloat(cashAmountTendered) >= totalAmount ? 'text-green-600' : 'text-red-500'}`}>
+                                      ₱{(parseFloat(cashAmountTendered) - totalAmount).toFixed(0)}
+                                   </span>
+                                </div>
+                             )}
+
+                             <div className="flex gap-3 pt-4">
+                                <button onClick={() => setSelectedPaymentMethod(null)} className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl">Back</button>
+                                <button 
+                                   onClick={handleConfirmPayment}
+                                   disabled={isProcessingPayment || (cashAmountTendered ? parseFloat(cashAmountTendered) < totalAmount : true)}
+                                   className="flex-[2] py-3 bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                   {isProcessingPayment ? <Loader2 className="animate-spin" /> : 'Confirm Cash'}
+                                </button>
+                             </div>
+                          </div>
+                       ) : (
+                          <div className="space-y-8 text-center py-8">
+                             {isProcessingPayment ? (
+                                <div className="flex flex-col items-center">
+                                   <div className="w-20 h-20 border-4 border-slate-200 border-t-red-600 rounded-full animate-spin mb-6"></div>
+                                   <h4 className="text-xl font-bold text-slate-800">Processing...</h4>
+                                   <p className="text-slate-500">Waiting for payment confirmation</p>
+                                </div>
+                             ) : (
+                                <>
+                                   <div className="mx-auto w-48 h-48 bg-slate-100 rounded-2xl flex items-center justify-center mb-4 border-2 border-dashed border-slate-300 relative overflow-hidden">
+                                      <QrCode size={64} className="text-slate-400 opacity-20" />
+                                      <div className="absolute inset-0 flex items-center justify-center">
+                                         <p className="text-xs text-slate-400 font-bold">Simulated API QR</p>
+                                      </div>
+                                   </div>
+                                   
+                                   <div>
+                                      <h4 className="text-xl font-bold text-slate-800 mb-1">Scan to Pay</h4>
+                                      <p className="text-slate-500 text-sm">Use your {selectedPaymentMethod} app</p>
+                                   </div>
+
+                                   <div className="flex gap-3 pt-4">
+                                      <button onClick={() => setSelectedPaymentMethod(null)} className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl">Back</button>
+                                      <button 
+                                         onClick={handleConfirmPayment}
+                                         className="flex-[2] py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                                      >
+                                         Simulate Success (Dev)
+                                      </button>
+                                   </div>
+                                </>
+                             )}
+                          </div>
+                       )}
+                    </div>
+                 )}
+              </div>
+           </div>
+        </div>
       )}
     </div>
   );

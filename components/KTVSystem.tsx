@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Mic2, Users, Clock, PlayCircle, SkipForward, Music2, Power, Receipt, GlassWater, Utensils, CheckCircle2, X, Plus, User, Banknote, Smartphone, QrCode, CircleDollarSign, Wallet, ClipboardList } from 'lucide-react';
-import { KTVRoom, Dish, Category, OrderItem, PaymentMethod } from '../types';
+import { KTVRoom, Dish, OrderItem, PaymentMethod } from '../types';
 
 interface KTVSystemProps {
   rooms: KTVRoom[];
@@ -154,7 +154,8 @@ const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
     setSelectedRoom(prev => prev ? { ...prev, currentSong: randomSong } : null);
   };
 
-  const ktvMenu = dishes.filter(d => d.category === Category.DRINKS || d.category === Category.SPECIAL || d.category === Category.COLD_DISH);
+  // Fixed error: Category is now a type (string), so we use string literals
+  const ktvMenu = dishes.filter(d => d.category === '酒水' || d.category === '特色菜' || d.category === '凉菜');
 
   const getStatusColor = (status: KTVRoom['status']) => {
     switch (status) {

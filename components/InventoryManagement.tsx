@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Search, Edit2, Trash2, AlertTriangle, PackageCheck, PackageX } from 'lucide-react';
 import { Ingredient } from '../types';
@@ -82,15 +83,15 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">库存管理 Inventory</h2>
-          <p className="text-slate-500 text-sm">Manage ingredients & stock levels</p>
+          <h2 className="text-2xl font-bold text-slate-800">Inventory 库存管理</h2>
+          <p className="text-slate-500 text-sm">Pamamahala ng Imbentaryo</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
         >
           <Plus size={20} />
-          <span>Add Item 录入食材</span>
+          <span>Add Item / Magdagdag</span>
         </button>
       </div>
 
@@ -98,7 +99,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Items 总食材</p>
+            <p className="text-sm font-medium text-slate-500">Total Items / Kabuuan</p>
             <h3 className="text-2xl font-bold text-slate-800 mt-1">{inventory.length}</h3>
           </div>
           <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
@@ -108,7 +109,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Low Stock 告急</p>
+            <p className="text-sm font-medium text-slate-500">Low Stock / Mababa ang stock</p>
             <h3 className={`text-2xl font-bold mt-1 ${lowStockItems.length > 0 ? 'text-red-600' : 'text-slate-800'}`}>
               {lowStockItems.length}
             </h3>
@@ -120,7 +121,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
            <div>
-            <p className="text-sm font-medium text-slate-500">Status 状态</p>
+            <p className="text-sm font-medium text-slate-500">Status / Kalagayan</p>
             <h3 className="text-xl font-bold text-slate-800 mt-1">
               {lowStockItems.length > 0 ? 'Need Restock 需补货' : 'Good 充足'}
             </h3>
@@ -139,7 +140,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
               type="text"
-              placeholder="Search items / 搜索食材..."
+              placeholder="Search / 搜索 / Hanapin..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
@@ -152,12 +153,12 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
           <table className="w-full text-left">
             <thead className="bg-slate-50 text-slate-500 text-sm">
               <tr>
-                <th className="px-6 py-4 font-medium">Name 名称</th>
-                <th className="px-6 py-4 font-medium">Stock 库存</th>
-                <th className="px-6 py-4 font-medium">Threshold 阈值</th>
-                <th className="px-6 py-4 font-medium">Status 状态</th>
-                <th className="px-6 py-4 font-medium">Updated 更新</th>
-                <th className="px-6 py-4 font-medium text-right">Action 操作</th>
+                <th className="px-6 py-4 font-medium">Name / Pangalan</th>
+                <th className="px-6 py-4 font-medium">Stock / Imbentaryo</th>
+                <th className="px-6 py-4 font-medium">Threshold / Limit</th>
+                <th className="px-6 py-4 font-medium">Status / Kalagayan</th>
+                <th className="px-6 py-4 font-medium">Updated</th>
+                <th className="px-6 py-4 font-medium text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -183,7 +184,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
                     <td className="px-6 py-4">
                       {isLow ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                          <AlertTriangle size={12} /> Low 库存不足
+                          <AlertTriangle size={12} /> Low / Mababa
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -218,7 +219,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
           {filteredInventory.length === 0 && (
             <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
                <PackageX size={48} className="text-slate-200" />
-               <p>No Items Found / 没有找到相关食材</p>
+               <p>No Items Found / Walang nakita</p>
             </div>
           )}
         </div>
@@ -230,7 +231,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-slate-800">
-                {editingItem ? 'Edit Item 编辑食材' : 'Add Item 录入新食材'}
+                {editingItem ? 'Edit Item / I-edit' : 'Add Item / Magdagdag'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 &times;
@@ -239,7 +240,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
             
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Name 食材名称</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Name / Pangalan</label>
                 <input
                   type="text"
                   required
@@ -252,7 +253,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Quantity 数量</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Quantity / Dami</label>
                   <input
                     type="number"
                     required
@@ -264,7 +265,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Unit 单位</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Unit / Yunit</label>
                   <input
                     type="text"
                     required
@@ -277,7 +278,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Alert Threshold 预警阈值</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Alert Threshold / Limitasyon</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -287,7 +288,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
                     onChange={e => setFormData(prev => ({ ...prev, threshold: Number(e.target.value) }))}
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">Alert if lower than this</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">Alert level</span>
                 </div>
               </div>
 
@@ -297,13 +298,13 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  Cancel 取消
+                  Cancel / Kanselahin
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium shadow-lg shadow-slate-900/10"
                 >
-                  Save 保存
+                  Save / I-save
                 </button>
               </div>
             </form>

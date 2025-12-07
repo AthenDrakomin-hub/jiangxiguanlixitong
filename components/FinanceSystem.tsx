@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -8,6 +9,7 @@ import {
   ArrowUpRight, ArrowDownRight, Download, ClipboardCheck, X
 } from 'lucide-react';
 import { Order, OrderStatus, Expense, ExpenseCategory } from '../types';
+import { PrinterService } from '../services/printer';
 
 interface FinanceSystemProps {
   orders: Order[];
@@ -472,7 +474,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({ orders, expenses, setExpe
                 </div>
 
                 <button 
-                  onClick={() => window.print()}
+                  onClick={() => PrinterService.printShiftReport(handoverData)}
                   className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900"
                 >
                    Print Report 打印交班小票

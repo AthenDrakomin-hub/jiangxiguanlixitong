@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker } from 'lucide-react';
-import { Dish, Category, Ingredient, DishIngredient } from '../types';
+import { Plus, Edit2, Trash2, Search, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2 } from 'lucide-react';
+import { Dish, Ingredient, DishIngredient } from '../types';
+import { getSupabase } from '../services/supabaseClient';
 
 // dnd-kit imports
 import {
@@ -24,7 +26,8 @@ import { CSS } from '@dnd-kit/utilities';
 interface MenuManagementProps {
   dishes: Dish[];
   setDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
-  inventory: Ingredient[]; 
+  inventory: Ingredient[];
+  categories: string[];
 }
 
 // Sortable Item Component
@@ -59,6 +62,7 @@ const SortableDishCard = ({ dish, isSelected, toggleSelection, handleOpenModal, 
           src={dish.imageUrl} 
           alt={dish.name} 
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
         />
         
         {/* Selection Checkbox Overlay */}
@@ -89,7 +93,7 @@ const SortableDishCard = ({ dish, isSelected, toggleSelection, handleOpenModal, 
 
         {!dish.available && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
-            <span className="text-white font-bold px-3 py-1 bg-red-600 rounded-full text-sm shadow-lg">Sold Out 售罄</span>
+            <span className="text-white font-bold px-3 py-1 bg-red-600 rounded-full text-sm shadow-lg">Sold Out / Ubos Na</span>
           </div>
         )}
         
@@ -137,19 +141,20 @@ const SortableDishCard = ({ dish, isSelected, toggleSelection, handleOpenModal, 
   );
 };
 
-const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inventory }) => {
+const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inventory, categories }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkMenuOpen, setIsBulkMenuOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Dish>>({
     name: '',
     description: '',
     price: 0,
-    category: Category.HOT_DISH,
+    category: categories[0] || '热菜',
     imageUrl: '',
     spiciness: 0,
     available: true,
@@ -235,7 +240,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
         name: '',
         description: '',
         price: 0,
-        category: Category.HOT_DISH,
+        category: categories[0] || '热菜',
         imageUrl: `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
         spiciness: 0,
         available: true,
@@ -298,19 +303,52 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
     }));
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Image too large. Max 5MB. 图片太大");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image too large. Max 5MB. 图片太大");
+      return;
     }
+
+    setIsUploading(true);
+
+    try {
+      // 1. Try Supabase Storage Upload
+      const supabase = getSupabase();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Use the existing 'dish-images' bucket found in your project
+      const { data, error } = await supabase.storage
+        .from('dish-images') 
+        .upload(filePath, file);
+
+      if (!error && data) {
+        // Get Public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dish-images')
+          .getPublicUrl(filePath);
+        
+        setFormData(prev => ({ ...prev, imageUrl: publicUrl }));
+        setIsUploading(false);
+        return; 
+      } else {
+        console.warn("Supabase upload failed (Bucket might not exist), falling back to Base64:", error);
+      }
+    } catch (err) {
+      console.warn("Upload error:", err);
+    }
+
+    // 2. Fallback to Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+      setIsUploading(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
@@ -326,13 +364,16 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-slate-800">Menu 菜单管理</h2>
+        <div>
+            <h2 className="text-2xl font-bold text-slate-800">Menu Management 菜单管理</h2>
+            <p className="text-slate-500 text-sm">Pamamahala ng Menu</p>
+        </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+          className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
         >
           <Plus size={20} />
-          <span>Add Dish 添加菜品</span>
+          <span>Add Dish / Magdagdag</span>
         </button>
       </div>
 
@@ -341,7 +382,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="Search Dish / 搜索菜品..."
+            placeholder="Search / 搜索 / Hanapin..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -352,8 +393,8 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
         >
-          <option value="All">All Categories 所有分类</option>
-          {Object.values(Category).map(cat => (
+          <option value="All">All Categories / Lahat</option>
+          {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
@@ -375,14 +416,14 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
             >
               {(filteredDishes.length > 0 && selectedIds.size === filteredDishes.length) && <Check size={14} />}
             </div>
-            Select All 全选 ({selectedIds.size})
+            Select All / Piliin Lahat ({selectedIds.size})
           </label>
         </div>
 
         <div className="flex items-center gap-3">
           {!isSortingEnabled && (
              <span className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded">
-               * Clear filters to sort 清除筛选后可排序
+               * Clear filters to sort
              </span>
           )}
 
@@ -397,7 +438,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                }`}
              >
                <Layers size={16} />
-               <span>Batch 批量操作</span>
+               <span>Batch / Maramihan</span>
                <ChevronDown size={14} className={`transition-transform ${isBulkMenuOpen ? 'rotate-180' : ''}`} />
              </button>
              
@@ -411,14 +452,14 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                    className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2 transition-colors"
                  >
                    <ArrowUpCircle size={16} />
-                   Enable 上架
+                   Enable / Paganahin
                  </button>
                  <button 
                    onClick={() => handleBulkAction('disable')} 
                    className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-2 transition-colors"
                  >
                    <ArrowDownCircle size={16} />
-                   Disable 下架
+                   Disable / Huwag Paganahin
                  </button>
                  <div className="h-px bg-slate-100 my-1"></div>
                  <button 
@@ -426,7 +467,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2 transition-colors"
                  >
                    <Trash2 size={16} />
-                   Delete 删除
+                   Delete / Tanggalin
                  </button>
                </div>
              )}
@@ -464,7 +505,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
               <h3 className="text-xl font-bold text-slate-800">
-                {editingDish ? 'Edit Dish 编辑菜品' : 'Add Dish 添加新菜品'}
+                {editingDish ? 'Edit Dish / I-edit' : 'Add Dish / Magdagdag'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                 &times;
@@ -475,7 +516,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Name 菜名</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Name / Pangalan</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -489,7 +530,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Price 价格 (₱)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Price / Presyo (₱)</label>
                     <input
                       type="number"
                       required
@@ -501,20 +542,20 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Category 分类</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Category / Kategorya</label>
                     <select
                       value={formData.category}
-                      onChange={e => setFormData(prev => ({ ...prev, category: e.target.value as Category }))}
+                      onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
                       className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
                     >
-                      {Object.values(Category).map(cat => (
+                      {categories.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Spiciness 辣度 (0-3)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Spiciness / Anghang (0-3)</label>
                     <input
                       type="range"
                       min="0"
@@ -524,10 +565,10 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                       className="w-full accent-red-600"
                     />
                     <div className="flex justify-between text-xs text-slate-400 mt-1">
-                      <span>None 不辣</span>
-                      <span>Mild 微辣</span>
-                      <span>Medium 中辣</span>
-                      <span>Hot 特辣</span>
+                      <span>None</span>
+                      <span>Mild</span>
+                      <span>Medium</span>
+                      <span>Hot</span>
                     </div>
                   </div>
 
@@ -539,11 +580,11 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                       onChange={e => setFormData(prev => ({ ...prev, available: e.target.checked }))}
                       className="w-4 h-4 text-red-600 rounded focus:ring-red-500"
                     />
-                    <label htmlFor="available" className="text-sm font-medium text-slate-700">Available 上架销售</label>
+                    <label htmlFor="available" className="text-sm font-medium text-slate-700">Available / Magagamit</label>
                   </div>
 
                    <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description 描述</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Description / Paglalarawan</label>
                     <textarea
                       rows={4}
                       value={formData.description}
@@ -556,11 +597,16 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                 <div className="space-y-6">
                   
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Image 图片</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Image / Larawan</label>
                     
                     <div className="space-y-3">
                       <div className="aspect-video rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden relative group transition-colors hover:border-red-200">
-                        {formData.imageUrl ? (
+                        {isUploading ? (
+                           <div className="flex flex-col items-center gap-2 text-slate-400">
+                              <Loader2 className="animate-spin" size={24} />
+                              <span className="text-xs">Uploading to 'dish-images'...</span>
+                           </div>
+                        ) : formData.imageUrl ? (
                           <>
                             <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -607,7 +653,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                   {/* Recipe / BOM Section */}
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                      <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
-                       <Beaker size={16} /> Recipe Settings 配方设置 (BOM)
+                       <Beaker size={16} /> Recipe / Resipe
                      </h4>
                      
                      <div className="flex gap-2 mb-3">
@@ -658,7 +704,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                           <div className="text-center text-slate-400 text-xs py-2">No ingredients bound. 暂无配方</div>
                         )}
                      </div>
-                     <p className="text-xs text-slate-400 mt-2">Stock will be deducted automatically when cooking starts. 烹饪开始时自动扣减库存。</p>
+                     <p className="text-xs text-slate-400 mt-2">Stock deducted automatically. Awtomatikong ibabawas ang stock.</p>
                   </div>
                 </div>
               </div>
@@ -670,14 +716,15 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                 >
-                  Cancel 取消
+                  Cancel / Kanselahin
                 </button>
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-sm shadow-red-200"
+                  disabled={isUploading}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-sm shadow-red-200 disabled:opacity-50"
                 >
-                  Save 保存
+                  {isUploading ? 'Uploading...' : 'Save / I-save'}
                 </button>
             </div>
           </div>

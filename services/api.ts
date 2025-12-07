@@ -1,6 +1,7 @@
+
 import { Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, ApiResponse } from '../types';
-import { loadData, saveData } from './storage';
-import { INITIAL_DISHES, INITIAL_ORDERS, INITIAL_EXPENSES, INITIAL_INVENTORY, INITIAL_KTV_ROOMS, INITIAL_SIGN_BILL_ACCOUNTS, INITIAL_HOTEL_ROOMS } from './mockData';
+import { getSupabase } from './supabaseClient';
+import { INITIAL_DISHES, INITIAL_KTV_ROOMS, INITIAL_HOTEL_ROOMS } from './mockData';
 
 // Helper to wrap response
 const success = <T>(data: T): ApiResponse<T> => ({
@@ -9,20 +10,59 @@ const success = <T>(data: T): ApiResponse<T> => ({
   timestamp: new Date().toISOString()
 });
 
+// Helper to handle Supabase fetch errors or empty states
+async function fetchTable<T>(tableName: string, fallback: T): Promise<T> {
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.from(tableName).select('*');
+    if (error) {
+      console.error(`Error fetching ${tableName}:`, error);
+      return fallback;
+    }
+    // If empty (first launch), verify if we should return fallback or empty array
+    // For fixed resources like Rooms, we might want to init them if table is empty
+    if (!data || data.length === 0) {
+        if (tableName === 'hotel_rooms' && Array.isArray(fallback) && fallback.length > 0) return fallback;
+        if (tableName === 'ktv_rooms' && Array.isArray(fallback) && fallback.length > 0) return fallback;
+        if (tableName === 'dishes' && Array.isArray(fallback) && fallback.length > 0) return fallback;
+        return [] as unknown as T;
+    }
+    return data as unknown as T;
+  } catch (e) {
+    console.error(`Exception fetching ${tableName}:`, e);
+    return fallback;
+  }
+}
+
+// Helper to save (upsert) data
+// Note: Frontend sends the *entire* array. 
+// Ideally we should only send changed rows, but to match existing architecture, we upsert the whole batch.
+async function saveTable(tableName: string, data: any[]) {
+  if (!data || data.length === 0) return;
+  
+  const supabase = getSupabase();
+  const { error } = await supabase.from(tableName).upsert(data);
+  if (error) {
+    console.error(`Error saving ${tableName}:`, error);
+    throw error;
+  }
+}
+
 export const DataAPI = {
   /**
-   * Initialize all application data
+   * Initialize all application data from Supabase
    */
   async fetchAll() {
-    // await delay(API_DELAY_MS); // Simulate network wait
+    console.log("⚡ Fetching data from Supabase...");
+    
     const [dishes, orders, expenses, inventory, ktvRooms, signBillAccounts, hotelRooms] = await Promise.all([
-      loadData<Dish[]>('dishes', INITIAL_DISHES),
-      loadData<Order[]>('orders', INITIAL_ORDERS),
-      loadData<Expense[]>('expenses', INITIAL_EXPENSES),
-      loadData<Ingredient[]>('inventory', INITIAL_INVENTORY),
-      loadData<KTVRoom[]>('ktvRooms', INITIAL_KTV_ROOMS),
-      loadData<SignBillAccount[]>('signBillAccounts', INITIAL_SIGN_BILL_ACCOUNTS),
-      loadData<HotelRoom[]>('hotelRooms', INITIAL_HOTEL_ROOMS)
+      fetchTable<Dish[]>('dishes', INITIAL_DISHES),
+      fetchTable<Order[]>('orders', []),
+      fetchTable<Expense[]>('expenses', []),
+      fetchTable<Ingredient[]>('inventory', []),
+      fetchTable<KTVRoom[]>('ktv_rooms', INITIAL_KTV_ROOMS),
+      fetchTable<SignBillAccount[]>('sign_bill_accounts', []),
+      fetchTable<HotelRoom[]>('hotel_rooms', INITIAL_HOTEL_ROOMS)
     ]);
     
     return {
@@ -41,7 +81,7 @@ export const DataAPI = {
    */
   Menu: {
     async save(dishes: Dish[]) {
-      await saveData('dishes', dishes);
+      await saveTable('dishes', dishes);
       return success(true);
     }
   },
@@ -51,7 +91,7 @@ export const DataAPI = {
    */
   Orders: {
     async save(orders: Order[]) {
-      await saveData('orders', orders);
+      await saveTable('orders', orders);
       return success(true);
     }
   },
@@ -61,7 +101,7 @@ export const DataAPI = {
    */
   Inventory: {
     async save(inventory: Ingredient[]) {
-      await saveData('inventory', inventory);
+      await saveTable('inventory', inventory);
       return success(true);
     }
   },
@@ -71,7 +111,7 @@ export const DataAPI = {
    */
   Finance: {
     async save(expenses: Expense[]) {
-      await saveData('expenses', expenses);
+      await saveTable('expenses', expenses);
       return success(true);
     }
   },
@@ -81,7 +121,7 @@ export const DataAPI = {
    */
   KTV: {
     async save(rooms: KTVRoom[]) {
-      await saveData('ktvRooms', rooms);
+      await saveTable('ktv_rooms', rooms);
       return success(true);
     }
   },
@@ -91,7 +131,7 @@ export const DataAPI = {
    */
   SignBill: {
     async save(accounts: SignBillAccount[]) {
-      await saveData('signBillAccounts', accounts);
+      await saveTable('sign_bill_accounts', accounts);
       return success(true);
     }
   },
@@ -101,7 +141,7 @@ export const DataAPI = {
    */
   Hotel: {
     async save(rooms: HotelRoom[]) {
-      await saveData('hotelRooms', rooms);
+      await saveTable('hotel_rooms', rooms);
       return success(true);
     }
   }

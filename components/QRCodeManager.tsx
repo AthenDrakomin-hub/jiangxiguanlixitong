@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { QrCode, Printer, BedDouble, Utensils, Mic2, Rocket, ExternalLink } from 'lucide-react';
+import { QrCode, Printer, BedDouble, Utensils, Mic2, Rocket, ExternalLink, Palette } from 'lucide-react';
 import { HotelRoom, KTVRoom } from '../types';
 
 interface QRCodeManagerProps {
@@ -8,13 +9,11 @@ interface QRCodeManagerProps {
 }
 
 type Tab = 'HOTEL' | 'LOBBY' | 'KTV' | 'TAKEOUT';
+type QRStyle = 'simple' | 'brand' | 'black';
 
 const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) => {
   const [activeTab, setActiveTab] = useState<Tab>('HOTEL');
-  
-  // We don't need state for baseUrl if we generate on the fly, 
-  // but to avoid hydration mismatch if SSR (not case here), we use useEffect or just direct access.
-  // Direct URL construction is safest for client-side app.
+  const [qrStyle, setQrStyle] = useState<QRStyle>('brand');
   
   // Generate QR Code URL with correct query parameters based on current location
   const getQRUrl = (data: string) => {
@@ -24,7 +23,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
       url.searchParams.set('id', data);
       
       const targetUrl = url.toString();
-      return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}&color=${qrStyle === 'black' ? '000000' : 'ea580c'}`;
     } catch (e) {
       return '';
     }
@@ -56,7 +55,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 print:grid-cols-4">
                 {hotelRooms.filter(r => r.floor === 2).map(room => (
-                  <QRCodeCard key={room.id} title={`${room.number}`} subTitle="客房点餐 Room Service" value={room.number} getUrl={getQRUrl} />
+                  <QRCodeCard key={room.id} title={`${room.number}`} subTitle="客房点餐 Room Service" value={room.number} getUrl={getQRUrl} style={qrStyle} />
                 ))}
               </div>
             </div>
@@ -66,7 +65,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 print:grid-cols-4">
                 {hotelRooms.filter(r => r.floor === 3).map(room => (
-                  <QRCodeCard key={room.id} title={`${room.number}`} subTitle="客房点餐 Room Service" value={room.number} getUrl={getQRUrl} />
+                  <QRCodeCard key={room.id} title={`${room.number}`} subTitle="客房点餐 Room Service" value={room.number} getUrl={getQRUrl} style={qrStyle} />
                 ))}
               </div>
             </div>
@@ -75,10 +74,10 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
       case 'LOBBY':
         return (
           <div className="flex flex-col items-center justify-center py-12">
-            <div className="bg-white p-10 rounded-2xl shadow-lg border border-slate-200 text-center max-w-lg w-full print:shadow-none print:border-4 print:border-slate-800">
+            <div className={`p-10 rounded-2xl shadow-lg text-center max-w-lg w-full print:shadow-none print:border-4 ${qrStyle === 'black' ? 'border-slate-800 bg-white' : 'border-orange-500 bg-orange-50'}`}>
                <h3 className="text-3xl font-bold text-slate-800 mb-2">大厅点餐 Lobby Dining</h3>
                <p className="text-slate-500 mb-8 text-lg">扫码查看菜单下单 / Scan to Order</p>
-               <div className="bg-slate-50 p-6 rounded-xl inline-block mb-6 border-2 border-slate-100">
+               <div className="bg-white p-6 rounded-xl inline-block mb-6 shadow-sm">
                   <img src={getQRUrl('LOBBY')} alt="Lobby QR" className="w-64 h-64 mix-blend-multiply" />
                </div>
                <div className="mt-4 text-slate-400 font-mono text-sm">ID: LOBBY</div>
@@ -93,7 +92,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {ktvRooms.map(room => (
-                <QRCodeCard key={room.id} title={room.name} subTitle="点歌/酒水 KTV Service" value={room.id} getUrl={getQRUrl} />
+                <QRCodeCard key={room.id} title={room.name} subTitle="点歌/酒水 KTV Service" value={room.id} getUrl={getQRUrl} style={qrStyle} />
               ))}
             </div>
           </div>
@@ -126,13 +125,20 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
            </h2>
            <p className="text-slate-500 text-sm mt-1">生成各区域点餐码 / Generate Order Codes</p>
         </div>
-        <button 
-          onClick={handlePrint}
-          className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 shadow-lg shadow-slate-900/20"
-        >
-          <Printer size={20} />
-          <span>批量打印 / Print</span>
-        </button>
+        <div className="flex gap-3">
+             <div className="flex bg-white rounded-lg p-1 border border-slate-200">
+                <button onClick={() => setQrStyle('simple')} className={`px-3 py-1.5 text-xs rounded-md font-bold ${qrStyle === 'simple' ? 'bg-slate-200 text-slate-800' : 'text-slate-500'}`}>Simple</button>
+                <button onClick={() => setQrStyle('brand')} className={`px-3 py-1.5 text-xs rounded-md font-bold ${qrStyle === 'brand' ? 'bg-orange-500 text-white' : 'text-slate-500'}`}>Brand</button>
+                <button onClick={() => setQrStyle('black')} className={`px-3 py-1.5 text-xs rounded-md font-bold ${qrStyle === 'black' ? 'bg-black text-white' : 'text-slate-500'}`}>Ink-Saver</button>
+             </div>
+             <button 
+               onClick={handlePrint}
+               className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 shadow-lg shadow-slate-900/20"
+             >
+               <Printer size={20} />
+               <span>批量打印 / Print</span>
+             </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -171,14 +177,20 @@ const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
   </button>
 );
 
-const QRCodeCard = ({ title, subTitle, value, getUrl }: any) => (
-  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-shadow print:shadow-none print:border-2 print:break-inside-avoid">
-    <div className="w-full aspect-square bg-slate-50 rounded-lg mb-3 overflow-hidden flex items-center justify-center relative">
-       <img src={getUrl(value)} alt={title} className="w-full h-full object-contain mix-blend-multiply p-2" />
-    </div>
-    <div className="font-bold text-slate-800 text-lg">{title}</div>
-    <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">{subTitle}</div>
-  </div>
-);
+const QRCodeCard = ({ title, subTitle, value, getUrl, style }: any) => {
+    const borderColor = style === 'brand' ? 'border-orange-500' : (style === 'black' ? 'border-black' : 'border-slate-200');
+    const bgColor = style === 'brand' ? 'bg-orange-50' : 'bg-white';
+    const textColor = style === 'brand' ? 'text-orange-900' : 'text-slate-800';
+
+    return (
+      <div className={`p-4 rounded-xl border-2 ${borderColor} ${bgColor} shadow-sm flex flex-col items-center text-center print:shadow-none print:break-inside-avoid`}>
+        <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden flex items-center justify-center relative p-2 border border-slate-100">
+           <img src={getUrl(value)} alt={title} className="w-full h-full object-contain mix-blend-multiply" />
+        </div>
+        <div className={`font-bold ${textColor} text-xl`}>{title}</div>
+        <div className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">{subTitle}</div>
+      </div>
+    );
+};
 
 export default QRCodeManager;
