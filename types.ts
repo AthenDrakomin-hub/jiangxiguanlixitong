@@ -206,7 +206,7 @@ export interface StorageSettings {
   type: StorageType;
   s3Config: S3Config;
   githubConfig: GitHubConfig;
-  supabaseConfig: SupabaseConfig;
+  supabaseConfig?: SupabaseConfig; // Make it optional since we're not using Supabase
 }
 
 // Car Service Types

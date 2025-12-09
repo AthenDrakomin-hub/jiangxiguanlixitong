@@ -1,11 +1,10 @@
-
 import { StorageSettings, S3Config, GitHubConfig } from "../types";
 
 const SETTINGS_KEY = 'jx_storage_settings';
 
 // Default Settings
 export const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
-  type: 'supabase', // Set Supabase as default per user request
+  type: 'local', // Use local storage as default
   s3Config: {
     region: 'auto',
     bucket: '',
@@ -19,18 +18,15 @@ export const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
     branch: 'main',
     token: '', 
     pathPrefix: 'data'
-  },
-  supabaseConfig: {
-    url: 'https://kdlhyzsihflwkwumxzfw.supabase.co', // Default URL provided by user
-    key: ''
   }
+  // supabaseConfig is optional and not included since we're not using Supabase
 };
 
 export const getStorageSettings = (): StorageSettings => {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
     if (saved) {
-        // Merge with defaults to ensure new fields (like supabaseConfig) exist if loading old settings
+        // Merge with defaults to ensure new fields exist if loading old settings
         return { ...DEFAULT_STORAGE_SETTINGS, ...JSON.parse(saved) };
     }
     return DEFAULT_STORAGE_SETTINGS;
@@ -44,7 +40,7 @@ export const saveStorageSettings = (settings: StorageSettings) => {
 };
 
 // Deprecated: Old storage methods kept only if needed for migration utilities later
-// Actual data logic is now handled by Supabase in api.ts
+// Actual data logic is now handled by TiDB in tidbAPI.ts
 export const loadData = async <T>(_key: string, defaultData: T): Promise<T> => {
     return defaultData;
 };

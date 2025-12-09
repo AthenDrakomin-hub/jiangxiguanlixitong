@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import { Page, Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, CarRecord, OrderStatus, OrderItem, DishIngredient } from './types';
 import { useDebouncedAutoSave } from './hooks/useDebouncedAutoSave';
-import { DataAPI } from './services/tidbAPI'; // Changed from './services/api'
+import { DataAPI } from './services/tidbAPI';
 import { APP_CONFIG } from './config/appConfig';
 import './index.css';
 
