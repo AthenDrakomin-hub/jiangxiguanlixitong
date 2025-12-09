@@ -274,7 +274,26 @@ const App: React.FC = () => {
     setIsAuthenticated(true);
   };
 
-  if (!isAuthenticated && currentPage !== 'customer') {
+  // 在开发环境中始终显示主界面，生产环境中才需要认证
+  const shouldShowLogin = () => {
+    if (typeof window !== 'undefined') {
+      // 检查是否是开发环境
+      const isDev = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' ||
+                   window.location.port !== '';
+      
+      // 在开发环境中不显示登录页面
+      if (isDev) {
+        return false;
+      }
+      
+      // 在生产环境中，非客户页面需要认证
+      return !isAuthenticated && currentPage !== 'customer';
+    }
+    return false;
+  };
+
+  if (shouldShowLogin()) {
     return <Login onLogin={handleLoginSuccess} />;
   }
 
