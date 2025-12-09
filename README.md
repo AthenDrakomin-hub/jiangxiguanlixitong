@@ -76,8 +76,8 @@
 | `TIDB_PASSWORD` | 数据库密码 |
 | `TIDB_DATABASE` | 数据库名称 |
 | `TIDB_SSL` | 是否启用 SSL (true/false) |
-| `VITE_ADMIN_USER` | (可选) 设置后台管理员用户名，默认 `admin` |
-| `VITE_ADMIN_PASS` | (可选) 设置后台管理员密码，默认 `jx88888888` |
+| `VITE_ADMIN_USER` | (可选) 设置后台管理员用户名 |
+| `VITE_ADMIN_PASS` | (可选) 设置后台管理员密码 |
 
 4.  点击 **Deploy**。
 
@@ -139,8 +139,8 @@ TIDB_DATABASE=your_tidb_database
 TIDB_SSL=true
 
 # 管理员凭据（可选）
-VITE_ADMIN_USER=admin
-VITE_ADMIN_PASS=jx88888888
+VITE_ADMIN_USER=your_admin_username
+VITE_ADMIN_PASS=your_admin_password
 ```
 
 ---
