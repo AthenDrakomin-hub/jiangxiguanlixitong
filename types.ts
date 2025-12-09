@@ -168,7 +168,7 @@ export interface SystemSettings {
     categories?: string[]; // Dynamic categories
 }
 
-export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'car';
+export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer';
 
 // Standardized API Response Wrapper
 export interface ApiResponse<T> {
@@ -197,19 +197,31 @@ export interface GitHubConfig {
   pathPrefix?: string; // Optional folder path, defaults to 'data/'
 }
 
+export interface TiDBConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+  ssl: boolean;
+}
+
 export interface StorageSettings {
   type: StorageType;
   s3Config: S3Config;
   githubConfig: GitHubConfig;
+  tidbConfig?: TiDBConfig; // Optional TiDB config for future extension
 }
 
 // Car Service Types
+export type CarRecordStatus = 'Scheduled' | 'Completed' | 'Cancelled';
+
 export interface CarRecord {
   id: string;
   guestName: string;
   destination: string;
   price: number;
   driver: string;
-  status: 'Scheduled' | 'Completed' | 'Cancelled';
+  status: CarRecordStatus;
   date: string; // ISO string
 }

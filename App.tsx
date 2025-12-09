@@ -1,27 +1,33 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { Loader2, Menu, Cloud } from 'lucide-react';
-import Login from './components/Login';
-import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
-import { Page, Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, CarRecord, OrderStatus } from './types';
-import { useDebouncedAutoSave } from './hooks/useDebouncedAutoSave';
-import { api } from './services/api';
+import { Loader2 } from 'lucide-react';
+import { apiClient } from './services/apiClient';
+import { 
+  Dish, 
+  Order, 
+  Expense, 
+  Ingredient, 
+  KTVRoom, 
+  SignBillAccount, 
+  HotelRoom, 
+  OrderStatus,
+  Page
+} from './types';
 import { APP_CONFIG } from './config/appConfig';
-import './index.css';
 
-// Lazy-loaded components
+const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const MenuManagement = React.lazy(() => import('./components/MenuManagement'));
 const OrderManagement = React.lazy(() => import('./components/OrderManagement'));
-const KitchenDisplay = React.lazy(() => import('./components/KitchenDisplay'));
-const CustomerOrder = React.lazy(() => import('./components/CustomerOrder'));
-const KTVSystem = React.lazy(() => import('./components/KTVSystem'));
-const HotelSystem = React.lazy(() => import('./components/HotelSystem'));
-const QRCodeManager = React.lazy(() => import('./components/QRCodeManager'));
-const SignBillSystem = React.lazy(() => import('./components/SignBillSystem'));
 const FinanceSystem = React.lazy(() => import('./components/FinanceSystem'));
 const InventoryManagement = React.lazy(() => import('./components/InventoryManagement'));
 const Settings = React.lazy(() => import('./components/Settings'));
-const CarService = React.lazy(() => import('./components/CarService'));
+const KTVSystem = React.lazy(() => import('./components/KTVSystem'));
+const SignBillSystem = React.lazy(() => import('./components/SignBillSystem'));
+const HotelSystem = React.lazy(() => import('./components/HotelSystem'));
+const QRCodeManager = React.lazy(() => import('./components/QRCodeManager'));
+const KitchenDisplay = React.lazy(() => import('./components/KitchenDisplay'));
+const CustomerOrder = React.lazy(() => import('./components/CustomerOrder'));
+const Login = React.lazy(() => import('./components/Login'));
+const Sidebar = React.lazy(() => import('./components/Sidebar'));
 
 const NOTIFICATION_SOUND_URL = APP_CONFIG.NOTIFICATION.soundUrl;
 
@@ -70,7 +76,7 @@ const App: React.FC = () => {
   const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
   const [signBillAccounts, setSignBillAccounts] = useState<SignBillAccount[]>([]);
   const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
-  const [carRecords, setCarRecords] = useState<CarRecord[]>([]);
+
   
   // Global Settings State
   const [systemSettings, setSystemSettings] = useState<any>({
@@ -98,7 +104,7 @@ const App: React.FC = () => {
         setLoadingText('正在同步云端数据... / Syncing Cloud Data');
         
         // Fetch all data from API with automatic fallback
-        const response: any = await api.fetchAll();
+        const response: any = await apiClient.fetchAll();
         
         // Update state with fetched data
         setDishes(response.dishes);
@@ -108,7 +114,7 @@ const App: React.FC = () => {
         setKtvRooms(response.ktvRooms);
         setSignBillAccounts(response.signBillAccounts);
         setHotelRooms(response.hotelRooms);
-        setCarRecords([]);
+
         
         // Load settings
         const savedSettings = localStorage.getItem('jx_settings');
@@ -128,18 +134,6 @@ const App: React.FC = () => {
   }, [isAuthenticated, currentPage]);
 
   // --- Optimized Persistence Layer (Debounced) ---
-  const saveDishesStatus = useDebouncedAutoSave('dishes', dishes, (data) => api.saveData('dishes', data), 1000, !isLoading);
-  const saveOrdersStatus = useDebouncedAutoSave('orders', orders, (data) => api.saveData('orders', data), 500, !isLoading);
-  const saveExpensesStatus = useDebouncedAutoSave('expenses', expenses, (data) => api.saveData('expenses', data), 1000, !isLoading);
-  const saveInventoryStatus = useDebouncedAutoSave('inventory', inventory, (data) => api.saveData('inventory', data), 1000, !isLoading);
-  const saveKtvStatus = useDebouncedAutoSave('ktvRooms', ktvRooms, (data) => api.saveData('ktv_rooms', data), 1000, !isLoading);
-  const saveSignBillStatus = useDebouncedAutoSave('signBillAccounts', signBillAccounts, (data) => api.saveData('sign_bill_accounts', data), 1000, !isLoading);
-  const saveHotelStatus = useDebouncedAutoSave('hotelRooms', hotelRooms, (data) => api.saveData('hotel_rooms', data), 1000, !isLoading);
-
-  // Global Saving Indicator logic
-  const isGlobalSaving = saveDishesStatus.isSaving || saveOrdersStatus.isSaving || saveExpensesStatus.isSaving || 
-                        saveInventoryStatus.isSaving || saveKtvStatus.isSaving || saveSignBillStatus.isSaving ||
-                        saveHotelStatus.isSaving;
 
   // Track previous data for Notifications logic
   const prevOrdersRef = useRef<Order[]>([]);
@@ -308,24 +302,32 @@ const App: React.FC = () => {
               return <OrderManagement orders={orders} setOrders={setOrders} />; 
             case 'kitchen':
               return <KitchenDisplay orders={orders} onStatusChange={handleOrderStatusChange} onBack={() => handleNavigate('dashboard')} />;
-            case 'customer':
-              return <CustomerOrder dishes={dishes} orders={orders} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
-            case 'ktv':
-              return <KTVSystem rooms={ktvRooms} setRooms={setKtvRooms} dishes={dishes} />;
-            case 'hotel':
-              return <HotelSystem rooms={hotelRooms} setRooms={setHotelRooms} dishes={dishes} onPlaceOrder={handlePlaceOrder} />;
-            case 'qrcode':
-              return <QRCodeManager hotelRooms={hotelRooms} ktvRooms={ktvRooms} />;
-            case 'signbill':
-              return <SignBillSystem accounts={signBillAccounts} setAccounts={setSignBillAccounts} />;
             case 'finance':
-              return <FinanceSystem orders={orders} expenses={expenses} setExpenses={setExpenses} />;
+              return <FinanceSystem 
+                orders={orders} 
+                expenses={expenses} 
+                setExpenses={setExpenses}
+              />;
             case 'inventory':
               return <InventoryManagement inventory={inventory} setInventory={setInventory} />;
             case 'settings':
               return <Settings onSettingsChange={handleSettingsUpdate} />;
-            case 'car':
-              return <CarService records={carRecords} setRecords={setCarRecords} />;
+            case 'ktv':
+              return <KTVSystem rooms={ktvRooms} setRooms={setKtvRooms} dishes={dishes} />;
+            case 'signbill':
+              return <SignBillSystem accounts={signBillAccounts} setAccounts={setSignBillAccounts} />;
+            case 'hotel':
+              return <HotelSystem 
+                rooms={hotelRooms} 
+                setRooms={setHotelRooms} 
+                dishes={dishes}
+                onPlaceOrder={handlePlaceOrder}
+              />;
+            case 'qrcode':
+              return <QRCodeManager hotelRooms={hotelRooms} ktvRooms={ktvRooms} />;
+            case 'customer':
+              return <CustomerOrder dishes={dishes} orders={orders} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
+
             default:
               return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} />;
           }
@@ -360,39 +362,36 @@ const App: React.FC = () => {
           onClick={() => setIsMobileMenuOpen(true)}
           className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
         >
-          <Menu size={24} />
+           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+           </svg>
         </button>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block w-64 bg-slate-900 text-white shadow-xl z-30">
+        <Sidebar currentPage={currentPage} onNavigate={handleNavigate} isOpen={true} onClose={() => {}} />
       </div>
 
       {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-50"
           onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      <Sidebar 
-        currentPage={currentPage} 
-        onNavigate={handleNavigate} 
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-      />
-      
-      {/* Main Content Area */}
-      <main className="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 overflow-y-auto relative min-h-screen w-full">
-        {/* Global Save Indicator */}
-        <div className={`fixed top-20 md:top-4 right-4 md:right-8 z-30 transition-all duration-300 transform ${isGlobalSaving ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
-          <div className="bg-white/90 backdrop-blur border border-slate-200 shadow-lg rounded-full px-4 py-1.5 flex items-center gap-2 text-xs font-medium text-slate-600">
-            <Cloud size={14} className="animate-pulse text-blue-500" />
-            <span>正在同步 / Syncing...</span>
+        >
+          <div 
+            className="absolute left-0 top-0 bottom-0 w-64 bg-slate-900 text-white shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <Sidebar currentPage={currentPage} onNavigate={handleNavigate} isOpen={true} onClose={() => setIsMobileMenuOpen(false)} />
           </div>
         </div>
+      )}
 
-        <div className="max-w-7xl mx-auto">
-          {renderContent()}
-        </div>
-      </main>
+      {/* Main Content */}
+      <div className="flex-1 md:ml-0 pt-16 md:pt-0">
+        {renderContent()}
+      </div>
     </div>
   );
 };

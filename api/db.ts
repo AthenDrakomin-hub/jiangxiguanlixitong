@@ -1,3 +1,6 @@
+// Database connection pool for Vercel Serverless API
+// This file should only be used in the backend API routes
+
 import mysql from 'mysql2/promise';
 
 // TiDB connection configuration

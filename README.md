@@ -1,32 +1,46 @@
-# 🏨 江西酒店综合管理系统 (Jiangxi Hotel Management System)
+# 江西酒店管理系统 (Jiangxi Hotel Management System)
 
-![Version](https://img.shields.io/badge/Version-2.5.0-blue?style=flat-square)
-![Status](https://img.shields.io/badge/Status-Production-emerald?style=flat-square)
-![Stack](https://img.shields.io/badge/Tech-React_19_·_TiDB_Cloud_·_Tailwind-7c3aed?style=flat-square)
+<div align="center">
 
-> **Enterprise-grade hotel & catering management solution designed for overseas Chinese businesses.**
-> 
-> 专为菲律宾（Pasay City）华人酒店打造的综合SaaS管理后台。集成了餐饮点餐、KTV 包厢管理、客房送餐、用车调度及财务库存管理于一体的全业务生态系统。
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](#)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript)](#)
+[![Vite](https://img.shields.io/badge/Vite-Blazing_Fast-blue?logo=vite)](#)
+[![TiDB](https://img.shields.io/badge/TiDB-Cloud-orange?logo=tidb)](#)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployment-black?logo=vercel)](#)
 
----
+</div>
 
-## ✨ 核心模块 (Core Modules)
+一款面向中小型酒店/餐厅的一站式管理解决方案，融合餐饮点单、客房服务、KTV预订、财务管理与库存管控，实现全业务链数字化运营。
 
-### 1. 🍽️ 餐饮中控 (Dining System)
-*   **多场景支持**: 覆盖大厅堂食 (Dine-in)、客房送餐 (Room Service)、外卖接单 (Takeout)。
-*   **H5 顾客端**: 顾客扫码即点，支持桌号/房号自动识别，无需下载APP。
-*   **KDS 厨显系统**: 实时同步后厨订单状态（待制作 -> 烹饪中 -> 出餐），替代传统纸质小票。
+## 🎉 部署状态
 
-### 2. 🎤 KTV 娱乐管理 (KTV Console)
-*   **包厢状态**: 可视化管理包厢（空闲/使用中/待清理/维护）。
-*   **计时计费**: 自动计算包厢时长费 + 酒水点单费用。
-*   **服务联动**: 支持切歌、呼叫服务、清洁标记。
+✅ **项目已准备就绪，可以正式部署到Vercel！**
 
-### 3. 🚗 用车调度 (Car Service)
-*   **行程管理**: 接机/送机/包车服务预约与调度。
-*   **状态追踪**: 待出行 -> 已完成/已取消，司机与费用记录。
+## 🌟 核心功能 (Core Features)
 
-### 4. 💼 财务与挂账 (Finance & Credit)
+### 1. 🍽️ 餐饮管理 (Restaurant Management)
+*   **智能菜单**: 支持菜品图片、描述、价格、分类、辣度标识。
+*   **桌边点单**: 桌号快速下单，实时同步至后厨显示屏(KDS)。
+*   **订单追踪**: 可视化订单状态(Pending/Confirmed/Cooking/Ready/Delivered/Paid/Cancelled)。
+*   **多语言支持**: 中英双语界面，菲律宾本土化术语。
+*   **批量导入**: 支持CSV模板批量导入菜单数据。
+
+### 2. 🎵 KTV娱乐系统 (Entertainment)
+*   **包厢管理**: 支持小型/中型/豪华包厢预订与状态追踪。
+*   **计费模式**: 按小时计费，自动计算消费金额。
+*   **时段管理**: 灵活设置不同时段的价格策略。
+
+### 3. 🏨 客房服务 (Hotel Services)
+*   **房间管理**: 支持标准间/大床房/套房等多种房型。
+*   **入住管理**: 客人信息登记、入住/退房时间记录。
+*   **客房送餐**: 直接从客房下单，无缝对接餐厅系统。
+
+### 4. 📱 数字化体验 (Digital Experience)
+*   **扫码点单**: 客户扫描二维码直接访问H5点单页面。
+*   **厨房显示屏**: 后厨实时接收并处理订单，支持订单状态更新。
+*   **移动适配**: 响应式设计，完美适配手机、平板、收银机等各种设备。
+
+### 5. 💰 财务与挂账 (Finance & Credit)
 *   **全渠道支付**: 聚合 Cash, GCash, Maya, Alipay, WeChat, USDT。
 *   **协议挂账**: 支持企业/VIP客户信用额度管理、挂账消费与周期结算 (月结/季结)。
 *   **交班报表**: 自动生成 Shift Report，统计当班营收与支付方式汇总。
@@ -35,7 +49,7 @@
 
 ## 🛠️ 技术架构 (Architecture)
 
-*   **Frontend**: React 19, TypeScript, Vite, Tailwind CSS
+*   **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
 *   **Backend / DB**: **TiDB Cloud** (MySQL compatible, Realtime, Storage)
 *   **UI Components**: Lucide React, Recharts (Data Viz), @dnd-kit (Drag & Drop)
 *   **Deployment**: Vercel (Recommended)
@@ -67,7 +81,25 @@
 
 4.  点击 **Deploy**。
 
-### 3. 本地开发 (Development)
+### 3. 数据库初始化
+部署完成后，需要初始化数据库表结构：
+
+```bash
+# 1. 克隆项目到本地
+git clone [your-repo-url]
+cd jiangxi-hotel-admin
+
+# 2. 安装依赖
+npm install
+
+# 3. 复制环境变量文件并填写TiDB连接信息
+cp .env.example .env.local
+
+# 4. 运行数据库初始化脚本
+node scripts/init-db.js
+```
+
+### 4. 本地开发 (Development)
 ```bash
 # 1. 克隆项目
 git clone [repo-url]
@@ -75,29 +107,112 @@ git clone [repo-url]
 # 2. 安装依赖
 npm install
 
-# 3. 创建 .env 文件并填入上述变量
-cp .env.example .env
+# 3. 复制环境变量文件并填写相关信息
+cp .env.example .env.local
 
-# 4. 启动服务
+# 4. 启动开发服务器
 npm run dev
+```
+
+### 5. 生产环境构建 (Production Build)
+```bash
+# 1. 构建生产版本
+npm run build
+
+# 2. 预览生产构建
+npm run preview
 ```
 
 ---
 
-## 📱 端侧入口 (Access Points)
+## 🔧 环境变量配置 (Environment Variables)
 
-*   **管理后台 (Admin)**: `https://your-domain.com/`
-*   **顾客点餐 (Customer)**: `https://your-domain.com/?page=customer` (或扫码)
-*   **后厨看板 (KDS)**: `https://your-domain.com/?page=kitchen`
+创建 `.env.local` 文件（开发环境）或在 Vercel 中设置环境变量：
+
+```env
+# TiDB 数据库连接信息
+TIDB_HOST=your_tidb_host
+TIDB_PORT=4000
+TIDB_USER=your_tidb_user
+TIDB_PASSWORD=your_tidb_password
+TIDB_DATABASE=your_tidb_database
+TIDB_SSL=true
+
+# 管理员凭据（可选）
+VITE_ADMIN_USER=admin
+VITE_ADMIN_PASS=jx88888888
+```
 
 ---
 
-## 🔒 安全与权限
+## 📁 项目结构 (Project Structure)
 
-*   **数据安全**: 敏感操作（如删除菜单、查看财务）需管理员权限。
-*   **网络安全**: 建议配合 Cloudflare 使用，防止 DDoS 攻击。
-*   **支付安全**: 系统仅记录支付方式，不接触敏感卡号信息。
+```
+jiangxi-hotel-admin/
+├── api/                 # Vercel Serverless API 路由
+├── components/          # React 组件
+├── config/              # 配置文件
+├── hooks/               # 自定义 React Hooks
+├── scripts/             # 部署和维护脚本
+├── services/            # 业务逻辑和服务
+├── utils/               # 工具函数
+├── App.tsx             # 主应用组件
+├── index.tsx           # 应用入口
+└── vite.config.ts      # Vite 配置
+```
 
 ---
 
-© 2024 Jiangxi Hotel Management System. All Rights Reserved.
+## ✅ 部署验证 (Deployment Validation)
+
+部署完成后，运行以下命令验证系统是否正常工作：
+
+```bash
+# 运行部署验证脚本
+npm run validate:deploy
+```
+
+该脚本将检查：
+1. 环境变量配置
+2. 数据库连接
+3. 数据库表结构
+4. API 服务
+5. 前端构建
+
+---
+
+## 🔄 数据库初始化 (Database Initialization)
+
+首次部署时，需要初始化数据库表结构。执行以下 SQL 脚本：
+
+```bash
+# 在 TiDB Cloud 控制台中执行 scripts/init-database.sql 文件
+```
+
+或者使用Node.js脚本：
+```bash
+# 运行数据库初始化脚本
+node scripts/init-db.js
+```
+
+---
+
+## 🔐 安全建议 (Security Recommendations)
+
+1.  **强密码策略**: 为管理员账户设置强密码
+2.  **HTTPS**: 确保启用了 HTTPS 加密传输
+3.  **访问控制**: 限制对管理后台的访问
+4.  **定期备份**: 定期备份 TiDB 数据库
+5.  **更新维护**: 定期更新依赖包以修复安全漏洞
+
+---
+
+## 📞 技术支持 (Support)
+
+如有任何问题，请提交 Issue 或联系技术支持团队。
+
+---
+
+## 📄 许可证 (License)
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。

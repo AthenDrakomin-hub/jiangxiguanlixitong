@@ -102,6 +102,55 @@ const translations: Record<string, TranslationDictionary> = {
     'yesterday': 'Yesterday',
     'thisWeek': 'This Week',
     'thisMonth': 'This Month',
+  },
+
+  'fil': {
+    // Navigation
+    'dashboard': 'Dashboard',
+    'menu': 'Pamamahala ng Menu',
+    'orders': 'Sentro ng Order',
+    'finance': 'Pamamahala sa Pananalapi',
+    'inventory': 'Imbentaryo',
+    'settings': 'Mga Setting ng Sistema',
+    'ktv': 'Silid ng KTV',
+    'signbill': 'Mag-sign ng Bill',
+    'hotel': 'Serbisyo sa Kuwarto ng Hotel',
+    'qrcode': 'Pamamahala ng QR Code',
+    'kitchen': 'Display ng Kusina',
+    'customer': 'Order ng Customer',
+    'car': 'Serbisyo sa Sasakyan',
+    
+    // Common actions
+    'save': 'I-save',
+    'cancel': 'Ikansela',
+    'delete': 'Tanggalin',
+    'edit': 'I-edit',
+    'add': 'Magdagdag',
+    'search': 'Maghanap',
+    'filter': 'Salain',
+    
+    // Status messages
+    'loading': 'Naglo-load...',
+    'success': 'Matagumpay ang operasyon',
+    'error': 'Nabigo ang operasyon',
+    'confirm': 'Kumpirmahin ang aksyon',
+    
+    // Form labels
+    'name': 'Pangalan',
+    'description': 'Paglalarawan',
+    'price': 'Presyo',
+    'quantity': 'Dami',
+    'category': 'Kategorya',
+    
+    // Validation messages
+    'required': 'Kinakailangan ang field na ito',
+    'invalidFormat': 'Di-wasto ang format',
+    
+    // Time related
+    'today': 'Ngayon',
+    'yesterday': 'Kahapon',
+    'thisWeek': 'Ngayong Linggo',
+    'thisMonth': 'Ngayong Buwan',
   }
 };
 
@@ -164,6 +213,16 @@ export const formatDate = (date: Date | string, locale?: string): string => {
   
   if (lang === 'zh-CN') {
     return dateObj.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+  
+  if (lang === 'fil') {
+    return dateObj.toLocaleDateString('fil-PH', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

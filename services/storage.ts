@@ -1,4 +1,4 @@
-import { StorageSettings, S3Config, GitHubConfig } from "../types";
+import { StorageSettings, S3Config, GitHubConfig, TiDBConfig } from "../types";
 
 const SETTINGS_KEY = 'jx_storage_settings';
 
@@ -18,17 +18,25 @@ export const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
     branch: 'main',
     token: '', 
     pathPrefix: 'data'
+  },
+  // Note: TiDB configuration is managed through environment variables and db.ts
+  // This is kept for backward compatibility and future extension
+  tidbConfig: {
+    host: '',
+    port: 4000,
+    user: '',
+    password: '',
+    database: '',
+    ssl: true
   }
-  // This configuration is no longer used since we've migrated to TiDB
-  // supabaseConfig is optional and not included since we're not using Supabase
 };
 
 export const getStorageSettings = (): StorageSettings => {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
     if (saved) {
-        // Merge with defaults to ensure new fields exist if loading old settings
-        return { ...DEFAULT_STORAGE_SETTINGS, ...JSON.parse(saved) };
+      // Merge with defaults to ensure new fields exist if loading old settings
+      return { ...DEFAULT_STORAGE_SETTINGS, ...JSON.parse(saved) };
     }
     return DEFAULT_STORAGE_SETTINGS;
   } catch (e) {
@@ -52,3 +60,5 @@ export const saveData = async <T>(_key: string, _data: T): Promise<void> => {
 
 export const testS3Connection = async (_config: S3Config): Promise<boolean> => { return false; };
 export const testGitHubConnection = async (_config: GitHubConfig): Promise<boolean> => { return false; };
+// Placeholder for future TiDB connection test
+export const testTiDBConnection = async (_config: TiDBConfig): Promise<boolean> => { return false; };

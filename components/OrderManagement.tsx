@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Clock, CheckCircle2, ChefHat, Banknote, XCircle, ClipboardList, BellPlus, Printer, Receipt, BedDouble, Utensils, Rocket, Mic2, QrCode, Smartphone, CircleDollarSign, Wallet, Archive } from 'lucide-react';
+import { ClipboardList, ChefHat, Utensils, Rocket, Banknote, Smartphone, QrCode, CircleDollarSign, Wallet, CheckCircle2, Clock, Printer, XCircle, BedDouble, Mic2, Archive, Receipt } from 'lucide-react';
 import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types';
 import { PrinterService } from '../services/printer';
 
@@ -50,22 +50,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
     PrinterService.printOrder(order);
   };
 
-  const handleSimulateOrder = () => {
-    const newOrder: Order = {
-      id: `ORD-${Date.now().toString().slice(-4)}`,
-      tableNumber: ['A1', 'A2', 'B1', 'C3', 'VIP1'][Math.floor(Math.random() * 5)],
-      source: 'LOBBY',
-      items: [
-        { dishId: '99', dishName: 'Test Item / 测试菜品', quantity: 1, price: 500 }
-      ],
-      status: OrderStatus.PENDING,
-      totalAmount: 500,
-      createdAt: new Date().toISOString(),
-      notes: 'System Test Order'
-    };
-    setOrders(prev => [newOrder, ...prev]);
-  };
-
   const getStatusConfig = (status: OrderStatus) => {
     switch (status) {
       case OrderStatus.PENDING: return { label: '待处理 Pending', tagalog: 'Naghihintay', color: 'text-orange-600 bg-orange-50 border-orange-200' };
@@ -112,14 +96,6 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
         </div>
         
         <div className="flex items-center gap-4">
-          <button
-            onClick={handleSimulateOrder}
-            className="flex items-center gap-2 px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors border border-slate-200 shadow-sm"
-          >
-            <BellPlus size={16} />
-            <span>Test / 模拟</span>
-          </button>
-
           <div className="flex gap-2 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto">
              <button
                 onClick={() => setFilterStatus('All')}

@@ -448,6 +448,16 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
              <Cloud className="text-blue-500" size={20} /> 数据存储与云同步
            </h3>
 
+           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+             <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+               <Info size={16} /> 系统数据存储说明
+             </h4>
+             <p className="text-sm text-blue-700">
+               本系统现在使用 TiDB Cloud 作为主要数据存储方案，所有数据（菜单、订单、财务等）都实时存储在云端数据库中。
+               下面的配置选项仅用于特定场景的数据备份和同步。
+             </p>
+           </div>
+
            <div className="flex flex-col md:flex-row gap-6 mb-8">
               <div className="w-full md:w-64 space-y-2">
                  <label className="block text-sm font-medium text-slate-700 mb-1">存储方式</label>
@@ -503,7 +513,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                  {storageSettings.type === 'github' && (
                     <div className="space-y-4 animate-in fade-in">
                        <div className="flex justify-between items-center">
-                          <h4 className="font-bold flex items-center gap-2"><Github size={18} /> GitHub 仓库配置</h4>
+                          <h4 className="font-bold flex items-center gap-2"><Github size={18} /> GitHub 云同步配置</h4>
                           {usingGithubEnv && (
                              <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">
                                 <ShieldCheck size={12} /> Environment Configured
@@ -614,7 +624,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                     </div>
                  )}
 
-           <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-start gap-3">
+           <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-start gap-3 mt-6">
               <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
               <div className="text-sm text-orange-800">
                  <strong>数据安全提示：</strong><br/>

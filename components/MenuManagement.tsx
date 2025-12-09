@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2, Download, FileSpreadsheet } from 'lucide-react';
 import { Dish, Ingredient, DishIngredient } from '../types';
 
 // dnd-kit imports
@@ -150,6 +150,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
   const [isBulkMenuOpen, setIsBulkMenuOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Dish>>({
     name: '',
@@ -373,6 +374,13 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
             <p className="text-slate-500 text-sm">Pamamahala ng Menu</p>
         </div>
         <div className="flex gap-2">
+          <button 
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
+          >
+            <Download size={20} />
+            <span>导入/导出</span>
+          </button>
           <button 
             onClick={() => setIsCategoryManagerOpen(true)}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
@@ -744,6 +752,191 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
         </div>
       )}
 
+      {/* Import/Export Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 bg-slate-900 text-white flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <FileSpreadsheet size={20} /> 菜单数据导入/导出
+                </h3>
+                <p className="text-slate-400 text-sm mt-1">Import/Export Menu Data</p>
+              </div>
+              <button 
+                onClick={() => setIsImportModalOpen(false)} 
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={24}/>
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                    <Download size={16} /> 下载模板
+                  </h4>
+                  <p className="text-sm text-blue-700 mb-3">
+                    下载标准CSV模板，填写菜单数据后上传导入
+                  </p>
+                  <button 
+                    onClick={() => {
+                      // Create CSV template
+                      const csvContent = "id,name,description,price,category,imageUrl,available,spiciness\n,,,\"0\",\"热菜\",,\"true\",\"0\"";
+                      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.setAttribute('href', url);
+                      link.setAttribute('download', 'menu_template.csv');
+                      link.style.visibility = 'hidden';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <Download size={16} /> 下载CSV模板
+                  </button>
+                </div>
+                
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                  <h4 className="font-bold text-green-800 mb-2 flex items-center gap-2">
+                    <Upload size={16} /> 上传导入
+                  </h4>
+                  <p className="text-sm text-green-700 mb-3">
+                    上传填写好的CSV文件，批量导入菜单数据
+                  </p>
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-green-300 rounded-lg cursor-pointer bg-green-50 hover:bg-green-100">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <FileSpreadsheet className="w-8 h-8 mb-2 text-green-500" />
+                        <p className="text-sm text-green-500">
+                          <span className="font-semibold">点击上传CSV文件</span>
+                        </p>
+                        <p className="text-xs text-green-400">支持CSV格式</p>
+                      </div>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept=".csv"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setIsUploading(true);
+                            try {
+                              // Parse CSV file
+                              const text = await file.text();
+                              const lines = text.split('\n').filter(line => line.trim() !== '');
+                              if (lines.length <= 1) {
+                                alert('文件为空或格式不正确');
+                                return;
+                              }
+                              
+                              // Validate header
+                              const header = lines[0].split(',').map(field => field.trim().replace(/^"|"$/g, ''));
+                              const requiredHeaders = ['id', 'name', 'description', 'price', 'category', 'imageUrl', 'available', 'spiciness'];
+                              const missingHeaders = requiredHeaders.filter(h => !header.includes(h));
+                              if (missingHeaders.length > 0) {
+                                alert(`CSV文件缺少必要列: ${missingHeaders.join(', ')}`);
+                                return;
+                              }
+                              
+                              // Skip header line
+                              const dataLines = lines.slice(1);
+                              const newDishes: Partial<Dish>[] = [];
+                              
+                              for (let i = 0; i < dataLines.length; i++) {
+                                const line = dataLines[i];
+                                const [id, name, description, price, category, imageUrl, available, spiciness] = line.split(',').map(field => field.trim().replace(/^"|"$/g, ''));
+                                
+                                // Validate data
+                                if (!name) {
+                                  alert(`第${i+2}行数据错误: 菜品名称不能为空`);
+                                  continue;
+                                }
+                                
+                                if (isNaN(parseFloat(price))) {
+                                  alert(`第${i+2}行数据错误: 价格必须为数字`);
+                                  continue;
+                                }
+                                
+                                if (isNaN(parseInt(spiciness))) {
+                                  alert(`第${i+2}行数据错误: 辣度必须为数字`);
+                                  continue;
+                                }
+                                
+                                if (available !== 'true' && available !== 'false') {
+                                  alert(`第${i+2}行数据错误: 可用性字段必须为 true 或 false`);
+                                  continue;
+                                }
+                                
+                                newDishes.push({
+                                  id: id || `import-${Date.now()}-${i}`,
+                                  name: name,
+                                  description: description || '',
+                                  price: parseFloat(price),
+                                  category: category || '热菜',
+                                  imageUrl: imageUrl || '',
+                                  available: available === 'true',
+                                  spiciness: parseInt(spiciness)
+                                });
+                              }
+                              
+                              // Add to existing dishes
+                              setDishes(prev => [...prev, ...newDishes as Dish[]]);
+                              
+                              // Save to backend API
+                              try {
+                                const response = await fetch('/api/dishes/batch', {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({ dishes: newDishes }),
+                                });
+                                
+                                const result = await response.json();
+                                if (result.success) {
+                                  alert(`成功导入 ${newDishes.length} 个菜品`);
+                                } else {
+                                  alert(`导入成功但保存到数据库失败: ${result.message}`);
+                                }
+                              } catch (apiError) {
+                                console.error('API调用失败:', apiError);
+                                alert('导入成功但保存到数据库失败，请手动保存');
+                              }
+                              
+                              setIsImportModalOpen(false);
+                            } catch (error) {
+                              console.error('导入失败:', error);
+                              alert('导入失败，请检查文件格式是否正确');
+                            } finally {
+                              setIsUploading(false);
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                  <h4 className="font-bold text-amber-800 mb-2">注意事项</h4>
+                  <ul className="text-sm text-amber-700 space-y-1">
+                    <li>• CSV文件需包含完整的表头信息</li>
+                    <li>• 价格和辣度需为数字格式</li>
+                    <li>• 可用性字段请填写 true 或 false</li>
+                    <li>• 如ID为空，系统将自动生成唯一ID</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Manager Modal */}
       {isCategoryManagerOpen && (
         <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
