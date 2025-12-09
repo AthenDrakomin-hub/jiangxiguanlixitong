@@ -179,7 +179,7 @@ export interface ApiResponse<T> {
 }
 
 // Storage Configuration
-export type StorageType = 'local' | 's3' | 'github' | 'supabase';
+export type StorageType = 'local' | 's3' | 'github';
 
 export interface S3Config {
   region: string;

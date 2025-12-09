@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Store, Database, RotateCcw, Check, Cloud, HardDrive, Wifi, WifiOff, AlertTriangle, Printer, Github, GitBranch, DollarSign, CreditCard, ShieldCheck, List, Plus, Trash2, AlertOctagon, Key } from 'lucide-react';
-import { StorageSettings, PaymentConfig, StoreInfo } from '../types';
+import { Save, Store, Printer, List, RotateCcw, ShieldCheck, Key, GitBranch, Github, Database, HardDrive, Cloud, Check, Plus, Trash2, CreditCard, DollarSign, AlertTriangle, AlertOctagon, Wifi, WifiOff } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection } from '../services/storage';
+import { StorageSettings, SystemSettings, StoreInfo, PaymentConfig } from '../types';
+import { APP_CONFIG } from '../config/appConfig';
 import { PrinterService } from '../services/printer';
-import { getSupabase } from '../services/supabaseClient';
 
 interface SettingsProps {
   onSettingsChange?: (settings: any) => void;
@@ -66,18 +66,17 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
   const env = (import.meta as any).env || {};
   const usingGithubEnv = !!(env.VITE_GITHUB_TOKEN);
   const usingS3Env = !!(env.VITE_S3_ACCESS_KEY);
-  const usingSupabaseEnv = !!(env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || env.SUPABASE_URL);
 
   // Load standard settings on mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('jx_settings');
     if (savedSettings) {
       const parsed = JSON.parse(savedSettings);
-      if (parsed.storeInfo) setStoreInfo(prev => ({ ...prev, ...parsed.storeInfo }));
+      if (parsed.storeInfo) setStoreInfo(prev => ({ ...prev, ...parsed.storeInfo as StoreInfo }));
       if (parsed.notifications) setNotifications(parsed.notifications);
       if (parsed.exchangeRate) setLocalFinancials(prev => ({ ...prev, exchangeRate: parsed.exchangeRate }));
       if (parsed.serviceChargeRate) setLocalFinancials(prev => ({ ...prev, serviceCharge: parsed.serviceChargeRate * 100 }));
-      if (parsed.payment) setPaymentConfig(prev => ({ ...prev, ...parsed.payment }));
+      if (parsed.payment) setPaymentConfig(prev => ({ ...prev, ...parsed.payment as PaymentConfig }));
       if (parsed.categories && Array.isArray(parsed.categories)) setCategories(parsed.categories);
     }
 
@@ -142,18 +141,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
     setTestStatus('none');
     
     let success = false;
-    if (currentSettings.type === 'supabase') {
-        try {
-            // For Supabase, we test by making a simple query using the new settings
-            // We can't use the global getSupabase() directly because it might not be updated yet
-            // But getSupabase reads from storage, and we just saved storage if handleSave called.
-            saveStorageSettings(currentSettings);
-            const client = getSupabase();
-            const { error } = await client.from('dishes').select('id').limit(1);
-            if (!error) success = true;
-            else console.error("Supabase Test Error:", error);
-        } catch (e) { console.error(e); }
-    } else if (currentSettings.type === 's3') {
+    if (currentSettings.type === 's3') {
       success = await testS3Connection(currentSettings.s3Config);
     } else if (currentSettings.type === 'github') {
       success = await testGitHubConnection(currentSettings.githubConfig);
@@ -461,17 +449,6 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                  <label className="block text-sm font-medium text-slate-700 mb-1">存储方式</label>
                  
                  <button 
-                   onClick={() => setStorageSettings({ ...storageSettings, type: 'supabase' })}
-                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${storageSettings.type === 'supabase' ? 'border-emerald-600 bg-emerald-50' : 'border-slate-100 hover:border-slate-300'}`}
-                 >
-                    <Database size={20} className="text-emerald-600" />
-                    <div>
-                       <div className="font-bold text-sm text-slate-800">Supabase 数据库</div>
-                       <div className="text-xs text-slate-500">推荐 / Realtime</div>
-                    </div>
-                 </button>
-
-                 <button 
                    onClick={() => setStorageSettings({ ...storageSettings, type: 'local' })}
                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${storageSettings.type === 'local' ? 'border-slate-800 bg-slate-50' : 'border-slate-100 hover:border-slate-300'}`}
                  >
@@ -507,47 +484,6 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
 
               <div className="flex-1 bg-slate-50 rounded-xl p-6 border border-slate-200">
                  
-                 {storageSettings.type === 'supabase' && (
-                    <div className="space-y-4 animate-in fade-in">
-                       <div className="flex justify-between items-center">
-                          <h4 className="font-bold flex items-center gap-2 text-emerald-700"><Database size={18} /> Supabase Configuration</h4>
-                          {usingSupabaseEnv && (
-                             <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">
-                                <ShieldCheck size={12} /> Environment Configured
-                             </span>
-                          )}
-                       </div>
-                       <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg border border-emerald-100 mb-4">
-                          Directly connect to your Supabase project. Enter your Project URL and Anon Key below.
-                          <br/>支持直连 Supabase 数据库，请填入您的 URL 和 Key。
-                       </div>
-
-                       <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase">Project URL</label>
-                          <input 
-                            type="text" 
-                            value={storageSettings.supabaseConfig?.url || ''} 
-                            onChange={e => setStorageSettings({...storageSettings, supabaseConfig: {...storageSettings.supabaseConfig, url: e.target.value}})} 
-                            className="w-full px-3 py-2 rounded border border-slate-300 text-sm font-mono" 
-                            placeholder="https://xyz.supabase.co"
-                          />
-                       </div>
-                       <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase">Anon / Public Key</label>
-                          <div className="relative">
-                             <Key size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                             <input 
-                               type="password" 
-                               value={storageSettings.supabaseConfig?.key || ''} 
-                               onChange={e => setStorageSettings({...storageSettings, supabaseConfig: {...storageSettings.supabaseConfig, key: e.target.value}})} 
-                               className="w-full pl-8 pr-3 py-2 rounded border border-slate-300 text-sm font-mono" 
-                               placeholder="eyJhbG..."
-                             />
-                          </div>
-                       </div>
-                    </div>
-                 )}
-
                  {storageSettings.type === 'local' && (
                     <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 space-y-4 py-6">
                        <HardDrive size={48} className="opacity-20" />
@@ -654,8 +590,10 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                        </div>
                     </div>
                  )}
-                 
-                 {storageSettings.type !== 'local' && (
+              </div>
+           </div>
+
+           {storageSettings.type !== 'local' && (
                     <div className="pt-4 mt-4 border-t border-slate-200 flex items-center justify-between">
                        <div className="flex items-center gap-2">
                           {testStatus === 'success' && <span className="text-green-600 text-xs font-bold flex items-center gap-1"><Wifi size={14} /> 连接成功 Connected</span>}
@@ -671,8 +609,6 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                        </button>
                     </div>
                  )}
-              </div>
-           </div>
 
            <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-start gap-3">
               <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />

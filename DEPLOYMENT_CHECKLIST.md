@@ -3,14 +3,17 @@
 ## 部署前准备
 
 ### 1. 环境变量配置
-- [ ] `VITE_SUPABASE_URL` - Supabase项目URL
-- [ ] `VITE_SUPABASE_ANON_KEY` - Supabase匿名密钥
+- [ ] `TIDB_HOST` - TiDB Cloud 主机地址
+- [ ] `TIDB_PORT` - TiDB Cloud 端口 (默认: 4000)
+- [ ] `TIDB_USER` - TiDB 用户名
+- [ ] `TIDB_PASSWORD` - TiDB 密码
+- [ ] `TIDB_DATABASE` - TiDB 数据库名
+- [ ] `TIDB_SSL` - 是否启用 SSL (true/false)
 - [ ] `VITE_ADMIN_USER` - 管理员用户名
 - [ ] `VITE_ADMIN_PASS` - 管理员密码
-- [ ] `VITE_STORAGE_TYPE` - 存储类型 (默认: supabase)
 
 ### 2. 数据库配置
-- [ ] 创建Supabase项目
+- [ ] 创建 TiDB Cloud 项目
 - [ ] 配置数据库表结构
 - [ ] 设置数据库权限
 - [ ] 初始化基础数据
@@ -38,8 +41,12 @@ npm run build
 ### 2. 环境配置
 创建 `.env.production` 文件:
 ```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+TIDB_HOST=your_tidb_host
+TIDB_PORT=4000
+TIDB_USER=your_tidb_user
+TIDB_PASSWORD=your_tidb_password
+TIDB_DATABASE=your_tidb_database
+TIDB_SSL=true
 VITE_ADMIN_USER=your_admin_username
 VITE_ADMIN_PASS=your_admin_password
 ```
@@ -102,7 +109,7 @@ VITE_ADMIN_PASS=your_admin_password
 
 ### 常见问题
 1. **数据库连接失败**
-   - 检查Supabase URL和密钥
+   - 检查TiDB连接参数
    - 确认网络连接
    - 验证防火墙设置
 

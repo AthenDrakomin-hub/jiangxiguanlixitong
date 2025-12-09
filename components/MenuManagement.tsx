@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2 } from 'lucide-react';
 import { Dish, Ingredient, DishIngredient } from '../types';
-import { getSupabase } from '../services/supabaseClient';
 
 // dnd-kit imports
 import {
@@ -303,6 +302,25 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
     }));
   };
 
+  const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
+
+    try {
+      // Skip Supabase upload and go directly to Base64 fallback
+      console.warn("Skipping Supabase upload, falling back to Base64");
+    } catch (err) {
+      console.warn("Upload error:", err);
+    }
+
+    // Fallback to Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
+      setIsUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -312,43 +330,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
       return;
     }
 
-    setIsUploading(true);
-
-    try {
-      // 1. Try Supabase Storage Upload
-      const supabase = getSupabase();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      // Use the existing 'dish-images' bucket found in your project
-      const { data, error } = await supabase.storage
-        .from('dish-images') 
-        .upload(filePath, file);
-
-      if (!error && data) {
-        // Get Public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('dish-images')
-          .getPublicUrl(filePath);
-        
-        setFormData(prev => ({ ...prev, imageUrl: publicUrl }));
-        setIsUploading(false);
-        return; 
-      } else {
-        console.warn("Supabase upload failed (Bucket might not exist), falling back to Base64:", error);
-      }
-    } catch (err) {
-      console.warn("Upload error:", err);
-    }
-
-    // 2. Fallback to Base64
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
-      setIsUploading(false);
-    };
-    reader.readAsDataURL(file);
+    await handleImageUpload(file);
   };
 
   useEffect(() => {

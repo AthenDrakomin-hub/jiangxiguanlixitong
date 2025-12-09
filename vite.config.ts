@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -6,8 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   // Allow these prefixes to be exposed to client-side code via import.meta.env
-  // This enables reading the default Supabase/Vercel variables
-  envPrefix: ['VITE_', 'NEXT_PUBLIC_', 'SUPABASE_'],
+  // This enables reading the default environment variables
+  envPrefix: ['VITE_'],
   build: {
     outDir: 'dist',
     chunkSizeWarningLimit: 1000,
