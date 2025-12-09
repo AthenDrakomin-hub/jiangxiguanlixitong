@@ -45,27 +45,6 @@ export const runAutoDetection = () => {
     return checks;
   };
   
-  // 4. 检查API连接
-  const checkAPIConnection = async () => {
-    try {
-      // 检查是否存在API客户端
-      const hasAPIClient = typeof window !== 'undefined' && 
-                          (window as any).apiClient !== undefined;
-      
-      return {
-        apiClientExists: hasAPIClient,
-        // 在实际应用中，这里会进行真正的API调用测试
-        mockAPIResponse: true
-      };
-    } catch (error) {
-      console.error('API连接检测失败:', error);
-      return {
-        apiClientExists: false,
-        mockAPIResponse: false
-      };
-    }
-  };
-  
   // 执行所有检测
   const tailwindWorking = checkTailwindStyles();
   const pwaFeatures = checkPWA();

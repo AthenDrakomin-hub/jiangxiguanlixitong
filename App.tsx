@@ -78,7 +78,7 @@ const App: React.FC = () => {
   const [inventory, setInventory] = useState<Ingredient[]>([]);
   const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
   const [signBillAccounts, setSignBillAccounts] = useState<SignBillAccount[]>([]);
-  const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([];
+  const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
 
   
   // Global Settings State
