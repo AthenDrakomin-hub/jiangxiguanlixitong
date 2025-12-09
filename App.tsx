@@ -38,8 +38,25 @@ const App: React.FC = () => {
     return 'dashboard';
   });
 
-  // Auth State
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Auth State - 在开发环境中自动认证
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // 在开发环境中自动通过认证
+    if (typeof window !== 'undefined') {
+      // 检查是否是开发环境
+      const isDev = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' ||
+                   window.location.port !== '';
+      
+      // 在开发环境中自动认证，生产环境中检查sessionStorage
+      if (isDev) {
+        return true;
+      }
+      
+      // 生产环境中检查认证状态
+      return sessionStorage.getItem('jx_auth') === 'true';
+    }
+    return false;
+  });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
