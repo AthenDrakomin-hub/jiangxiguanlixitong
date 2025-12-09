@@ -1,9 +1,8 @@
-
 # 🏨 江西饭店综合管理系统 (Jiangxi Hotel Management System)
 
 ![Version](https://img.shields.io/badge/Version-2.5.0-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Production-emerald?style=flat-square)
-![Stack](https://img.shields.io/badge/Tech-React_19_·_Supabase_·_Tailwind-7c3aed?style=flat-square)
+![Stack](https://img.shields.io/badge/Tech-React_19_·_TiDB_Cloud_·_Tailwind-7c3aed?style=flat-square)
 
 > **Enterprise-grade hotel & catering management solution designed for overseas Chinese businesses.**
 > 
@@ -37,7 +36,7 @@
 ## 🛠️ 技术架构 (Architecture)
 
 *   **Frontend**: React 19, TypeScript, Vite, Tailwind CSS
-*   **Backend / DB**: **Supabase** (PostgreSQL, Realtime, Storage, Auth)
+*   **Backend / DB**: **TiDB Cloud** (MySQL compatible, Realtime, Storage)
 *   **UI Components**: Lucide React, Recharts (Data Viz), @dnd-kit (Drag & Drop)
 *   **Deployment**: Vercel (Recommended)
 
@@ -45,10 +44,10 @@
 
 ## 🚀 部署指南 (Deployment)
 
-### 1. Supabase 设置 (Database)
-1.  登录 [Supabase](https://supabase.com) 创建新项目。
-2.  进入 **SQL Editor**，运行项目提供的 `schema.sql` (如有) 或等待应用自动初始化数据。
-3.  获取 `Project URL` 和 `anon public key`。
+### 1. TiDB Cloud 设置 (Database)
+1.  登录 [TiDB Cloud](https://tidbcloud.com) 创建新集群。
+2.  创建数据库和用户，并授予相应权限。
+3.  获取连接信息：Host, Port, Username, Password, Database Name。
 
 ### 2. Vercel 部署 (Hosting)
 1.  Fork 本仓库到您的 GitHub。
@@ -57,8 +56,13 @@
 
 | Variable Name | Value Description |
 | :--- | :--- |
-| `VITE_SUPABASE_URL` | 您的 Supabase 项目网址 (e.g., https://xyz.supabase.co) |
-| `VITE_SUPABASE_ANON_KEY` | 您的 Supabase Anon API Key |
+| `TIDB_HOST` | 您的 TiDB Cloud 集群地址 |
+| `TIDB_PORT` | 端口号 (默认: 4000) |
+| `TIDB_USER` | 数据库用户名 |
+| `TIDB_PASSWORD` | 数据库密码 |
+| `TIDB_DATABASE` | 数据库名称 |
+| `TIDB_SSL` | 是否启用 SSL (true/false) |
+| `VITE_ADMIN_USER` | (可选) 设置后台管理员用户名，默认 `admin` |
 | `VITE_ADMIN_PASS` | (可选) 设置后台管理员密码，默认 `jx88888888` |
 
 4.  点击 **Deploy**。

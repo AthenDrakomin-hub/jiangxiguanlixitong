@@ -1,65 +1,34 @@
-
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import Sidebar from './components/Sidebar';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { Loader2, Menu, Cloud } from 'lucide-react';
 import Login from './components/Login';
-import { Page, Dish, Order, OrderStatus, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, OrderItem, DishIngredient, CarRecord } from './types';
-import { DataAPI } from './services/api';
-import { Loader2, Cloud, Menu } from 'lucide-react';
-import { getStorageSettings } from './services/storage';
+import Sidebar from './components/Sidebar';
+import Dashboard from './components/Dashboard';
+import { Page, Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, CarRecord, OrderStatus, OrderItem, DishIngredient } from './types';
+import { useDebouncedAutoSave } from './hooks/useDebouncedAutoSave';
+import { DataAPI } from './services/tidbAPI'; // Changed from './services/api'
+import { APP_CONFIG } from './config/appConfig';
+import './index.css';
 
-// Lazy load components to optimize bundle size
-const Dashboard = lazy(() => import('./components/Dashboard'));
-const MenuManagement = lazy(() => import('./components/MenuManagement'));
-const OrderManagement = lazy(() => import('./components/OrderManagement'));
-const FinanceSystem = lazy(() => import('./components/FinanceSystem'));
-const InventoryManagement = lazy(() => import('./components/InventoryManagement'));
-const KTVSystem = lazy(() => import('./components/KTVSystem'));
-const SignBillSystem = lazy(() => import('./components/SignBillSystem'));
-const HotelSystem = lazy(() => import('./components/HotelSystem'));
-const QRCodeManager = lazy(() => import('./components/QRCodeManager'));
-const KitchenDisplay = lazy(() => import('./components/KitchenDisplay'));
-const CustomerOrder = lazy(() => import('./components/CustomerOrder'));
-const Settings = lazy(() => import('./components/Settings'));
-const CarService = lazy(() => import('./components/CarService')); 
+// Lazy-loaded components
+const MenuManagement = React.lazy(() => import('./components/MenuManagement'));
+const OrderManagement = React.lazy(() => import('./components/OrderManagement'));
+const KitchenDisplay = React.lazy(() => import('./components/KitchenDisplay'));
+const CustomerOrder = React.lazy(() => import('./components/CustomerOrder'));
+const KTVSystem = React.lazy(() => import('./components/KTVSystem'));
+const HotelSystem = React.lazy(() => import('./components/HotelSystem'));
+const QRCodeManager = React.lazy(() => import('./components/QRCodeManager'));
+const SignBillSystem = React.lazy(() => import('./components/SignBillSystem'));
+const FinanceSystem = React.lazy(() => import('./components/FinanceSystem'));
+const InventoryManagement = React.lazy(() => import('./components/InventoryManagement'));
+const Settings = React.lazy(() => import('./components/Settings'));
+const CarService = React.lazy(() => import('./components/CarService'));
 
-// Notification sound URL
-const NOTIFICATION_SOUND_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
-
-// Custom Hook for Debounced Auto Save
-function useDebouncedAutoSave<T>(
-  key: string, 
-  data: T, 
-  saveFn: (data: T) => Promise<any>, 
-  delay: number = 1000,
-  shouldSave: boolean
-) {
-  const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    if (!shouldSave) return;
-
-    const handler = setTimeout(async () => {
-      setIsSaving(true);
-      try {
-        await saveFn(data);
-      } catch (e) {
-        console.error(`Failed to auto-save ${key}`, e);
-      } finally {
-        setIsSaving(false);
-      }
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [data, delay, shouldSave, saveFn, key]);
-
-  return { isSaving };
-}
+const NOTIFICATION_SOUND_URL = APP_CONFIG.NOTIFICATION.soundUrl;
 
 const App: React.FC = () => {
-  // Initialize Page from URL
+  // Page Routing State
   const [currentPage, setCurrentPage] = useState<Page>(() => {
+    // Check URL params for customer/kitchen views
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const pageParam = params.get('page');
@@ -88,40 +57,33 @@ const App: React.FC = () => {
   
   // Global Settings State
   const [systemSettings, setSystemSettings] = useState<any>({
-      storeInfo: {
-          name: '江西饭店 (Jinjiang Star Hotel)',
-          address: '5 Corner Lourdes Street and Roxas Boulevard, Pasay City',
-          phone: '+639084156449',
-          openingHours: '10:00 - 02:00',
-          wifiSsid: 'jx88888888',
-          telegram: '@jx555999'
+      storeInfo: APP_CONFIG.DEFAULT_STORE_INFO,
+      notifications: {
+          sound: true,
+          desktop: true
       },
-      categories: ['热菜', '凉菜', '汤羹', '主食', '酒水', '特色菜']
+      payment: {
+          enabledMethods: ['CASH'],
+          aliPayEnabled: false,
+          weChatEnabled: false,
+          gCashEnabled: true,
+          mayaEnabled: true
+      },
+      exchangeRate: APP_CONFIG.DEFAULT_FINANCIAL.exchangeRate,
+      serviceChargeRate: APP_CONFIG.DEFAULT_FINANCIAL.serviceChargeRate,
+      categories: []
   });
 
-  // Check Auth on Mount
-  useEffect(() => {
-    const sessionAuth = sessionStorage.getItem('jx_auth');
-    if (sessionAuth === 'true') {
-      setIsAuthenticated(true);
-    }
-    // Note: Customer page does not require auth
-    if (currentPage === 'customer') {
-      setIsAuthenticated(true);
-    }
-  }, [currentPage]);
-
-  // Initial Data Load
+  // --- Data Initialization ---
   useEffect(() => {
     const initData = async () => {
-      // Check storage type for better loading text
-      const settings = getStorageSettings();
-      if (settings.type === 'github') {
-        setLoadingText('Connecting to GitHub Cloud... / 正在连接云端数据库');
-      }
-
       try {
-        const response = await DataAPI.fetchAll();
+        setLoadingText('正在同步云端数据... / Syncing Cloud Data');
+        
+        // Fetch all data from TiDB
+        const response: any = await DataAPI.fetchAll();
+        
+        // Update state with fetched data
         setDishes(response.dishes.data);
         setOrders(response.orders.data);
         setExpenses(response.expenses.data);
@@ -129,6 +91,7 @@ const App: React.FC = () => {
         setKtvRooms(response.ktvRooms.data);
         setSignBillAccounts(response.signBillAccounts.data);
         setHotelRooms(response.hotelRooms.data);
+        setCarRecords([]);
         
         // Load settings
         const savedSettings = localStorage.getItem('jx_settings');

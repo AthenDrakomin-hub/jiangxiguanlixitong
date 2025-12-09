@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle } from 'lucide-react';
+import { APP_CONFIG } from '../config/appConfig';
 
 interface LoginProps {
   onLogin: () => void;
@@ -17,8 +17,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     // Get credentials from Env Vars or default safely
     const env = (import.meta as any).env || {};
     // VITE_ADMIN_USER and VITE_ADMIN_PASS should be set in Vercel Environment Variables
-    const validUser = env.VITE_ADMIN_USER || 'admin';
-    const validPass = env.VITE_ADMIN_PASS || 'jx88888888';
+    const validUser = env.VITE_ADMIN_USER || APP_CONFIG.DEFAULT_ADMIN.username;
+    const validPass = env.VITE_ADMIN_PASS || APP_CONFIG.DEFAULT_ADMIN.password;
 
     if (username === validUser && password === validPass) {
       onLogin();

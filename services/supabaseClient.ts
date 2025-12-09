@@ -1,4 +1,3 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { getStorageSettings } from './storage';
 
@@ -34,9 +33,20 @@ export const getSupabase = (): SupabaseClient => {
   if (!url) url = 'https://placeholder.supabase.co';
   if (!key) key = 'placeholder-key';
 
+  // DISABLE DATABASE CONNECTION TEMPORARILY
   // Create new client if config changed or not exists
   if (!client || url !== lastUrl || key !== lastKey) {
-    client = createClient(url, key);
+    // Temporarily disable database connection
+    console.log("⚠️ Database connection temporarily disabled - waiting for new cloud database setup");
+    client = createClient(url, key, {
+      db: {
+        schema: 'public'
+      },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
     lastUrl = url;
     lastKey = key;
     console.log(`🔌 Supabase Client Re-initialized with URL: ${url}`);
