@@ -196,6 +196,19 @@ const App: React.FC = () => {
      setSystemSettings(newSettings);
   };
 
+  // Handle Categories Update from MenuManagement Component
+  const handleCategoriesUpdate = (newCategories: string[] | ((prev: string[]) => string[])) => {
+    // If it's a function, we need to get the actual value
+    const categories = typeof newCategories === 'function' 
+      ? newCategories(systemSettings.categories || []) 
+      : newCategories;
+      
+    setSystemSettings((prev: any) => ({
+      ...prev,
+      categories: categories
+    }));
+  };
+
   // Callback to allow other components (Hotel, KTV, Customer) to place orders
   const handlePlaceOrder = (newOrder: Order) => {
     setOrders(prev => [newOrder, ...prev]);
@@ -260,7 +273,13 @@ const App: React.FC = () => {
             case 'dashboard':
               return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} hotelRooms={hotelRooms} />;
             case 'menu':
-              return <MenuManagement dishes={dishes} setDishes={setDishes} inventory={inventory} categories={systemSettings.categories || []} />;
+              return <MenuManagement 
+                dishes={dishes} 
+                setDishes={setDishes} 
+                inventory={inventory} 
+                categories={systemSettings.categories || []} 
+                setCategories={handleCategoriesUpdate} 
+              />;
             case 'orders':
               return <OrderManagement orders={orders} setOrders={setOrders} />; 
             case 'kitchen':

@@ -139,46 +139,52 @@ export const PrinterService = {
         <title>Shift Report</title>
         <style>
           @page { size: 72mm auto; margin: 0; }
-          body { width: 72mm; font-family: 'Courier New', monospace; font-size: 12px; padding: 5px; margin: 0; color: #000; font-weight: bold; }
+          body { width: 72mm; font-family: 'Courier New', monospace; font-size: 12px; padding: 8px; margin: 0; color: #000; font-weight: bold; }
           .header { text-align: center; margin-bottom: 10px; }
-          .title { font-size: 16px; font-weight: 900; }
+          .title { font-size: 18px; font-weight: 900; margin-bottom: 5px; }
+          .subtitle { font-size: 14px; font-weight: bold; color: #ea580c; margin-bottom: 8px; }
           .divider { border-bottom: 1px dashed #000; margin: 8px 0; }
           .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-          .total { font-size: 18px; font-weight: 900; border-top: 2px solid #000; padding-top: 5px; margin-top: 5px; }
+          .label { font-weight: normal; }
+          .value { font-weight: bold; }
+          .total-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 16px; font-weight: 900; border-top: 2px solid #000; padding-top: 5px; }
+          .section-title { font-weight: bold; margin: 8px 0 4px 0; color: #ea580c; }
+          .footer { text-align: center; font-size: 10px; margin-top: 15px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="title">交班报表 Shift Report</div>
-          <div>${store.name}</div>
-          <div style="font-size:10px;">${date}</div>
+          <div class="title">江西饭店 Jiangxi Hotel</div>
+          <div class="subtitle">交班报表 Shift Report</div>
+          <div>${date}</div>
         </div>
         
         <div class="divider"></div>
         
         <div class="row">
-           <span>Total Orders 单量:</span>
-           <span>${data.count}</span>
+          <span class="label">Total Orders 单量:</span>
+          <span class="value">${data.count}</span>
         </div>
 
         <div class="divider"></div>
-        <div style="font-weight:bold; margin-bottom:5px;">Income Breakdown 收入明细:</div>
+        <div class="section-title">Income Breakdown 收入明细:</div>
 
         ${Object.entries(data.byMethod).map(([method, amount]) => `
-           <div class="row">
-             <span>${method}:</span>
-             <span>${formatPrice(amount)}</span>
-           </div>
+          <div class="row">
+            <span class="label">${method}:</span>
+            <span class="value">${formatPrice(amount)}</span>
+          </div>
         `).join('')}
 
-        <div class="row total">
-           <span>REVENUE:</span>
-           <span>${formatPrice(data.total)}</span>
+        <div class="total-row">
+          <span>TOTAL REVENUE 总营收:</span>
+          <span>${formatPrice(data.total)}</span>
         </div>
 
         <div class="divider"></div>
-        <div style="text-align:center; font-size:10px; margin-top:20px;">
-           Printed by Admin System
+        <div class="footer">
+          Printed by Admin System<br/>
+          *** Thank you 谢谢惠顾 ***
         </div>
       </body>
       </html>

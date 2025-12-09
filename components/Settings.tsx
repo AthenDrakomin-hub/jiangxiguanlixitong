@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Store, Printer, List, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, Plus, Trash2, CreditCard, DollarSign, AlertTriangle, AlertOctagon, Wifi, WifiOff } from 'lucide-react';
+import { Save, Store, Printer, List, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, Plus, Trash2, CreditCard, DollarSign, AlertTriangle, AlertOctagon, Wifi, WifiOff, Info } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection } from '../services/storage';
 import { StorageSettings, StoreInfo, PaymentConfig } from '../types';
 import { PrinterService } from '../services/printer';
@@ -309,94 +309,115 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
         </div>
 
         {/* 2. Menu Categories */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-             <List className="text-slate-400" size={20} /> 菜单分类管理 (Categories)
-           </h3>
-           <div className="mb-4 flex gap-2">
-               <input 
-                  type="text" 
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="新分类名称 New Category"
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-900"
-               />
-               <button 
-                  onClick={handleAddCategory}
-                  disabled={!newCategory}
-                  className="bg-slate-900 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-               >
-                   <Plus size={20} />
-               </button>
-           </div>
-           <div className="flex flex-wrap gap-2">
-               {categories.map(cat => (
-                   <div key={cat} className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 group">
-                       <span className="text-sm font-medium text-slate-700">{cat}</span>
-                       <button onClick={() => handleRemoveCategory(cat)} className="text-slate-400 hover:text-red-500">
-                           <Trash2 size={14} />
-                       </button>
-                   </div>
-               ))}
-           </div>
-        </div>
+        {/* Moved to MenuManagement component for better organization */}
 
         {/* 3. Payment Methods */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <CreditCard className="text-slate-400" size={20} /> H5 支付方式配置
             </h3>
-            <div className="space-y-3">
-               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                 <span className="font-medium text-slate-700 flex items-center gap-2">
-                   💳 现金支付 Cash
-                 </span>
-                 <span className="text-xs text-slate-400 bg-slate-200 px-2 py-1 rounded">Always On</span>
+            <div className="space-y-4">
+               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                 <div className="flex items-center gap-3">
+                   <span className="font-bold text-slate-800 flex items-center gap-2">
+                     💳 现金支付 Cash
+                   </span>
+                   <span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">Always On</span>
+                 </div>
+                 <span className="text-sm text-slate-500">无需配置 / No Setup Required</span>
                </div>
-               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                 <span className="font-medium text-slate-700 flex items-center gap-2">
-                   📱 GCash
-                 </span>
-                 <input 
-                    type="checkbox" 
-                    checked={paymentConfig.gCashEnabled}
-                    onChange={e => setPaymentConfig({ ...paymentConfig, gCashEnabled: e.target.checked })}
-                    className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                 />
+               
+               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                 <div className="flex items-center gap-3">
+                   <span className="font-bold text-slate-800 flex items-center gap-2">
+                     📱 GCash
+                   </span>
+                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
+                     {paymentConfig.gCashEnabled ? 'ENABLED' : 'DISABLED'}
+                   </span>
+                 </div>
+                 <div className="flex items-center gap-3">
+                   <span className="text-sm text-slate-500">菲律宾主流支付</span>
+                   <input 
+                      type="checkbox" 
+                      checked={paymentConfig.gCashEnabled}
+                      onChange={e => setPaymentConfig({ ...paymentConfig, gCashEnabled: e.target.checked })}
+                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
+                   />
+                 </div>
                </div>
-               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                 <span className="font-medium text-slate-700 flex items-center gap-2">
-                   💚 Maya
-                 </span>
-                 <input 
-                    type="checkbox" 
-                    checked={paymentConfig.mayaEnabled}
-                    onChange={e => setPaymentConfig({ ...paymentConfig, mayaEnabled: e.target.checked })}
-                    className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                 />
+               
+               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                 <div className="flex items-center gap-3">
+                   <span className="font-bold text-slate-800 flex items-center gap-2">
+                     💚 Maya
+                   </span>
+                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
+                     {paymentConfig.mayaEnabled ? 'ENABLED' : 'DISABLED'}
+                   </span>
+                 </div>
+                 <div className="flex items-center gap-3">
+                   <span className="text-sm text-slate-500">菲律宾主流支付</span>
+                   <input 
+                      type="checkbox" 
+                      checked={paymentConfig.mayaEnabled}
+                      onChange={e => setPaymentConfig({ ...paymentConfig, mayaEnabled: e.target.checked })}
+                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
+                   />
+                 </div>
                </div>
-               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                 <span className="font-medium text-slate-700 flex items-center gap-2">
-                   🔵 Alipay 支付宝
-                 </span>
-                 <input 
-                    type="checkbox" 
-                    checked={paymentConfig.aliPayEnabled}
-                    onChange={e => setPaymentConfig({ ...paymentConfig, aliPayEnabled: e.target.checked })}
-                    className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                 />
+               
+               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                 <div className="flex items-center gap-3">
+                   <span className="font-bold text-slate-800 flex items-center gap-2">
+                     🔵 Alipay 支付宝
+                   </span>
+                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
+                     {paymentConfig.aliPayEnabled ? 'ENABLED' : 'DISABLED'}
+                   </span>
+                 </div>
+                 <div className="flex items-center gap-3">
+                   <span className="text-sm text-slate-500">中国用户首选</span>
+                   <input 
+                      type="checkbox" 
+                      checked={paymentConfig.aliPayEnabled}
+                      onChange={e => setPaymentConfig({ ...paymentConfig, aliPayEnabled: e.target.checked })}
+                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
+                   />
+                 </div>
                </div>
-               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                 <span className="font-medium text-slate-700 flex items-center gap-2">
-                   🟢 WeChat Pay 微信支付
-                 </span>
-                 <input 
-                    type="checkbox" 
-                    checked={paymentConfig.weChatEnabled}
-                    onChange={e => setPaymentConfig({ ...paymentConfig, weChatEnabled: e.target.checked })}
-                    className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                 />
+               
+               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                 <div className="flex items-center gap-3">
+                   <span className="font-bold text-slate-800 flex items-center gap-2">
+                     🟢 WeChat Pay 微信支付
+                   </span>
+                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
+                     {paymentConfig.weChatEnabled ? 'ENABLED' : 'DISABLED'}
+                   </span>
+                 </div>
+                 <div className="flex items-center gap-3">
+                   <span className="text-sm text-slate-500">中国用户首选</span>
+                   <input 
+                      type="checkbox" 
+                      checked={paymentConfig.weChatEnabled}
+                      onChange={e => setPaymentConfig({ ...paymentConfig, weChatEnabled: e.target.checked })}
+                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
+                   />
+                 </div>
                </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                <Info size={16} /> 支付配置说明
+              </h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• 启用的支付方式将在客户下单时显示</li>
+                <li>• 现金支付始终可用，无法禁用</li>
+                <li>• 移动支付将引导客户至相应应用完成付款</li>
+                <li>• 所有交易需手动确认收款</li>
+              </ul>
             </div>
         </div>
 

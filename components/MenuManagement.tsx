@@ -27,6 +27,7 @@ interface MenuManagementProps {
   setDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
   inventory: Ingredient[];
   categories: string[];
+  setCategories: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 // Sortable Item Component
@@ -140,7 +141,7 @@ const SortableDishCard = ({ dish, isSelected, toggleSelection, handleOpenModal, 
   );
 };
 
-const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inventory, categories }) => {
+const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inventory, categories, setCategories }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -148,6 +149,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkMenuOpen, setIsBulkMenuOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   
   const [formData, setFormData] = useState<Partial<Dish>>({
     name: '',
@@ -160,6 +162,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
     ingredients: []
   });
 
+  const [newCategory, setNewCategory] = useState('');
   const [selectedIngredientId, setSelectedIngredientId] = useState<string>('');
   const [ingredientQty, setIngredientQty] = useState<string>('');
 
@@ -326,6 +329,32 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
     await handleImageUpload(file);
   };
 
+  const handleAddCategory = () => {
+    if (newCategory && !categories.includes(newCategory)) {
+      setCategories([...categories, newCategory]);
+      setNewCategory('');
+    }
+  };
+
+  const handleRemoveCategory = (cat: string) => {
+    // Don't allow removing categories that have dishes
+    const hasDishes = dishes.some(dish => dish.category === cat);
+    if (hasDishes) {
+      alert(`无法删除分类 "${cat}"，因为还有菜品属于此分类。请先将这些菜品移动到其他分类。`);
+      return;
+    }
+    
+    setCategories(categories.filter(c => c !== cat));
+    
+    // Reset form category if it was the removed category
+    if (formData.category === cat) {
+      setFormData(prev => ({
+        ...prev,
+        category: categories.length > 1 ? categories.find(c => c !== cat) || categories[0] : '热菜'
+      }));
+    }
+  };
+
   useEffect(() => {
     const closeMenu = (e: MouseEvent) => {
       if (isBulkMenuOpen && !(e.target as Element).closest('.bulk-menu-container')) {
@@ -343,13 +372,22 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
             <h2 className="text-2xl font-bold text-slate-800">Menu Management 菜单管理</h2>
             <p className="text-slate-500 text-sm">Pamamahala ng Menu</p>
         </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
-        >
-          <Plus size={20} />
-          <span>Add Dish / Magdagdag</span>
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setIsCategoryManagerOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+          >
+            <Layers size={20} />
+            <span>分类管理</span>
+          </button>
+          <button 
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+          >
+            <Plus size={20} />
+            <span>Add Dish / Magdagdag</span>
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4">
@@ -705,6 +743,89 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
           </div>
         </div>
       )}
+
+      {isCategoryManagerOpen && (
+        <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 bg-slate-900 text-white flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Layers size={20} /> 菜单分类管理
+                </h3>
+                <p className="text-slate-400 text-sm mt-1">Manage Menu Categories</p>
+              </div>
+              <button 
+                onClick={() => setIsCategoryManagerOpen(false)} 
+                className="text-slate-400 hover:text-white"
+              >
+                <X size={24}/>
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  添加新分类 / Add New Category
+                </label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="新分类名称"
+                    className="flex-1 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button 
+                    onClick={handleAddCategory}
+                    disabled={!newCategory.trim()}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 hover:bg-blue-700 transition-colors"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="border-t border-slate-200 pt-4">
+                <h4 className="font-medium text-slate-700 mb-3">现有分类 / Existing Categories</h4>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {categories.map(cat => {
+                    const dishCount = dishes.filter(d => d.category === cat).length;
+                    return (
+                      <div 
+                        key={cat} 
+                        className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200"
+                      >
+                        <div>
+                          <span className="font-medium text-slate-800">{cat}</span>
+                          <span className="text-xs text-slate-500 ml-2">({dishCount} 菜品)</span>
+                        </div>
+                        <button 
+                          onClick={() => handleRemoveCategory(cat)}
+                          disabled={dishCount > 0}
+                          className={`p-1 rounded ${
+                            dishCount > 0 
+                              ? 'text-slate-300 cursor-not-allowed' 
+                              : 'text-red-500 hover:bg-red-100'
+                          }`}
+                          title={dishCount > 0 ? "无法删除：仍有菜品属于此分类" : "删除分类"}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div className="mt-6 pt-4 border-t border-slate-200 text-xs text-slate-500">
+                <p>• 分类名称不能重复</p>
+                <p>• 有菜品的分类无法删除</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

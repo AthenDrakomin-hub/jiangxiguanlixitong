@@ -23,7 +23,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
       url.searchParams.set('id', data);
       
       const targetUrl = url.toString();
-      return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(targetUrl)}&color=${qrStyle === 'black' ? '000000' : 'ea580c'}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}&color=${qrStyle === 'black' ? '000000' : 'ea580c'}&bgcolor=ffffff`;
     } catch (e) {
       return '';
     }
@@ -77,7 +77,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
             <div className={`p-10 rounded-2xl shadow-lg text-center max-w-lg w-full print:shadow-none print:border-4 ${qrStyle === 'black' ? 'border-slate-800 bg-white' : 'border-orange-500 bg-orange-50'}`}>
                <h3 className="text-3xl font-bold text-slate-800 mb-2">大厅点餐 Lobby Dining</h3>
                <p className="text-slate-500 mb-8 text-lg">扫码查看菜单下单 / Scan to Order</p>
-               <div className="bg-white p-6 rounded-xl inline-block mb-6 shadow-sm">
+               <div className="bg-white p-6 rounded-xl inline-block mb-6 shadow-sm border-2 border-dashed border-slate-200">
                   <img src={getQRUrl('LOBBY')} alt="Lobby QR" className="w-64 h-64 mix-blend-multiply" />
                </div>
                <div className="mt-4 text-slate-400 font-mono text-sm">ID: LOBBY</div>
@@ -103,7 +103,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
               <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 text-center max-w-md w-full print:shadow-none print:border-2">
                  <h3 className="text-2xl font-bold text-slate-800 mb-2">外卖专属码 Takeout</h3>
                  <p className="text-slate-500 mb-6">印在宣传单或名片上 / For Flyers & Cards</p>
-                 <div className="bg-slate-50 p-6 rounded-xl inline-block mb-6">
+                 <div className="bg-slate-50 p-6 rounded-xl inline-block mb-6 border-2 border-dashed border-slate-200">
                     <img src={getQRUrl('TAKEOUT')} alt="Takeout QR" className="w-48 h-48 mix-blend-multiply" />
                  </div>
                  <div className="flex items-center justify-center gap-2 text-sm text-blue-600 bg-blue-50 py-2 rounded-lg break-all">
@@ -189,6 +189,7 @@ const QRCodeCard = ({ title, subTitle, value, getUrl, style }: any) => {
         </div>
         <div className={`font-bold ${textColor} text-xl`}>{title}</div>
         <div className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">{subTitle}</div>
+        <div className="text-xs text-slate-400 font-mono mt-1">ID: {value}</div>
       </div>
     );
 };
