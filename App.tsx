@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import { Page, Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, CarRecord, OrderStatus, OrderItem, DishIngredient } from './types';
 import { useDebouncedAutoSave } from './hooks/useDebouncedAutoSave';
-import { DataAPI } from './services/tidbAPI';
+import { api } from './services/api';
 import { APP_CONFIG } from './config/appConfig';
 import './index.css';
 
@@ -97,17 +97,17 @@ const App: React.FC = () => {
       try {
         setLoadingText('正在同步云端数据... / Syncing Cloud Data');
         
-        // Fetch all data from TiDB
-        const response: any = await DataAPI.fetchAll();
+        // Fetch all data from API with automatic fallback
+        const response: any = await api.fetchAll();
         
         // Update state with fetched data
-        setDishes(response.dishes.data);
-        setOrders(response.orders.data);
-        setExpenses(response.expenses.data);
-        setInventory(response.inventory.data);
-        setKtvRooms(response.ktvRooms.data);
-        setSignBillAccounts(response.signBillAccounts.data);
-        setHotelRooms(response.hotelRooms.data);
+        setDishes(response.dishes);
+        setOrders(response.orders);
+        setExpenses(response.expenses);
+        setInventory(response.inventory);
+        setKtvRooms(response.ktvRooms);
+        setSignBillAccounts(response.signBillAccounts);
+        setHotelRooms(response.hotelRooms);
         setCarRecords([]);
         
         // Load settings
@@ -128,13 +128,13 @@ const App: React.FC = () => {
   }, [isAuthenticated, currentPage]);
 
   // --- Optimized Persistence Layer (Debounced) ---
-  const saveDishesStatus = useDebouncedAutoSave('dishes', dishes, DataAPI.Menu.save, 1000, !isLoading);
-  const saveOrdersStatus = useDebouncedAutoSave('orders', orders, DataAPI.Orders.save, 500, !isLoading);
-  const saveExpensesStatus = useDebouncedAutoSave('expenses', expenses, DataAPI.Finance.save, 1000, !isLoading);
-  const saveInventoryStatus = useDebouncedAutoSave('inventory', inventory, DataAPI.Inventory.save, 1000, !isLoading);
-  const saveKtvStatus = useDebouncedAutoSave('ktvRooms', ktvRooms, DataAPI.KTV.save, 1000, !isLoading);
-  const saveSignBillStatus = useDebouncedAutoSave('signBillAccounts', signBillAccounts, DataAPI.SignBill.save, 1000, !isLoading);
-  const saveHotelStatus = useDebouncedAutoSave('hotelRooms', hotelRooms, DataAPI.Hotel.save, 1000, !isLoading);
+  const saveDishesStatus = useDebouncedAutoSave('dishes', dishes, (data) => api.saveData('dishes', data), 1000, !isLoading);
+  const saveOrdersStatus = useDebouncedAutoSave('orders', orders, (data) => api.saveData('orders', data), 500, !isLoading);
+  const saveExpensesStatus = useDebouncedAutoSave('expenses', expenses, (data) => api.saveData('expenses', data), 1000, !isLoading);
+  const saveInventoryStatus = useDebouncedAutoSave('inventory', inventory, (data) => api.saveData('inventory', data), 1000, !isLoading);
+  const saveKtvStatus = useDebouncedAutoSave('ktvRooms', ktvRooms, (data) => api.saveData('ktv_rooms', data), 1000, !isLoading);
+  const saveSignBillStatus = useDebouncedAutoSave('signBillAccounts', signBillAccounts, (data) => api.saveData('sign_bill_accounts', data), 1000, !isLoading);
+  const saveHotelStatus = useDebouncedAutoSave('hotelRooms', hotelRooms, (data) => api.saveData('hotel_rooms', data), 1000, !isLoading);
 
   // Global Saving Indicator logic
   const isGlobalSaving = saveDishesStatus.isSaving || saveOrdersStatus.isSaving || saveExpensesStatus.isSaving || 
@@ -232,41 +232,29 @@ const App: React.FC = () => {
   };
 
   // Centralized Order Status Handler with Inventory Deduction
-  const handleOrderStatusChange = (orderId: string, newStatus: OrderStatus) => {
-     // 1. Find the order
-     const order = orders.find(o => o.id === orderId);
-     if (!order) return;
+  const handleOrderStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    console.log(`Updating order ${orderId} status to ${newStatus}`);
+    
+    // 1. Deduct inventory if moving to COOKING
+    if (newStatus === OrderStatus.COOKING) {
+       const order = orders.find(o => o.id === orderId);
+       if (order) {
+          // Deduct ingredients from inventory
+          setInventory(prev => prev.map(invItem => {
+             // Find if this item is used in the order
+             const orderItem = order.items?.find(item => item.dishId === invItem.id);
+             if (orderItem) {
+                const amountToDeduct = orderItem.quantity;
+                return { ...invItem, quantity: Math.max(0, invItem.quantity - amountToDeduct) };
+             }
+             return invItem;
+          }));
+          console.log("Inventory deducted for Order", orderId);
+       }
+    }
 
-     // 2. If status changing to COOKING, deduct inventory (Kitchen Dishes)
-     if (newStatus === OrderStatus.COOKING && order.status === OrderStatus.PENDING) {
-        // Logic to deduct ingredients
-        const deductions = new Map<string, number>();
-
-        order.items.forEach((item: OrderItem) => {
-           const dish = dishes.find(d => d.id === item.dishId);
-           if (dish && dish.ingredients) {
-              dish.ingredients.forEach((ing: DishIngredient) => {
-                 const currentDeduction = deductions.get(ing.ingredientId) || 0;
-                 deductions.set(ing.ingredientId, currentDeduction + (ing.quantity * item.quantity));
-              });
-           }
-        });
-
-        // Update Inventory State
-        if (deductions.size > 0) {
-           setInventory(prevInv => prevInv.map(invItem => {
-              if (deductions.has(invItem.id)) {
-                 const amountToDeduct = deductions.get(invItem.id)!;
-                 return { ...invItem, quantity: Math.max(0, invItem.quantity - amountToDeduct) };
-              }
-              return invItem;
-           }));
-           console.log("Inventory deducted for Order", orderId);
-        }
-     }
-
-     // 3. Update Order Status
-     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    // 2. Update Order Status
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
   };
 
   const handleLoginSuccess = () => {
