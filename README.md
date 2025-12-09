@@ -215,4 +215,5 @@ node scripts/init-db.js
 
 ## 📄 许可证 (License)
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+本项目为专有软件，版权所有。未经授权，禁止复制、分发或修改本软件的任何部分。
+查看 [LICENSE](LICENSE) 文件了解详细条款。
