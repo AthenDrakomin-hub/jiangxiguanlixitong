@@ -36,7 +36,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
 
   // Settings
   const storeInfo = systemSettings?.storeInfo;
-  const storeName = storeInfo?.name || '江西饭店 (Jinjiang Star Hotel)';
+  const storeName = storeInfo?.name || '江西酒店 (Jinjiang Star Hotel)';
   const exchangeRate = systemSettings?.exchangeRate || 8.2;
   const serviceChargeRate = systemSettings?.serviceChargeRate || 0.10;
   

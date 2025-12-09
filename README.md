@@ -1,4 +1,4 @@
-# 🏨 江西饭店综合管理系统 (Jiangxi Hotel Management System)
+# 🏨 江西酒店综合管理系统 (Jiangxi Hotel Management System)
 
 ![Version](https://img.shields.io/badge/Version-2.5.0-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Production-emerald?style=flat-square)

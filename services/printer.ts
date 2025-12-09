@@ -1,11 +1,11 @@
 
-import { Order, StoreInfo } from '../types';
+import { Order } from '../types';
 
 // Helper to format currency
 const formatPrice = (price: number) => `₱${price.toFixed(2)}`;
 
 // Helper to get current store info (fallback if not passed)
-const getStoreInfo = (): StoreInfo => {
+const getStoreInfo = () => {
   try {
     const settings = localStorage.getItem('jx_settings');
     if (settings) {
@@ -16,7 +16,7 @@ const getStoreInfo = (): StoreInfo => {
     console.error("Error loading settings for print", e);
   }
   return {
-    name: '江西饭店 Jiangxi Hotel',
+    name: '江西酒店 Jiangxi Hotel',
     address: 'Pasay City',
     phone: '',
     openingHours: '10:00 - 02:00',
@@ -129,7 +129,6 @@ export const PrinterService = {
 
   // Print Shift Report (Finance)
   printShiftReport: (data: { total: number; byMethod: Record<string, number>; count: number }) => {
-    const store = getStoreInfo();
     const date = new Date().toLocaleString('zh-CN');
 
     const htmlContent = `
@@ -154,7 +153,7 @@ export const PrinterService = {
       </head>
       <body>
         <div class="header">
-          <div class="title">江西饭店 Jiangxi Hotel</div>
+          <div class="title">江西酒店 Jiangxi Hotel</div>
           <div class="subtitle">交班报表 Shift Report</div>
           <div>${date}</div>
         </div>

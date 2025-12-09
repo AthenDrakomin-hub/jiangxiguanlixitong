@@ -152,7 +152,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({ hotelRooms, ktvRooms }) =
       <div className="bg-slate-50/50 rounded-xl p-4 md:p-8 min-h-[60vh] border border-slate-200 print:bg-white print:border-none print:p-0">
          {/* Print Instruction */}
          <div className="hidden print:block text-center mb-8">
-            <h1 className="text-3xl font-bold">江西饭店 Jiangxi Hotel</h1>
+            <h1 className="text-3xl font-bold">江西酒店 Jiangxi Hotel</h1>
             <p className="text-slate-500">扫码下单 • 极速送达 / Scan to Order</p>
          </div>
 

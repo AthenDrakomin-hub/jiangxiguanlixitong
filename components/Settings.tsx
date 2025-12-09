@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Store, Printer, List, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, Plus, Trash2, CreditCard, DollarSign, AlertTriangle, AlertOctagon, Wifi, WifiOff, Info } from 'lucide-react';
+import { Save, Store, Printer, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, CreditCard, DollarSign, AlertTriangle, Wifi, WifiOff, Info } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection } from '../services/storage';
 import { StorageSettings, StoreInfo, PaymentConfig } from '../types';
 import { PrinterService } from '../services/printer';
@@ -11,7 +11,7 @@ interface SettingsProps {
 
 const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
   const [storeInfo, setStoreInfo] = useState<StoreInfo>({
-    name: '江西饭店 (Jinjiang Star Hotel)',
+    name: '江西酒店 (Jinjiang Star Hotel)',
     address: '5 Corner Lourdes Street and Roxas Boulevard, Pasay City',
     phone: '+639084156449',
     openingHours: '10:00 - 02:00',
@@ -22,7 +22,6 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
   });
 
   const [categories, setCategories] = useState<string[]>(['热菜', '凉菜', '汤羹', '主食', '酒水', '特色菜']);
-  const [newCategory, setNewCategory] = useState('');
 
   const [notifications, setNotifications] = useState({
     sound: true,
@@ -151,22 +150,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
   };
 
   // Category Logic
-  const handleAddCategory = () => {
-      if(newCategory && !categories.includes(newCategory)) {
-          setCategories([...categories, newCategory]);
-          setNewCategory('');
-      }
-  };
 
-  const handleRemoveCategory = (cat: string) => {
-      setConfirmModal({
-          open: true,
-          level: 'low',
-          title: '确认删除分类',
-          message: `确定要删除分类 "${cat}" 吗？注意：属于该分类的菜品可能会显示异常。`,
-          action: () => setCategories(categories.filter(c => c !== cat))
-      });
-  };
 
   const handleS3ProviderChange = (provider: string) => {
     setS3Provider(provider);
@@ -648,7 +632,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                 <div className={`p-6 ${confirmModal.level === 'high' ? 'bg-red-50' : 'bg-white'}`}>
                     <div className="flex items-center gap-3 mb-4">
                         <div className={`p-3 rounded-full ${confirmModal.level === 'high' ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
-                            {confirmModal.level === 'high' ? <AlertOctagon size={32} /> : <AlertTriangle size={32} />}
+                            <AlertTriangle size={32} />
                         </div>
                         <h3 className="text-xl font-bold text-slate-900">{confirmModal.title}</h3>
                     </div>

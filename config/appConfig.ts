@@ -8,7 +8,7 @@ export const APP_CONFIG = {
   
   // Store information
   DEFAULT_STORE_INFO: {
-    name: '江西饭店 (Jinjiang Star Hotel)',
+    name: '江西酒店 (Jinjiang Star Hotel)',
     address: '5 Corner Lourdes Street and Roxas Boulevard, Pasay City',
     phone: '+639084156449',
     openingHours: '10:00 - 02:00',

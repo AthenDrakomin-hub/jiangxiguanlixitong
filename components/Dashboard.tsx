@@ -94,7 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">运营总览</h2>
-          <p className="text-slate-500 text-sm">江西饭店 (Pasay City) - 实时经营数据</p>
+          <p className="text-slate-500 text-sm">江西酒店 (Pasay City) - 实时经营数据</p>
         </div>
         <div className="text-sm font-medium px-3 py-1 bg-white rounded-lg border border-slate-200 text-slate-600 shadow-sm">
            {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

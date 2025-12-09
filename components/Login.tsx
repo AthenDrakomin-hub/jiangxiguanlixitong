@@ -35,7 +35,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <Lock className="text-white" size={32} />
            </div>
            <h2 className="text-2xl font-bold text-slate-800">系统登录 Login</h2>
-           <p className="text-slate-500 text-sm mt-1">江西饭店后端管理系统<br/>Backend Management System</p>
+           <p className="text-slate-500 text-sm mt-1">江西酒店后端管理系统<br/>Backend Management System</p>
         </div>
 
         <form onSubmit={handleLogin} className="p-8 space-y-6">

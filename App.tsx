@@ -330,7 +330,7 @@ const App: React.FC = () => {
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 z-40 flex items-center justify-between px-4 shadow-md">
         <div className="flex items-center gap-2 text-white font-bold">
-           <span className="text-lg">江西饭店 Admin</span>
+           <span className="text-lg">江西酒店 Admin</span>
         </div>
         <button 
           onClick={() => setIsMobileMenuOpen(true)}
