@@ -197,11 +197,6 @@ export interface GitHubConfig {
   pathPrefix?: string; // Optional folder path, defaults to 'data/'
 }
 
-export interface SupabaseConfig {
-  url: string;
-  key: string;
-}
-
 export interface StorageSettings {
   type: StorageType;
   s3Config: S3Config;
