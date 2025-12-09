@@ -7,7 +7,13 @@ export default {
     "./services/**/*.{js,ts,jsx,tsx}"
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // 确保包含所有默认颜色
+        transparent: 'transparent',
+        current: 'currentColor',
+      }
+    },
   },
   plugins: [],
 }
