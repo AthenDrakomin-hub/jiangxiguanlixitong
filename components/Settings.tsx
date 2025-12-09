@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Store, Printer, List, RotateCcw, ShieldCheck, Key, GitBranch, Github, Database, HardDrive, Cloud, Check, Plus, Trash2, CreditCard, DollarSign, AlertTriangle, AlertOctagon, Wifi, WifiOff } from 'lucide-react';
+import { Save, Store, Printer, List, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, Plus, Trash2, CreditCard, DollarSign, AlertTriangle, AlertOctagon, Wifi, WifiOff } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection } from '../services/storage';
-import { StorageSettings, SystemSettings, StoreInfo, PaymentConfig } from '../types';
-import { APP_CONFIG } from '../config/appConfig';
+import { StorageSettings, StoreInfo, PaymentConfig } from '../types';
 import { PrinterService } from '../services/printer';
 
 interface SettingsProps {
@@ -437,7 +436,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
         {/* 5. Data Storage & Sync */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden">
            <div className="absolute top-0 right-0 p-4 opacity-5">
-              <Database size={120} />
+              <Cloud size={120} />
            </div>
            
            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
