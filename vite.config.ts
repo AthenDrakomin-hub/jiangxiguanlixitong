@@ -21,5 +21,13 @@ export default defineConfig({
         }
       }
     }
+  },
+  // 确保正确的模块解析和构建设置
+  resolve: {
+    extensions: ['.ts', '.tsx', '.js', '.jsx']
+  },
+  esbuild: {
+    // TypeScript特定设置
+    tsconfigRaw: '{}'
   }
 })
