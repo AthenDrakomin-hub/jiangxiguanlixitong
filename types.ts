@@ -1,4 +1,3 @@
-
 // Removed hardcoded enum to allow dynamic categories
 export type Category = string; 
 
@@ -168,7 +167,7 @@ export interface SystemSettings {
     categories?: string[]; // Dynamic categories
 }
 
-export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'payment';
+export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'payment' | 'autodetect';
 
 // Standardized API Response Wrapper
 export interface ApiResponse<T> {

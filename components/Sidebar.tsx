@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Utensils, ClipboardList, DollarSign, Package, Settings, Mic2, FileSignature, BedDouble, QrCode, ChefHat, X, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Utensils, ClipboardList, DollarSign, Package, Settings, Mic2, FileSignature, BedDouble, QrCode, ChefHat, X, CreditCard, Bug } from 'lucide-react';
 import { Page } from '../types';
 import { t } from '../utils/i18n';
 
@@ -53,6 +53,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
     { id: 'settings', label: t('settings'), icon: Settings },
   ];
 
+  // 添加测试工具菜单项（仅在开发环境中显示）
+  const testItems: MenuItem[] = [
+    { id: 'autodetect' as Page, label: '自动检测测试', icon: Bug },
+  ];
+
+  const isDevelopment = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.hostname === 'localhost' || 
+             window.location.hostname === '127.0.0.1' ||
+             window.location.port !== '';
+    }
+    return false;
+  };
+
   return (
     <div className={`
       h-screen w-64 bg-slate-900 text-white flex flex-col fixed left-0 top-0 shadow-xl z-50 transition-transform duration-300 ease-in-out
@@ -93,6 +107,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
             <MenuButton key={item.id} {...item} />
           ))}
         </div>
+
+        {/* Test Tools Section - Only shown in development */}
+        {isDevelopment() && (
+          <div>
+            <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-3 pt-4 border-t border-slate-800">测试工具</div>
+            {testItems.map(item => (
+              <MenuButton key={item.id} {...item} />
+            ))}
+          </div>
+        )}
       </nav>
 
       <div className="p-4 border-t border-slate-800 text-xs text-slate-500">

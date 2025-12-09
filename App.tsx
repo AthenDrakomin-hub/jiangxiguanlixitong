@@ -13,6 +13,7 @@ import {
   Page
 } from './types';
 import { APP_CONFIG } from './config/appConfig';
+import AutoDetectTest from './src/AutoDetectTest';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const MenuManagement = React.lazy(() => import('./components/MenuManagement'));
@@ -41,6 +42,7 @@ const App: React.FC = () => {
       const pageParam = params.get('page');
       if (pageParam === 'customer') return 'customer';
       if (pageParam === 'kitchen') return 'kitchen';
+      if (pageParam === 'autodetect') return 'autodetect'; // 添加自动检测页面路由
     }
     return 'dashboard';
   });
@@ -76,7 +78,7 @@ const App: React.FC = () => {
   const [inventory, setInventory] = useState<Ingredient[]>([]);
   const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
   const [signBillAccounts, setSignBillAccounts] = useState<SignBillAccount[]>([]);
-  const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
+  const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([];
 
   
   // Global Settings State
@@ -194,7 +196,7 @@ const App: React.FC = () => {
     setCurrentPage(page);
     // Also update URL for better history management
     const url = new URL(window.location.href);
-    if (page === 'customer' || page === 'kitchen') {
+    if (page === 'customer' || page === 'kitchen' || page === 'autodetect') {
       url.searchParams.set('page', page);
     } else {
       url.searchParams.delete('page');
@@ -281,6 +283,11 @@ const App: React.FC = () => {
   }
 
   const renderContent = () => {
+    // 如果是自动检测页面，直接返回测试组件
+    if (currentPage === 'autodetect') {
+      return <AutoDetectTest />;
+    }
+    
     return (
       <Suspense fallback={
         <div className="flex items-center justify-center h-64 text-slate-400 gap-2">
@@ -349,8 +356,8 @@ const App: React.FC = () => {
     );
   }
 
-  // Customer View & Kitchen View (No Sidebar)
-  if (currentPage === 'customer' || currentPage === 'kitchen') {
+  // Customer View & Kitchen View & AutoDetect View (No Sidebar)
+  if (currentPage === 'customer' || currentPage === 'kitchen' || currentPage === 'autodetect') {
      return renderContent();
   }
 
