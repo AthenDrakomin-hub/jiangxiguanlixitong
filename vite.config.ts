@@ -61,6 +61,17 @@ export default defineConfig({
       }
     }
   },
+  // 配置开发服务器和代理
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
   // 确保正确的模块解析和构建设置
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx']

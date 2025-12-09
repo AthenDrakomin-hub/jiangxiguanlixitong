@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "node server.cjs",
     "dev:vercel": "C:\\nvm4w\\nodejs\\node.exe C:\\nvm4w\\nodejs\\node_modules\\vercel\\dist\\index.js dev",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
@@ -20,6 +21,7 @@
     "@tailwindcss/postcss": "^4.1.17",
     "@vercel/postgres": "^0.10.0",
     "csv-parse": "^6.1.0",
+    "express": "^4.21.1",
     "lucide-react": "^0.556.0",
     "mysql2": "^3.9.7",
     "react": "^18.3.1",
