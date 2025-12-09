@@ -329,7 +329,7 @@ const App: React.FC = () => {
               return <CustomerOrder dishes={dishes} orders={orders} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
 
             default:
-              return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} />;
+              return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} hotelRooms={hotelRooms} />;
           }
         })()}
       </Suspense>
@@ -370,7 +370,9 @@ const App: React.FC = () => {
 
       {/* Desktop Sidebar */}
       <div className="hidden md:block w-64 bg-slate-900 text-white shadow-xl z-30">
-        <Sidebar currentPage={currentPage} onNavigate={handleNavigate} isOpen={true} onClose={() => {}} />
+        <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+          <Sidebar currentPage={currentPage} onNavigate={handleNavigate} isOpen={true} onClose={() => {}} />
+        </Suspense>
       </div>
 
       {/* Mobile Sidebar Overlay */}
@@ -383,7 +385,9 @@ const App: React.FC = () => {
             className="absolute left-0 top-0 bottom-0 w-64 bg-slate-900 text-white shadow-xl"
             onClick={e => e.stopPropagation()}
           >
-            <Sidebar currentPage={currentPage} onNavigate={handleNavigate} isOpen={true} onClose={() => setIsMobileMenuOpen(false)} />
+            <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+              <Sidebar currentPage={currentPage} onNavigate={handleNavigate} isOpen={true} onClose={() => setIsMobileMenuOpen(false)} />
+            </Suspense>
           </div>
         </div>
       )}
