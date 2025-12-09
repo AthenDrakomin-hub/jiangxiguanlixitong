@@ -19,6 +19,7 @@ export const DEFAULT_STORAGE_SETTINGS: StorageSettings = {
     token: '', 
     pathPrefix: 'data'
   }
+  // This configuration is no longer used since we've migrated to TiDB
   // supabaseConfig is optional and not included since we're not using Supabase
 };
 

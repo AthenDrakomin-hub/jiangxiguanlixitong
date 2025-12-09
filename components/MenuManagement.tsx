@@ -305,14 +305,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
   const handleImageUpload = async (file: File) => {
     setIsUploading(true);
 
-    try {
-      // Skip Supabase upload and go directly to Base64 fallback
-      console.warn("Skipping Supabase upload, falling back to Base64");
-    } catch (err) {
-      console.warn("Upload error:", err);
-    }
-
-    // Fallback to Base64
+    // Directly use Base64 encoding without Supabase
     const reader = new FileReader();
     reader.onloadend = () => {
       setFormData(prev => ({ ...prev, imageUrl: reader.result as string }));
