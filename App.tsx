@@ -3,7 +3,7 @@ import { Loader2, Menu, Cloud } from 'lucide-react';
 import Login from './components/Login';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
-import { Page, Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, CarRecord, OrderStatus, OrderItem, DishIngredient } from './types';
+import { Page, Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, CarRecord, OrderStatus } from './types';
 import { useDebouncedAutoSave } from './hooks/useDebouncedAutoSave';
 import { api } from './services/api';
 import { APP_CONFIG } from './config/appConfig';
