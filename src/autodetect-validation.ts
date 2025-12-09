@@ -38,8 +38,8 @@ export const runAutoDetection = () => {
     const checks = {
       viewportMeta: !!document.querySelector('meta[name="viewport"]'),
       responsiveClasses: window.innerWidth < 768 ? 
-        document.body.classList.contains('md:hidden') !== undefined :
-        document.body.classList.contains('md:block') !== undefined
+        (document.body.classList.contains('md:hidden') !== undefined) :
+        (document.body.classList.contains('md:block') !== undefined)
     };
     
     return checks;
@@ -60,7 +60,8 @@ export const runAutoDetection = () => {
   
   // 总体评估
   const allChecksPassed = tailwindWorking && 
-                         Object.values(pwaFeatures).every(v => v) &&
+                         pwaFeatures.serviceWorker &&
+                         pwaFeatures.offlineSupport &&
                          responsiveFeatures.viewportMeta;
                          
   console.log('\n=== 检测结论 ===');
@@ -77,7 +78,11 @@ export const runAutoDetection = () => {
 // 如果在浏览器环境中，立即运行检测
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    runAutoDetection();
+    try {
+      runAutoDetection();
+    } catch (error) {
+      console.error('自动检测运行失败:', error);
+    }
   }, 1000);
 }
 

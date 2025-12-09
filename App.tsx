@@ -110,13 +110,13 @@ const App: React.FC = () => {
         const response: any = await apiClient.fetchAll();
         
         // Update state with fetched data
-        setDishes(response.dishes);
-        setOrders(response.orders);
-        setExpenses(response.expenses);
-        setInventory(response.inventory);
-        setKtvRooms(response.ktvRooms);
-        setSignBillAccounts(response.signBillAccounts);
-        setHotelRooms(response.hotelRooms);
+        setDishes(response.dishes || []);
+        setOrders(response.orders || []);
+        setExpenses(response.expenses || []);
+        setInventory(response.inventory || []);
+        setKtvRooms(response.ktvRooms || []);
+        setSignBillAccounts(response.signBillAccounts || []);
+        setHotelRooms(response.hotelRooms || []);
 
         
         // Load settings
@@ -157,13 +157,13 @@ const App: React.FC = () => {
   // Monitor New Orders Logic
   useEffect(() => {
     if (isLoading) return;
-    const prevOrders = prevOrdersRef.current;
+    const prevOrders = prevOrdersRef.current || [];
     
     // Check for NEW PENDING orders
-    const currentPending = orders.filter(o => o.status === OrderStatus.PENDING).length;
-    const prevPending = prevOrders.filter(o => o.status === OrderStatus.PENDING).length;
+    const currentPending = orders ? orders.filter(o => o.status === OrderStatus.PENDING).length : 0;
+    const prevPending = prevOrders ? prevOrders.filter(o => o.status === OrderStatus.PENDING).length : 0;
 
-    if (orders.length > prevOrders.length && currentPending > prevPending) {
+    if (orders && prevOrders && orders.length > prevOrders.length && currentPending > prevPending) {
         const oldOrderIds = new Set(prevOrders.map(o => o.id));
         const brandNewOrders = orders.filter(o => !oldOrderIds.has(o.id) && o.status === OrderStatus.PENDING);
         
@@ -172,7 +172,7 @@ const App: React.FC = () => {
         }
     }
     
-    prevOrdersRef.current = orders;
+    prevOrdersRef.current = orders || [];
   }, [orders, isLoading]);
 
   const triggerNotification = (title: string, body: string) => {
@@ -225,7 +225,7 @@ const App: React.FC = () => {
 
   // Callback to allow other components (Hotel, KTV, Customer) to place orders
   const handlePlaceOrder = (newOrder: Order) => {
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => [newOrder, ...(prev || [])]);
   };
 
   // Centralized Order Status Handler with Inventory Deduction
@@ -234,10 +234,10 @@ const App: React.FC = () => {
     
     // 1. Deduct inventory if moving to COOKING
     if (newStatus === OrderStatus.COOKING) {
-       const order = orders.find(o => o.id === orderId);
+       const order = orders ? orders.find(o => o.id === orderId) : undefined;
        if (order) {
           // Deduct ingredients from inventory
-          setInventory(prev => prev.map(invItem => {
+          setInventory(prev => (prev || []).map(invItem => {
              // Find if this item is used in the order
              const orderItem = order.items?.find(item => item.dishId === invItem.id);
              if (orderItem) {
@@ -251,7 +251,7 @@ const App: React.FC = () => {
     }
 
     // 2. Update Order Status
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    setOrders(prev => (prev || []).map(o => o.id === orderId ? { ...o, status: newStatus } : o));
   };
 
   const handleLoginSuccess = () => {
@@ -297,49 +297,49 @@ const App: React.FC = () => {
         {(() => {
           switch (currentPage) {
             case 'dashboard':
-              return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} hotelRooms={hotelRooms} />;
+              return <Dashboard orders={orders || []} ktvRooms={ktvRooms || []} signBillAccounts={signBillAccounts || []} hotelRooms={hotelRooms || []} />;
             case 'menu':
               return <MenuManagement 
-                dishes={dishes} 
+                dishes={dishes || []} 
                 setDishes={setDishes} 
-                inventory={inventory} 
+                inventory={inventory || []} 
                 categories={systemSettings.categories || []} 
                 setCategories={handleCategoriesUpdate} 
               />;
             case 'orders':
-              return <OrderManagement orders={orders} setOrders={setOrders} />; 
+              return <OrderManagement orders={orders || []} setOrders={setOrders} />; 
             case 'kitchen':
-              return <KitchenDisplay orders={orders} onStatusChange={handleOrderStatusChange} onBack={() => handleNavigate('dashboard')} />;
+              return <KitchenDisplay orders={orders || []} onStatusChange={handleOrderStatusChange} onBack={() => handleNavigate('dashboard')} />;
             case 'finance':
               return <FinanceSystem 
-                orders={orders} 
-                expenses={expenses} 
+                orders={orders || []} 
+                expenses={expenses || []} 
                 setExpenses={setExpenses}
               />;
             case 'inventory':
-              return <InventoryManagement inventory={inventory} setInventory={setInventory} />;
+              return <InventoryManagement inventory={inventory || []} setInventory={setInventory} />;
             case 'settings':
               return <Settings onSettingsChange={handleSettingsUpdate} />;
             case 'ktv':
-              return <KTVSystem rooms={ktvRooms} setRooms={setKtvRooms} dishes={dishes} />;
+              return <KTVSystem rooms={ktvRooms || []} setRooms={setKtvRooms} dishes={dishes || []} />;
             case 'signbill':
-              return <SignBillSystem accounts={signBillAccounts} setAccounts={setSignBillAccounts} />;
+              return <SignBillSystem accounts={signBillAccounts || []} setAccounts={setSignBillAccounts} />;
             case 'hotel':
               return <HotelSystem 
-                rooms={hotelRooms} 
+                rooms={hotelRooms || []} 
                 setRooms={setHotelRooms} 
-                dishes={dishes}
+                dishes={dishes || []}
                 onPlaceOrder={handlePlaceOrder}
               />;
             case 'qrcode':
-              return <QRCodeManager hotelRooms={hotelRooms} ktvRooms={ktvRooms} />;
+              return <QRCodeManager hotelRooms={hotelRooms || []} ktvRooms={ktvRooms || []} />;
             case 'customer':
-              return <CustomerOrder dishes={dishes} orders={orders} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
+              return <CustomerOrder dishes={dishes || []} orders={orders || []} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
             case 'payment':
               return <PaymentManagement />;
 
             default:
-              return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} hotelRooms={hotelRooms} />;
+              return <Dashboard orders={orders || []} ktvRooms={ktvRooms || []} signBillAccounts={signBillAccounts || []} hotelRooms={hotelRooms || []} />;
           }
         })()}
       </Suspense>

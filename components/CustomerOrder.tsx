@@ -10,7 +10,7 @@ interface CustomerOrderProps {
   systemSettings?: SystemSettings;
 }
 
-const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOrder, systemSettings }) => {
+const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [], onPlaceOrder, systemSettings }) => {
   // Navigation State
   const [activeTab, setActiveTab] = useState<'MENU' | 'ORDERS'>('MENU');
   
@@ -84,7 +84,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
     return 'LOBBY';
   };
 
-  const displayedDishes = dishes.filter(d => {
+  const displayedDishes = (dishes || []).filter(d => {
     const matchesCategory = activeCategory === 'All' || d.category === activeCategory;
     const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase());
     return d.available && matchesCategory && matchesSearch;
@@ -93,7 +93,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes, orders, onPlaceOr
   // History Orders (Filter by Table ID)
   const myOrders = useMemo(() => {
      if (!tableId) return [];
-     return orders.filter(o => o.tableNumber === tableId).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+     return (orders || []).filter(o => o.tableNumber === tableId).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [orders, tableId]);
 
   // Cart Logic
