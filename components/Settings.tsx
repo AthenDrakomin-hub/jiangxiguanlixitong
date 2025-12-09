@@ -401,6 +401,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                 <li>• 现金支付始终可用，无法禁用</li>
                 <li>• 移动支付将引导客户至相应应用完成付款</li>
                 <li>• 所有交易需手动确认收款</li>
+                <li>• <a href="#" onClick={(e) => { e.preventDefault(); /* Navigate to payment management */ }} className="text-blue-600 underline">点击这里管理详细的支付方式信息</a></li>
               </ul>
             </div>
         </div>

@@ -168,7 +168,7 @@ export interface SystemSettings {
     categories?: string[]; // Dynamic categories
 }
 
-export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer';
+export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'payment';
 
 // Standardized API Response Wrapper
 export interface ApiResponse<T> {

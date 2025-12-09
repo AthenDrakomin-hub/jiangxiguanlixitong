@@ -28,6 +28,7 @@ const KitchenDisplay = React.lazy(() => import('./components/KitchenDisplay'));
 const CustomerOrder = React.lazy(() => import('./components/CustomerOrder'));
 const Login = React.lazy(() => import('./components/Login'));
 const Sidebar = React.lazy(() => import('./components/Sidebar'));
+const PaymentManagement = React.lazy(() => import('./components/PaymentManagement'));
 
 const NOTIFICATION_SOUND_URL = APP_CONFIG.NOTIFICATION.soundUrl;
 
@@ -327,6 +328,8 @@ const App: React.FC = () => {
               return <QRCodeManager hotelRooms={hotelRooms} ktvRooms={ktvRooms} />;
             case 'customer':
               return <CustomerOrder dishes={dishes} orders={orders} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
+            case 'payment':
+              return <PaymentManagement />;
 
             default:
               return <Dashboard orders={orders} ktvRooms={ktvRooms} signBillAccounts={signBillAccounts} hotelRooms={hotelRooms} />;
