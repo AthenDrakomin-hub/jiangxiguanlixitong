@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "init-db": "node scripts/init-db.js",
+    "init-db-api": "node scripts/init-db-via-api.js",
+    "check-api": "node check-api.js",
     "test-github-sync": "node test-github-sync.js"
   },
   "dependencies": {
