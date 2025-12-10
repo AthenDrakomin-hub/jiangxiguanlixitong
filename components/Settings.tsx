@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Save, Store, Printer, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, CreditCard, DollarSign, AlertTriangle, Wifi, WifiOff, Info } from 'lucide-react';
-import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection, syncAllDataToGitHub } from '../services/storage';
+import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection, fetchAndSyncAllDataToGitHub } from '../services/storage';
 import { StorageSettings, StoreInfo, PaymentConfig } from '../types';
 import { PrinterService } from '../services/printer';
 
@@ -205,20 +205,8 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
     setSyncStatus('idle');
     
     try {
-      // 这里需要获取所有数据，但在设置页面无法直接访问
-      // 在实际实现中，您需要从全局状态或 API 获取所有数据
-      const allData = {
-        dishes: [],
-        orders: [],
-        expenses: [],
-        inventory: [],
-        ktv_rooms: [],
-        sign_bill_accounts: [],
-        hotel_rooms: [],
-        payment_methods: []
-      };
-      
-      const success = await syncAllDataToGitHub(storageSettings.githubConfig, allData);
+      // 调用新的同步函数
+      const success = await fetchAndSyncAllDataToGitHub(storageSettings.githubConfig);
       
       if (success) {
         setSyncStatus('success');

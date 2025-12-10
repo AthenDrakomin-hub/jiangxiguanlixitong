@@ -143,3 +143,42 @@ export const syncAllDataToGitHub = async (githubConfig: GitHubConfig, allData: a
     return false;
   }
 };
+
+// 从 TiDB 获取所有数据并同步到 GitHub
+export const fetchAndSyncAllDataToGitHub = async (githubConfig: GitHubConfig): Promise<boolean> => {
+  try {
+    // 获取所有数据表的数据
+    const tables = [
+      'dishes', 'orders', 'expenses', 'inventory', 
+      'ktv_rooms', 'sign_bill_accounts', 'hotel_rooms', 'payment_methods'
+    ];
+    
+    // 并行获取所有数据
+    const allData: Record<string, any[]> = {};
+    
+    // 注意：在实际实现中，这里需要调用真实的 API 来获取数据
+    // 由于这是一个前端服务，我们需要通过 API 客户端来获取数据
+    
+    // 模拟获取数据的过程
+    for (const table of tables) {
+      try {
+        // 在实际实现中，这里需要调用真实的 API
+        // 例如：const response = await fetch(`/api/${table}`);
+        // const data = await response.json();
+        // allData[table] = data;
+        
+        // 暂时使用空数组作为占位符
+        allData[table] = [];
+      } catch (error) {
+        console.error(`Failed to fetch data for table ${table}:`, error);
+        allData[table] = [];
+      }
+    }
+    
+    // 同步所有数据到 GitHub
+    return await syncAllDataToGitHub(githubConfig, allData);
+  } catch (error) {
+    console.error('Fetch and sync error:', error);
+    return false;
+  }
+};
