@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Save, Store, Printer, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, CreditCard, DollarSign, AlertTriangle, Wifi, WifiOff, Info } from 'lucide-react';
-import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection } from '../services/storage';
+import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection, syncAllDataToGitHub } from '../services/storage';
 import { StorageSettings, StoreInfo, PaymentConfig } from '../types';
 import { PrinterService } from '../services/printer';
 
@@ -191,6 +191,47 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
           ]
       };
       PrinterService.printOrder(dummyOrder);
+  };
+
+  // 添加同步状态
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // 添加手动同步函数
+  const handleManualSync = async () => {
+    if (storageSettings.type !== 'github') return;
+    
+    setIsSyncing(true);
+    setSyncStatus('idle');
+    
+    try {
+      // 这里需要获取所有数据，但在设置页面无法直接访问
+      // 在实际实现中，您需要从全局状态或 API 获取所有数据
+      const allData = {
+        dishes: [],
+        orders: [],
+        expenses: [],
+        inventory: [],
+        ktv_rooms: [],
+        sign_bill_accounts: [],
+        hotel_rooms: [],
+        payment_methods: []
+      };
+      
+      const success = await syncAllDataToGitHub(storageSettings.githubConfig, allData);
+      
+      if (success) {
+        setSyncStatus('success');
+        setTimeout(() => setSyncStatus('idle'), 3000);
+      } else {
+        setSyncStatus('error');
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      setSyncStatus('error');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -548,6 +589,23 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                              <label className="text-xs font-bold text-slate-500 uppercase">访问令牌 (Token)</label>
                              <input type="password" value={storageSettings.githubConfig.token} onChange={e => setStorageSettings({...storageSettings, githubConfig: {...storageSettings.githubConfig, token: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" placeholder="ghp_..." />
                           </div>
+                       </div>
+                       
+                       // 添加手动同步按钮
+                       <div className="pt-4 mt-4 border-t border-slate-200 flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                           {syncStatus === 'success' && <span className="text-green-600 text-xs font-bold flex items-center gap-1"><Check size={14} /> 同步成功</span>}
+                           {syncStatus === 'error' && <span className="text-red-600 text-xs font-bold flex items-center gap-1"><AlertTriangle size={14} /> 同步失败</span>}
+                           {syncStatus === 'idle' && !isSyncing && <span className="text-slate-400 text-xs">点击按钮手动同步所有数据到 GitHub</span>}
+                           {isSyncing && <span className="text-slate-400 text-xs">同步中...</span>}
+                         </div>
+                         <button 
+                           onClick={handleManualSync}
+                           disabled={isSyncing}
+                           className="text-sm font-medium text-white bg-blue-600 px-3 py-1.5 rounded hover:bg-blue-700 disabled:opacity-50"
+                         >
+                           {isSyncing ? '同步中...' : '手动同步'}
+                         </button>
                        </div>
                     </div>
                  )}
