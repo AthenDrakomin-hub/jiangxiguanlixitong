@@ -10,7 +10,8 @@
     "init-db": "node scripts/init-db.js",
     "init-db-api": "node scripts/init-db-via-api.js",
     "check-api": "node check-api.js",
-    "test-github-sync": "node test-github-sync.js"
+    "test-github-sync": "node test-github-sync.js",
+    "test-db-connection": "node test-db-connection.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

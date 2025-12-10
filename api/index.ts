@@ -1,6 +1,23 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import pool from './db.js';
 
+// 定义允许访问的表
+const ALLOWED_TABLES = [
+  'dishes', 
+  'orders', 
+  'expenses', 
+  'inventory', 
+  'ktv_rooms', 
+  'sign_bill_accounts', 
+  'hotel_rooms', 
+  'payment_methods'
+];
+
+// 验证表名是否允许访问
+function isValidTable(tableName: string): boolean {
+  return ALLOWED_TABLES.includes(tableName);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method, query, body } = req;
   
@@ -19,6 +36,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Extract table name from URL path
     const pathParts = req.url?.split('/').filter((p: string) => p) || [];
     const tableName = pathParts[pathParts.length - 1]?.split('?')[0] || query.table as string;
+    
+    // 验证表名
+    if (tableName && tableName !== 'index' && !isValidTable(tableName)) {
+      res.status(400).json({ 
+        success: false,
+        message: `Invalid table name: ${tableName}`
+      });
+      return;
+    }
     
     switch (method) {
       case 'GET':
