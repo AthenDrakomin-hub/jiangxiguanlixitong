@@ -1,229 +1,143 @@
-# 江西酒店管理系统 (Jiangxi Hotel Management System)
+# 江西酒店管理系统
 
-<div align="center">
+专为海外华人酒店设计的全栈 SaaS 管理系统，集成餐饮点单、客房管理、KTV 预订、财务管理等功能。
 
-[![React](https://img.shields.io/badge/React-18-blue?logo=react)](#)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript)](#)
-[![Vite](https://img.shields.io/badge/Vite-Blazing_Fast-blue?logo=vite)](#)
-[![TiDB](https://img.shields.io/badge/TiDB-Cloud-orange?logo=tidb)](#)
-[![Vercel](https://img.shields.io/badge/Vercel-Deployment-black?logo=vercel)](#)
+## 📋 项目介绍
 
-</div>
+这是一个**前后端一体化**的酒店管理系统：
+- **前端**：React 18 + TypeScript + Vite 构建的单页应用 (SPA)
+- **后端**：Vercel Serverless Functions 提供 RESTful API
+- **数据库**：TiDB Cloud（MySQL 兼容的云数据库）
+- **部署**：Vercel 一键部署，支持 PWA 安装到桌面
 
-一款面向中小型酒店/餐厅的一站式管理解决方案，融合餐饮点单、客房服务、KTV预订、财务管理与库存管控，实现全业务链数字化运营。
+## ✨ 核心功能
 
-## 🎉 部署状态
+### 🍽️ 餐饮管理
+- 菜单管理（图片、价格、分类、辣度标识）
+- 桌边点单（扫码点餐 H5 页面，支持中文/菲律宾语）
+- 后厨显示屏（实时接收订单）
+- 订单状态追踪（待处理 → 制作中 → 已完成 → 已支付）
 
-✅ **项目已准备就绪，可以正式部署到Vercel！**
+### 🏨 客房管理
+- 房间状态（空闲/已入住）
+- 客房送餐（从房间直接下单到餐厅）
+- 入住登记与退房管理
 
-🔧 **最近更新** (2024-12-10):
-- ✅ 修复 API 路由映射问题
-- ✅ 移除硬编码数据库凭据
-- ✅ 清理代码冗余
-- ✅ 完善部署文档
+### 🎵 KTV 预订
+- 包厢管理（小型/中型/豪华包厢）
+- 按小时计费
+- 预订时段管理
 
-📖 **快速开始指南**: 参见 [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md)  
-📊 **项目状态报告**: 参见 [PROJECT_STATUS.md](PROJECT_STATUS.md)  
-🔧 **修复总结**: 参见 [FIXES_SUMMARY.md](FIXES_SUMMARY.md)
+### 💰 财务管理
+- 多种支付方式（现金、GCash、Maya、支付宝、微信、USDT）
+- 协议挂账（企业/VIP 客户信用额度管理）
+- 交班报表（Shift Report）
 
-## 🌟 核心功能 (Core Features)
+## 🛠️ 技术架构
 
-### 1. 🍽️ 餐饮管理 (Restaurant Management)
-*   **智能菜单**: 支持菜品图片、描述、价格、分类、辣度标识。
-*   **桌边点单**: 桌号快速下单，实时同步至后厨显示屏(KDS)。
-*   **订单追踪**: 可视化订单状态(Pending/Confirmed/Cooking/Ready/Delivered/Paid/Cancelled)。
-*   **多语言支持**: 中英双语界面，菲律宾本土化术语。
-*   **批量导入**: 支持CSV模板批量导入菜单数据。
+### 前端技术栈
+- **框架**：React 18 + TypeScript
+- **构建工具**：Vite 6
+- **样式**：Tailwind CSS
+- **UI 组件**：Lucide React（图标）、Recharts（图表）
+- **模块规范**：ES Module（`"type": "module"`）
+- **PWA**：vite-plugin-pwa（支持桌面安装）
 
-### 2. 🎵 KTV娱乐系统 (Entertainment)
-*   **包厢管理**: 支持小型/中型/豪华包厢预订与状态追踪。
-*   **计费模式**: 按小时计费，自动计算消费金额。
-*   **时段管理**: 灵活设置不同时段的价格策略。
+### 后端技术栈
+- **运行环境**：Vercel Serverless Functions (Node.js)
+- **API 风格**：RESTful API
+- **数据库**：TiDB Cloud（MySQL 兼容）
+- **数据库驱动**：mysql2/promise
 
-### 3. 🏨 客房服务 (Hotel Services)
-*   **房间管理**: 支持标准间/大床房/套房等多种房型。
-*   **入住管理**: 客人信息登记、入住/退房时间记录。
-*   **客房送餐**: 直接从客房下单，无缝对接餐厅系统。
+### 项目结构说明
 
-### 4. 📱 数字化体验 (Digital Experience)
-*   **扫码点单**: 客户扫描二维码直接访问H5点单页面。
-*   **厨房显示屏**: 后厨实时接收并处理订单，支持订单状态更新。
-*   **移动适配**: 响应式设计，完美适配手机、平板、收银机等各种设备。
+```
+jiangxiguanlixitong/
+├── api/                    # 后端 API (Vercel Serverless Functions)
+│   ├── db.ts              # 数据库连接池
+│   └── index.ts           # API 路由处理器
+├── components/            # React 组件
+│   ├── App.tsx           # 主应用（后台管理界面）
+│   ├── CustomerOrder.tsx # H5 点餐页面
+│   ├── HotelSystem.tsx   # 酒店客房模块
+│   └── ...
+├── scripts/               # 数据库初始化脚本
+├── vite.config.ts        # Vite 构建配置
+├── package.json          # 依赖管理（"type": "module"）
+└── tsconfig.app.json     # TypeScript 配置（"module": "ESNext"）
+```
 
-### 5. 💰 财务与挂账 (Finance & Credit)
-*   **全渠道支付**: 聚合 Cash, GCash, Maya, Alipay, WeChat, USDT。
-*   **协议挂账**: 支持企业/VIP客户信用额度管理、挂账消费与周期结算 (月结/季结)。
-*   **交班报表**: 自动生成 Shift Report，统计当班营收与支付方式汇总。
+**重要说明**：
+- `api/` 文件夹是 **Vercel 后端 API**，运行在 Node.js 服务器端
+- 其他代码是 **前端应用**，运行在浏览器
+- Vercel 部署时会自动识别并分别处理前后端代码
 
----
+## 🚀 快速开始
 
-## 🛠️ 技术架构 (Architecture)
+### 1. 准备 TiDB Cloud 数据库
 
-*   **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
-*   **Backend / DB**: **TiDB Cloud** (MySQL compatible, Realtime, Storage)
-*   **UI Components**: Lucide React, Recharts (Data Viz), @dnd-kit (Drag & Drop)
-*   **Deployment**: Vercel (Recommended)
+1. 访问 [TiDB Cloud](https://tidbcloud.com) 创建免费集群
+2. 创建数据库：`fortune500`
+3. 获取连接信息（Host、Port、User、Password）
 
----
+### 2. Vercel 一键部署
 
-## 🚀 部署指南 (Deployment)
+1. Fork 本项目到您的 GitHub
+2. 在 [Vercel](https://vercel.com) 导入项目
+3. 配置环境变量：
 
-### 1. TiDB Cloud 设置 (Database)
-1.  登录 [TiDB Cloud](https://tidbcloud.com) 创建新集群。
-2.  创建数据库和用户，并授予相应权限。
-3.  获取连接信息：Host, Port, Username, Password, Database Name。
+   ```
+   TIDB_HOST=gateway01.xxx.prod.aws.tidbcloud.com
+   TIDB_PORT=4000
+   TIDB_USER=你的用户名
+   TIDB_PASSWORD=你的密码
+   TIDB_DATABASE=fortune500
+   TIDB_SSL=true
+   ```
 
-### 2. Vercel 部署 (Hosting)
-1.  Fork 本仓库到您的 GitHub。
-2.  在 Vercel 中导入项目。
-3.  **关键步骤**: 在 Environment Variables 中添加以下变量：
+4. 点击 Deploy
 
-| Variable Name | Value Description |
-| :--- | :--- |
-| `TIDB_HOST` | 您的 TiDB Cloud 集群地址 |
-| `TIDB_PORT` | 端口号 (默认: 4000) |
-| `TIDB_USER` | 数据库用户名 |
-| `TIDB_PASSWORD` | 数据库密码 |
-| `TIDB_DATABASE` | 数据库名称 |
-| `TIDB_SSL` | 是否启用 SSL (true/false) |
-| `VITE_ADMIN_USER` | (可选) 设置后台管理员用户名 |
-| `VITE_ADMIN_PASS` | (可选) 设置后台管理员密码 |
-
-4.  点击 **Deploy**。
-
-### 3. 数据库初始化
-部署完成后，需要初始化数据库表结构：
+### 3. 初始化数据库
 
 ```bash
-# 1. 克隆项目到本地
-git clone [your-repo-url]
-cd jiangxi-hotel-admin
+# 克隆项目
+git clone https://github.com/your-username/jiangxiguanlixitong.git
+cd jiangxiguanlixitong
 
-# 2. 安装依赖
+# 安装依赖
 npm install
 
-# 3. 复制环境变量文件并填写TiDB连接信息
+# 创建 .env.local 文件，填写 TiDB 连接信息
 cp .env.example .env.local
 
-# 4. 运行数据库初始化脚本
+# 运行初始化脚本
 node scripts/init-db.js
 ```
 
-### 4. 本地开发 (Development)
+### 4. 本地开发
+
 ```bash
-# 1. 克隆项目
-git clone [repo-url]
-
-# 2. 安装依赖
-npm install
-
-# 3. 复制环境变量文件并填写相关信息
-cp .env.example .env.local
-
-# 4. 启动开发服务器
+# 启动开发服务器
 npm run dev
+
+# 访问 http://localhost:5173
 ```
 
-### 5. 生产环境构建 (Production Build)
-```bash
-# 1. 构建生产版本
-npm run build
-
-# 2. 预览生产构建
-npm run preview
-```
-
----
-
-## 🔧 环境变量配置 (Environment Variables)
-
-创建 `.env.local` 文件（开发环境）或在 Vercel 中设置环境变量：
-
-```env
-# TiDB 数据库连接信息
-TIDB_HOST=your_tidb_host
-TIDB_PORT=4000
-TIDB_USER=your_tidb_user
-TIDB_PASSWORD=your_tidb_password
-TIDB_DATABASE=your_tidb_database
-TIDB_SSL=true
-
-# 管理员凭据（可选）
-VITE_ADMIN_USER=your_admin_username
-VITE_ADMIN_PASS=your_admin_password
-```
-
----
-
-## 📁 项目结构 (Project Structure)
-
-```
-jiangxi-hotel-admin/
-├── api/                 # Vercel Serverless API 路由
-├── components/          # React 组件
-├── config/              # 配置文件
-├── hooks/               # 自定义 React Hooks
-├── scripts/             # 部署和维护脚本
-├── services/            # 业务逻辑和服务
-├── utils/               # 工具函数
-├── App.tsx             # 主应用组件
-├── index.tsx           # 应用入口
-└── vite.config.ts      # Vite 配置
-```
-
----
-
-## ✅ 部署验证 (Deployment Validation)
-
-部署完成后，运行以下命令验证系统是否正常工作：
+## 📦 可用命令
 
 ```bash
-# 运行部署验证脚本
-npm run validate:deploy
+npm run dev          # 启动开发服务器
+npm run build        # 构建生产版本
+npm run preview      # 预览生产构建
+npm run init-db      # 初始化数据库
 ```
 
-该脚本将检查：
-1. 环境变量配置
-2. 数据库连接
-3. 数据库表结构
-4. API 服务
-5. 前端构建
+## 🌐 访问方式
 
----
+- **后台管理**：`https://your-domain.com`
+- **H5 点餐页面**：`https://your-domain.com/?location=8201`（桌号 8201）
+- **API 接口**：`https://your-domain.com/api/menu_items`
 
-## 🔄 数据库初始化 (Database Initialization)
+## 📄 许可证
 
-首次部署时，需要初始化数据库表结构。执行以下 SQL 脚本：
-
-```bash
-# 在 TiDB Cloud 控制台中执行 scripts/init-database.sql 文件
-```
-
-或者使用Node.js脚本：
-```bash
-# 运行数据库初始化脚本
-node scripts/init-db.js
-```
-
----
-
-## 🔐 安全建议 (Security Recommendations)
-
-1.  **强密码策略**: 为管理员账户设置强密码
-2.  **HTTPS**: 确保启用了 HTTPS 加密传输
-3.  **访问控制**: 限制对管理后台的访问
-4.  **定期备份**: 定期备份 TiDB 数据库
-5.  **更新维护**: 定期更新依赖包以修复安全漏洞
-
----
-
-## 📞 技术支持 (Support)
-
-如有任何问题，请提交 Issue 或联系技术支持团队。
-
----
-
-## 📄 许可证 (License)
-
-本项目为专有软件，版权所有。未经授权，禁止复制、分发或修改本软件的任何部分。
-查看 [LICENSE](LICENSE) 文件了解详细条款。
+本项目为专有软件，版权所有。
