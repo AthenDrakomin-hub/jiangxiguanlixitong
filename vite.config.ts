@@ -61,7 +61,6 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom'],
           'recharts': ['recharts'],
-          'aws-sdk': ['@aws-sdk/client-s3'],
           'dnd-kit': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
           'lucide': ['lucide-react']
         }
