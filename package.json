@@ -35,6 +35,7 @@
     "workbox-build": "^7.4.0"
   },
   "devDependencies": {
+    "@types/mysql2": "^3.9.7",
     "@types/node": "^24.10.2",
     "@types/node-fetch": "^2.6.11",
     "@types/react": "^19.2.7",
