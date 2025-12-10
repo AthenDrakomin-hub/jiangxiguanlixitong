@@ -185,7 +185,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
                  {hotelRooms.filter((r: HotelRoom) => r.orders && r.orders.length > 0).map((room: HotelRoom) => (
                    <div key={room.id} className="bg-orange-50 border border-orange-200 p-3 rounded-lg flex justify-between items-center">
                       <span className="font-bold text-orange-800">{room.number}</span>
-                      <span className="text-xs bg-white px-2 py-1 rounded text-orange-600 font-bold">₱{room.orders.reduce((s: number, i: any) => s + i.price * i.quantity, 0)}</span>
+                      <span className="text-xs bg-white px-2 py-1 rounded text-orange-600 font-bold">₱{room.orders ? room.orders.reduce((s: number, i: any) => s + i.price * i.quantity, 0) : 0}</span>
                    </div>
                  ))}
                </div>
