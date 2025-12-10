@@ -38,8 +38,8 @@ async function testConnection() {
     console.log('✅ 数据库连接成功！');
     
     // 测试查询
-    const [rows] = await connection.execute('SELECT COUNT(*) as count FROM menu_items');
-    console.log('✅ 查询成功，menu_items表记录数:', rows[0].count);
+    const [rows] = await connection.execute('SELECT COUNT(*) as count FROM dishes');
+    console.log('✅ 查询成功，dishes表记录数:', rows[0].count);
     
     await connection.end();
   } catch (error) {
