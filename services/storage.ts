@@ -147,8 +147,9 @@ export const syncAllDataToGitHub = async (githubConfig: GitHubConfig, allData: a
 // 从 TiDB 获取所有数据并同步到 GitHub
 export const fetchAndSyncAllDataToGitHub = async (githubConfig: GitHubConfig): Promise<boolean> => {
   try {
-    // 导入 API 客户端
-    const { apiClient } = await import('../services/apiClient');
+    // 动态导入 API 客户端以避免循环依赖
+    const apiClientModule = await import('./apiClient');
+    const { apiClient } = apiClientModule;
     
     // 获取所有数据
     const allData = await apiClient.fetchAll();
