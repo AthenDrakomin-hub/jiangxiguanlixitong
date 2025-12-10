@@ -11,7 +11,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:tidb": "C:\\nvm4w\\nodejs\\node.exe test-tidb-connection-simple.mjs",
-    "validate:deploy": "node scripts/deployment-validation.js"
+    "validate:deploy": "node scripts/deployment-validation.js",
+    "pre-deploy-check": "node scripts/pre-deploy-check.js",
+    "init-db": "node scripts/init-db.js",
+    "diagnose-pwa": "node scripts/diagnose-pwa.cjs",
+    "test-h5": "node scripts/test-h5-page.cjs",
+    "test-rooms": "node scripts/test-room-status.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.454.0",

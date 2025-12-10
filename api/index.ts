@@ -16,17 +16,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Extract table name from URL path
+    const pathParts = req.url?.split('/').filter((p: string) => p) || [];
+    const tableName = pathParts[pathParts.length - 1]?.split('?')[0] || query.table as string;
+    
     switch (method) {
       case 'GET':
-        if (query.table) {
+        if (tableName && tableName !== 'index') {
           // Get all records from a table
           const connection = await pool.getConnection();
-          const [rows] = await connection.execute(`SELECT * FROM ${query.table}`);
+          const [rows] = await connection.execute(`SELECT * FROM ${tableName}`);
           connection.release();
           res.status(200).json({ 
             success: true,
             data: rows,
-            message: `Successfully fetched data from ${query.table}`
+            message: `Successfully fetched data from ${tableName}`
           });
         } else {
           res.status(200).json({ 
@@ -39,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
       case 'POST':
         // Create new record
-        if (query.table && body) {
+        if (tableName && body) {
           const connection = await pool.getConnection();
           
           // Generate a unique ID for the new record
@@ -56,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           values.unshift(id); // Add generated id as first value
           
           const placeholders = keys.map(() => '?').join(', ');
-          const sql = `INSERT INTO ${query.table} (${keys.join(', ')}) VALUES (${placeholders})`;
+          const sql = `INSERT INTO ${tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
           
           await connection.execute(sql, values);
           connection.release();
@@ -64,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           res.status(201).json({ 
             success: true,
             data: { id, ...body },
-            message: `Successfully created record in ${query.table}`
+            message: `Successfully created record in ${tableName}`
           });
         } else {
           res.status(400).json({ 
@@ -76,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
       case 'PUT':
         // Update existing record
-        if (query.table && query.id && body) {
+        if (tableName && query.id && body) {
           const connection = await pool.getConnection();
           
           // Build UPDATE query dynamically based on body data
@@ -85,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const setters = keys.map(key => `${key} = ?`).join(', ');
           values.push(query.id as string); // Add id for WHERE clause
           
-          const sql = `UPDATE ${query.table} SET ${setters} WHERE id = ?`;
+          const sql = `UPDATE ${tableName} SET ${setters} WHERE id = ?`;
           
           await connection.execute(sql, values);
           connection.release();
@@ -93,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           res.status(200).json({ 
             success: true,
             data: { id: query.id, ...body },
-            message: `Successfully updated record in ${query.table}`
+            message: `Successfully updated record in ${tableName}`
           });
         } else {
           res.status(400).json({ 
@@ -105,14 +109,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
       case 'DELETE':
         // Delete record
-        if (query.table && query.id) {
+        if (tableName && query.id) {
           const connection = await pool.getConnection();
-          await connection.execute(`DELETE FROM ${query.table} WHERE id = ?`, [query.id]);
+          await connection.execute(`DELETE FROM ${tableName} WHERE id = ?`, [query.id]);
           connection.release();
           
           res.status(200).json({ 
             success: true,
-            message: `Successfully deleted record from ${query.table}`
+            message: `Successfully deleted record from ${tableName}`
           });
         } else {
           res.status(400).json({ 

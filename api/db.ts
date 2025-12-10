@@ -1,19 +1,26 @@
 // Database connection pool for Vercel Serverless API
 // This file should only be used in the backend API routes
 
-import mysql from 'mysql2/promise';
+import * as mysql from 'mysql2/promise';
 
 // TiDB connection configuration
 const tidbConfig = {
-  host: process.env.TIDB_HOST || 'gateway01.eu-central-1.prod.aws.tidbcloud.com',
+  host: process.env.TIDB_HOST,
   port: parseInt(process.env.TIDB_PORT || '4000'),
-  user: process.env.TIDB_USER || 'qraob1XdQoegM6F.root',
-  password: process.env.TIDB_PASSWORD || 'rZrxRtFz7wGOtZ0D',
+  user: process.env.TIDB_USER,
+  password: process.env.TIDB_PASSWORD,
   database: process.env.TIDB_DATABASE || 'fortune500',
   ssl: process.env.TIDB_SSL === 'true' ? {
     rejectUnauthorized: true
   } : undefined
 };
+
+// Validate required environment variables
+if (!process.env.TIDB_HOST || !process.env.TIDB_USER || !process.env.TIDB_PASSWORD) {
+  console.error('❌ Missing required database environment variables!');
+  console.error('Please set: TIDB_HOST, TIDB_USER, TIDB_PASSWORD');
+  throw new Error('Database configuration error');
+}
 
 // Create a connection pool
 const pool = mysql.createPool({
