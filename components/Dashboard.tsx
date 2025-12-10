@@ -45,19 +45,19 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
   // 1. Dining Revenue (Hall + Takeout)
   const diningRevenue = useMemo(() => 
     orders
-      .filter(o => o.status !== OrderStatus.CANCELLED)
-      .reduce((acc, order) => acc + order.totalAmount, 0)
+      .filter((o: Order) => o.status !== OrderStatus.CANCELLED)
+      .reduce((acc: number, order: Order) => acc + order.totalAmount, 0)
   , [orders]);
 
   // 2. KTV Revenue
   const activeKtvRevenue = useMemo(() => {
-    return ktvRooms.reduce((acc, room) => {
+    return ktvRooms.reduce((acc: number, room: KTVRoom) => {
       if (room.status === 'InUse' && room.currentSession) {
         const start = new Date(room.currentSession.startTime).getTime();
         const now = new Date().getTime();
         const hours = Math.max(1, Math.ceil((now - start) / (1000 * 60 * 60)));
         const roomFee = hours * room.hourlyRate;
-        const ordersFee = room.currentSession.orders.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const ordersFee = room.currentSession.orders ? room.currentSession.orders.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) : 0;
         return acc + roomFee + ordersFee;
       }
       return acc;
@@ -66,18 +66,18 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
 
   // 3. Hotel Room Dining Revenue (Active orders in rooms)
   const hotelDiningRevenue = useMemo(() => {
-    return hotelRooms.reduce((acc, room) => {
-      const roomOrderTotal = room.orders.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return hotelRooms.reduce((acc: number, room: HotelRoom) => {
+      const roomOrderTotal = room.orders ? room.orders.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) : 0;
       return acc + roomOrderTotal;
     }, 0);
   }, [hotelRooms]);
 
   // 4. Total Receivables
   const totalReceivables = useMemo(() => 
-    signBillAccounts.reduce((acc, account) => acc + account.currentDebt, 0)
+    signBillAccounts.reduce((acc: number, account: SignBillAccount) => acc + (account?.currentDebt || 0), 0)
   , [signBillAccounts]);
 
-  const activeHotelDining = hotelRooms.filter(r => r.orders.length > 0).length;
+  const activeHotelDining = hotelRooms.filter((r: HotelRoom) => r.orders && r.orders.length > 0).length;
   
   // Total Estimated Assets
   const totalAssets = diningRevenue + activeKtvRevenue + hotelDiningRevenue + totalReceivables;
@@ -132,7 +132,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
           value={`₱${totalReceivables.toLocaleString()}`} 
           icon={FileSignature} 
           color="bg-yellow-500" 
-          footer={`${signBillAccounts.filter(a => a.currentDebt > 0).length} 个单位欠款`}
+          footer={`${signBillAccounts.filter((a: SignBillAccount) => a.currentDebt > 0).length} 个单位欠款`}
         />
       </div>
 
@@ -182,10 +182,10 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
                <div className="text-slate-400 text-sm py-4">当前无客房点餐 No Active Orders</div>
              ) : (
                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                 {hotelRooms.filter(r => r.orders.length > 0).map(room => (
+                 {hotelRooms.filter((r: HotelRoom) => r.orders && r.orders.length > 0).map((room: HotelRoom) => (
                    <div key={room.id} className="bg-orange-50 border border-orange-200 p-3 rounded-lg flex justify-between items-center">
                       <span className="font-bold text-orange-800">{room.number}</span>
-                      <span className="text-xs bg-white px-2 py-1 rounded text-orange-600 font-bold">₱{room.orders.reduce((s,i) => s + i.price * i.quantity, 0)}</span>
+                      <span className="text-xs bg-white px-2 py-1 rounded text-orange-600 font-bold">₱{room.orders.reduce((s: number, i: any) => s + i.price * i.quantity, 0)}</span>
                    </div>
                  ))}
                </div>
@@ -197,7 +197,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
                 <h3 className="font-bold text-slate-800 flex items-center gap-2"><Mic2 size={18} /> KTV 包厢状态 (4F)</h3>
              </div>
              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-               {ktvRooms.map(room => (
+               {ktvRooms.map((room: KTVRoom) => (
                  <div key={room.id} className={`flex items-center justify-between p-3 rounded-lg border ${room.status === 'InUse' ? 'bg-purple-50 border-purple-200' : 'bg-slate-50 border-slate-100'}`}>
                     <span className={`font-bold ${room.status === 'InUse' ? 'text-purple-700' : 'text-slate-500'}`}>{room.name}</span>
                     <span className={`w-2 h-2 rounded-full ${room.status === 'InUse' ? 'bg-purple-500 animate-pulse' : 'bg-slate-300'}`}></span>
