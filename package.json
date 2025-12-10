@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "init-db": "node scripts/init-db.js"
+    "init-db": "node scripts/init-db.js",
+    "test-github-sync": "node test-github-sync.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
