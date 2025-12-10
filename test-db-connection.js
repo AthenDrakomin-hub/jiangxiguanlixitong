@@ -2,6 +2,12 @@
 // 用于验证Vercel环境变量配置是否正确
 
 import mysql from 'mysql2/promise';
+import * as dotenv from 'dotenv';
+import { join } from 'path';
+
+// 显式加载 .env.local 文件
+const envPath = join(process.cwd(), '.env.local');
+dotenv.config({ path: envPath });
 
 // 从环境变量获取数据库配置
 const config = {
