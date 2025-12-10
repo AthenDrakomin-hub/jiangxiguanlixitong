@@ -579,20 +579,48 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                           </div>
                        </div>
                        
-                       // 添加手动同步按钮
-                       <div className="pt-4 mt-4 border-t border-slate-200 flex items-center justify-between">
-                         <div className="flex items-center gap-2">
-                           {syncStatus === 'success' && <span className="text-green-600 text-xs font-bold flex items-center gap-1"><Check size={14} /> 同步成功</span>}
-                           {syncStatus === 'error' && <span className="text-red-600 text-xs font-bold flex items-center gap-1"><AlertTriangle size={14} /> 同步失败</span>}
-                           {syncStatus === 'idle' && !isSyncing && <span className="text-slate-400 text-xs">点击按钮手动同步所有数据到 GitHub</span>}
-                           {isSyncing && <span className="text-slate-400 text-xs">同步中...</span>}
+                       // 添加手动同步按钮和状态显示
+                       <div className="pt-4 mt-4 border-t border-slate-200">
+                         <div className="flex items-center justify-between mb-2">
+                           <h4 className="font-bold text-slate-700">数据同步</h4>
+                           <div className="flex items-center gap-2">
+                             {syncStatus === 'success' && (
+                               <span className="text-green-600 text-xs font-bold flex items-center gap-1">
+                                 <Check size={14} /> 同步成功
+                               </span>
+                             )}
+                             {syncStatus === 'error' && (
+                               <span className="text-red-600 text-xs font-bold flex items-center gap-1">
+                                 <AlertTriangle size={14} /> 同步失败
+                               </span>
+                             )}
+                             {isSyncing && (
+                               <span className="text-slate-400 text-xs flex items-center gap-1">
+                                 <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                                 同步中...
+                               </span>
+                             )}
+                           </div>
                          </div>
+                         <p className="text-xs text-slate-500 mb-3">
+                           点击下面的按钮将所有数据备份到您的 GitHub 仓库
+                         </p>
                          <button 
                            onClick={handleManualSync}
                            disabled={isSyncing}
-                           className="text-sm font-medium text-white bg-blue-600 px-3 py-1.5 rounded hover:bg-blue-700 disabled:opacity-50"
+                           className="w-full text-sm font-medium text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                          >
-                           {isSyncing ? '同步中...' : '手动同步'}
+                           {isSyncing ? (
+                             <>
+                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                               正在同步数据...
+                             </>
+                           ) : (
+                             <>
+                               <Github size={16} />
+                               备份所有数据到 GitHub
+                             </>
+                           )}
                          </button>
                        </div>
                     </div>
