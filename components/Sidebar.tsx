@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Utensils, ClipboardList, DollarSign, Package, Settings, Mic2, FileSignature, BedDouble, QrCode, ChefHat, X, CreditCard, Bug } from 'lucide-react';
+import { LayoutDashboard, Utensils, ClipboardList, DollarSign, Package, Settings, Mic2, FileSignature, BedDouble, QrCode, ChefHat, X, CreditCard, Bug, Shield } from 'lucide-react';
 import { Page } from '../types';
 import { t } from '../utils/i18n';
 
@@ -50,6 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
     { id: 'signbill', label: t('signbill'), icon: FileSignature },
     { id: 'finance', label: t('finance'), icon: DollarSign },
     { id: 'payment', label: '支付方式', icon: CreditCard },
+    { id: 'permissions', label: '权限管理', icon: Shield },
     { id: 'settings', label: t('settings'), icon: Settings },
   ];
 

@@ -8,12 +8,7 @@
 4. 添加以下环境变量:
 
 ```
-TIDB_HOST=gateway01.eu-central-1.prod.aws.tidbcloud.com
-TIDB_PORT=4000
-TIDB_USER=qraob1XdQoegM6F.root
-TIDB_PASSWORD=rZrxRtFz7wGOtZ0D
-TIDB_DATABASE=fortune500
-TIDB_SSL=true
+BLOB_READ_WRITE_TOKEN=your_blob_read_write_token_here
 ```
 
 5. 重新部署项目:
@@ -29,7 +24,7 @@ TIDB_SSL=true
 
 ## 常见问题
 
-如果仍有数据库连接问题，请检查:
+如果部署后数据无法正常访问，请检查:
 1. 环境变量名称是否完全匹配
-2. TiDB Cloud 是否允许来自 Vercel 的连接
-3. 网络防火墙设置
+2. BLOB_READ_WRITE_TOKEN 是否正确配置
+3. 网络连接是否正常

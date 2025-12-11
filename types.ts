@@ -167,7 +167,7 @@ export interface SystemSettings {
     categories?: string[]; // Dynamic categories
 }
 
-export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'payment' | 'autodetect';
+export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'payment' | 'permissions' | 'autodetect';
 
 // Standardized API Response Wrapper
 export interface ApiResponse<T> {
@@ -178,7 +178,7 @@ export interface ApiResponse<T> {
 }
 
 // Storage Configuration
-export type StorageType = 'local' | 's3' | 'github';
+export type StorageType = 'blob';
 
 export interface S3Config {
   region: string;
@@ -207,9 +207,6 @@ export interface TiDBConfig {
 
 export interface StorageSettings {
   type: StorageType;
-  s3Config: S3Config;
-  githubConfig: GitHubConfig;
-  tidbConfig?: TiDBConfig; // Optional TiDB config for future extension
 }
 
 // Car Service Types

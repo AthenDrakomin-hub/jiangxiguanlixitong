@@ -12,8 +12,8 @@ import {
   OrderStatus,
   Page
 } from './types';
-import { APP_CONFIG } from './config/appConfig';
-import AutoDetectTest from './src/AutoDetectTest';
+import { APP_CONFIG } from './config/appConfig.ts';
+import AutoDetectTest from './src/AutoDetectTest.tsx';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const MenuManagement = React.lazy(() => import('./components/MenuManagement'));
@@ -30,6 +30,7 @@ const CustomerOrder = React.lazy(() => import('./components/CustomerOrder'));
 const Login = React.lazy(() => import('./components/Login'));
 const Sidebar = React.lazy(() => import('./components/Sidebar'));
 const PaymentManagement = React.lazy(() => import('./components/PaymentManagement'));
+const PermissionManagement = React.lazy(() => import('./components/PermissionManagement'));
 
 const NOTIFICATION_SOUND_URL = APP_CONFIG.NOTIFICATION.soundUrl;
 
@@ -337,6 +338,8 @@ const App: React.FC = () => {
               return <CustomerOrder dishes={dishes || []} orders={orders || []} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
             case 'payment':
               return <PaymentManagement />;
+            case 'permissions':
+              return <PermissionManagement />;
 
             default:
               return <Dashboard orders={orders || []} ktvRooms={ktvRooms || []} signBillAccounts={signBillAccounts || []} hotelRooms={hotelRooms || []} />;

@@ -21,6 +21,7 @@ const translations: Record<string, TranslationDictionary> = {
     'kitchen': '后厨显示',
     'customer': '顾客点餐',
     'car': '用车服务',
+    'permissions': '权限管理',
     
     // Common actions
     'save': '保存',
@@ -70,6 +71,7 @@ const translations: Record<string, TranslationDictionary> = {
     'kitchen': 'Kitchen Display',
     'customer': 'Customer Order',
     'car': 'Car Service',
+    'permissions': 'Permission Management',
     
     // Common actions
     'save': 'Save',
@@ -119,6 +121,7 @@ const translations: Record<string, TranslationDictionary> = {
     'kitchen': 'Display ng Kusina',
     'customer': 'Order ng Customer',
     'car': 'Serbisyo sa Sasakyan',
+    'permissions': 'Pamamahala ng Pahintulot',
     
     // Common actions
     'save': 'I-save',

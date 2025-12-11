@@ -1,44 +1,51 @@
-# 江西酒店管理系统
-
-专为海外华人酒店设计的全栈 SaaS 管理系统，集成餐饮点单、客房管理、KTV 预订、财务管理等功能。
+# 江西酒店管理系统 (Blob Storage 版本)
 
 ## 📋 项目介绍
 
 这是一个**前后端一体化**的酒店管理系统：
 - **前端**：React 18 + TypeScript + Vite 构建的单页应用 (SPA)
 - **后端**：Vercel Serverless Functions 提供 RESTful API
-- **数据库**：TiDB Cloud（MySQL 兼容的云数据库）
+- **数据存储**：Vercel Blob Storage（对象存储）
 - **部署**：Vercel 一键部署，支持 PWA 安装到桌面
 
 ## ✨ 核心功能
 
 ### 🍽️ 餐饮管理
 - 菜单管理（图片、价格、分类、辣度标识）
-- 桌边点单（扫码点餐 H5 页面，支持中文/菲律宾语）
-- 后厨显示屏（实时接收订单）
-- 订单状态追踪（待处理 → 制作中 → 已完成 → 已支付）
+- 实时下单系统（支持多人同时点餐）
+- 厨房显示屏（实时显示订单状态）
+- 桌号二维码生成（扫码点餐）
 
-### 🏨 客房管理
-- 房间状态（空闲/已入住）
-- 客房送餐（从房间直接下单到餐厅）
-- 入住登记与退房管理
+### 🏨 酒店管理
+- 客房状态管理（入住、清洁、维修等）
+- KTV包房预订系统
+- 挂账账户管理
 
-### 🎵 KTV 预订
-- 包厢管理（小型/中型/豪华包厢）
-- 按小时计费
-- 预订时段管理
+### 💰 财务系统
+- 收支明细记录
+- 多种支付方式（现金、移动支付、加密货币等）
+- 日/月/年财务报表
+- 数据导出为 CSV
 
-### 💰 财务管理
-- 多种支付方式（现金、GCash、Maya、支付宝、微信、USDT）
-- 协议挂账（企业/VIP 客户信用额度管理）
-- 交班报表（Shift Report）
+### 📦 库存管理
+- 商品入库/出库
+- 库存预警提醒
+- 采购清单生成
 
-## 🛠️ 技术架构
+### ⚙️ 系统特性
+- 响应式设计（支持手机、平板、电脑）
+- 深色模式适配
+- PWA 支持（可安装到桌面）
+- 多语言支持（中英切换）
+
+## 🧱 技术架构
 
 ### 前端技术栈
-- **框架**：React 18 + TypeScript
-- **构建工具**：Vite 6
-- **样式**：Tailwind CSS
+- **框架**：React 18 (Hooks)
+- **语言**：TypeScript
+- **构建工具**：Vite 5
+- **样式**：Tailwind CSS 3 + PostCSS
+- **状态管理**：React Context API
 - **UI 组件**：Lucide React（图标）、Recharts（图表）
 - **模块规范**：ES Module（`"type": "module"`）
 - **PWA**：vite-plugin-pwa（支持桌面安装）
@@ -46,22 +53,22 @@
 ### 后端技术栈
 - **运行环境**：Vercel Serverless Functions (Node.js)
 - **API 风格**：RESTful API
-- **数据库**：TiDB Cloud（MySQL 兼容）
-- **数据库驱动**：mysql2/promise
+- **数据存储**：Vercel Blob Storage（对象存储）
+- **存储驱动**：@vercel/blob
 
 ### 项目结构说明
 
 ```
 jiangxiguanlixitong/
 ├── api/                    # 后端 API (Vercel Serverless Functions)
-│   ├── db.ts              # 数据库连接池
+│   ├── db.ts              # Blob Storage 客户端
 │   └── index.ts           # API 路由处理器
 ├── components/            # React 组件
 │   ├── App.tsx           # 主应用（后台管理界面）
 │   ├── CustomerOrder.tsx # H5 点餐页面
 │   ├── HotelSystem.tsx   # 酒店客房模块
 │   └── ...
-├── scripts/               # 数据库初始化脚本
+├── scripts/               # 数据迁移和示例数据脚本
 ├── vite.config.ts        # Vite 构建配置
 ├── package.json          # 依赖管理（"type": "module"）
 └── tsconfig.app.json     # TypeScript 配置（"module": "ESNext"）
@@ -74,11 +81,11 @@ jiangxiguanlixitong/
 
 ## 🚀 快速开始
 
-### 1. 准备 TiDB Cloud 数据库
+### 1. 准备 Vercel Blob Storage
 
-1. 访问 [TiDB Cloud](https://tidbcloud.com) 创建免费集群
-2. 创建数据库：`fortune500`
-3. 获取连接信息（Host、Port、User、Password）
+1. 访问 [Vercel](https://vercel.com) 创建账号
+2. 在项目设置中创建 Blob Storage 存储桶
+3. 获取 `BLOB_READ_WRITE_TOKEN`
 
 ### 2. Vercel 一键部署
 
@@ -87,31 +94,16 @@ jiangxiguanlixitong/
 3. 配置环境变量：
 
    ```
-   TIDB_HOST=gateway01.xxx.prod.aws.tidbcloud.com
-   TIDB_PORT=4000
-   TIDB_USER=你的用户名
-   TIDB_PASSWORD=你的密码
-   TIDB_DATABASE=fortune500
-   TIDB_SSL=true
+   BLOB_READ_WRITE_TOKEN=your_blob_read_write_token_here
    ```
 
 4. 点击 Deploy
 
-### 3. 初始化数据库
+### 3. 添加示例数据
 
 ```bash
-# 克隆项目
-git clone https://github.com/your-username/jiangxiguanlixitong.git
-cd jiangxiguanlixitong
-
-# 安装依赖
-npm install
-
-# 创建 .env.local 文件，填写 TiDB 连接信息
-cp .env.example .env.local
-
-# 运行初始化脚本
-node scripts/init-db.js
+# 添加示例数据到 Vercel Blob Storage
+npm run add-sample-data
 ```
 
 ### 4. 本地开发
@@ -129,14 +121,15 @@ npm run dev
 npm run dev          # 启动开发服务器
 npm run build        # 构建生产版本
 npm run preview      # 预览生产构建
-npm run init-db      # 初始化数据库
+npm run add-sample-data # 添加示例数据
+npm run migrate-data # 从现有数据库迁移数据（如果适用）
 ```
 
 ## 🌐 访问方式
 
 - **后台管理**：`https://your-domain.com`
 - **H5 点餐页面**：`https://your-domain.com/?location=8201`（桌号 8201）
-- **API 接口**：`https://your-domain.com/api/menu_items`
+- **API 接口**：`https://your-domain.com/api/dishes`
 
 ## 📄 许可证
 

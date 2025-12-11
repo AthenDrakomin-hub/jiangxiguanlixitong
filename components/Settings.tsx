@@ -1,13 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
-import { Save, Store, Printer, RotateCcw, ShieldCheck, GitBranch, Github, HardDrive, Cloud, Check, CreditCard, DollarSign, AlertTriangle, Wifi, WifiOff, Info } from 'lucide-react';
-import { getStorageSettings, saveStorageSettings, testS3Connection, testGitHubConnection, fetchAndSyncAllDataToGitHub } from '../services/storage';
-import { StorageSettings, StoreInfo, PaymentConfig } from '../types';
+import { Save, Store, Printer, Cloud, Check, DollarSign, AlertTriangle, Wifi, Info } from 'lucide-react';
+import { getStorageSettings, saveStorageSettings } from '../services/storage';
+import { StorageSettings, StoreInfo } from '../types';
 import { PrinterService } from '../services/printer';
 
 interface SettingsProps {
   onSettingsChange?: (settings: any) => void;
 }
+
+// 系统版本信息 - 硬编码
+const SYSTEM_VERSION = 'v1.0.0';
+const SYSTEM_NAME = '江西酒店管理系统';
+const SYSTEM_CODE = 'JX-HMS-2025';
 
 const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
   const [storeInfo, setStoreInfo] = useState<StoreInfo>({
@@ -33,20 +37,8 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
     serviceCharge: 10
   });
 
-  const [paymentConfig, setPaymentConfig] = useState<PaymentConfig>({
-    enabledMethods: ['CASH'],
-    aliPayEnabled: false,
-    weChatEnabled: false,
-    gCashEnabled: true,
-    mayaEnabled: true
-  });
-
   // Storage State
   const [storageSettings, setStorageSettings] = useState<StorageSettings>(getStorageSettings());
-  const [isTestLoading, setIsTestLoading] = useState(false);
-  const [testStatus, setTestStatus] = useState<'none' | 'success' | 'failure'>('none');
-  const [s3Provider, setS3Provider] = useState<string>('custom');
-
   const [showToast, setShowToast] = useState(false);
   
   // Safety Confirmation State
@@ -60,11 +52,6 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
   
   const [confirmInput, setConfirmInput] = useState('');
 
-  // Check if using Env Vars (for UI indication) - Safely
-  const env = (import.meta as any).env || {};
-  const usingGithubEnv = !!(env.VITE_GITHUB_TOKEN);
-  const usingS3Env = !!(env.VITE_S3_ACCESS_KEY);
-
   // Load standard settings on mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('jx_settings');
@@ -74,14 +61,11 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
       if (parsed.notifications) setNotifications(parsed.notifications);
       if (parsed.exchangeRate) setLocalFinancials(prev => ({ ...prev, exchangeRate: parsed.exchangeRate }));
       if (parsed.serviceChargeRate) setLocalFinancials(prev => ({ ...prev, serviceCharge: parsed.serviceChargeRate * 100 }));
-      if (parsed.payment) setPaymentConfig(prev => ({ ...prev, ...parsed.payment as PaymentConfig }));
       if (parsed.categories && Array.isArray(parsed.categories)) setCategories(parsed.categories);
     }
 
     // Auto-test connection if configured
-    if (storageSettings.type !== 'local') {
-        handleTestConnection(storageSettings);
-    }
+    // Removed connection testing as we're only using Vercel Blob Storage now
   }, []);
 
   const handleSave = () => {
@@ -89,7 +73,6 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
     const settings = {
       storeInfo,
       notifications,
-      payment: paymentConfig,
       exchangeRate: localFinancials.exchangeRate,
       serviceChargeRate: localFinancials.serviceCharge / 100,
       categories
@@ -103,78 +86,41 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
     if (onSettingsChange) {
       onSettingsChange(settings);
     }
-    
-    // Re-test connection if storage settings changed
-    if (storageSettings.type !== 'local') {
-        handleTestConnection(storageSettings);
-    }
 
     // Show toast
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  const executeReset = () => {
-      localStorage.removeItem('jx_dishes');
-      localStorage.removeItem('jx_orders');
-      localStorage.removeItem('jx_expenses');
-      localStorage.removeItem('jx_settings');
-      localStorage.removeItem('jx_inventory');
-      window.location.reload();
-  };
+  // const executeReset = () => {
+  //     localStorage.removeItem('jx_dishes');
+  //     localStorage.removeItem('jx_orders');
+  //     localStorage.removeItem('jx_expenses');
+  //     localStorage.removeItem('jx_settings');
+  //     localStorage.removeItem('jx_inventory');
+  //     window.location.reload();
+  // };
 
-  const handleResetData = () => {
-      setConfirmInput('');
-      setConfirmModal({
-          open: true,
-          level: 'high',
-          title: '系统级警告 System Warning',
-          message: '此操作将永久清除浏览器中的所有本地数据！包括订单、菜单和财务记录。如果是“本地存储”模式，数据将无法恢复。\n\n如需继续，请在下方输入 "RESET"',
-          action: executeReset
-      });
-  };
+  // const handleResetData = () => {
+  //     setConfirmInput('');
+  //     setConfirmModal({
+  //         open: true,
+  //         level: 'high',
+  //         title: '系统级警告 System Warning',
+  //         message: '此操作将永久清除浏览器中的所有本地数据！包括订单、菜单和财务记录。如果是“本地存储”模式，数据将无法恢复。\n\n如需继续，请在下方输入 "RESET"',
+  //         action: executeReset
+  //     });
+  // };
 
-  const handleTestConnection = async (currentSettings = storageSettings) => {
-    setIsTestLoading(true);
-    setTestStatus('none');
-    
-    let success = false;
-    if (currentSettings.type === 's3') {
-      success = await testS3Connection(currentSettings.s3Config);
-    } else if (currentSettings.type === 'github') {
-      success = await testGitHubConnection(currentSettings.githubConfig);
-    }
-    
-    setIsTestLoading(false);
-    setTestStatus(success ? 'success' : 'failure');
+  const handleTestConnection = async () => {
+    // Connection testing removed as we're only using Vercel Blob Storage now
+    // All connections are handled automatically by the Vercel Blob Storage client
+    // Return a resolved promise to satisfy async signature
+    return Promise.resolve();
   };
 
   // Category Logic
 
-
-  const handleS3ProviderChange = (provider: string) => {
-    setS3Provider(provider);
-    let endpoint = '';
-    let region = 'auto';
-
-    switch (provider) {
-      case 'google':
-        endpoint = 'https://storage.googleapis.com';
-        break;
-      case 'cloudflare':
-        endpoint = 'https://<ACCOUNT_ID>.r2.cloudflarestorage.com';
-        break;
-      case 'minio':
-        endpoint = 'http://localhost:9000';
-        region = 'us-east-1';
-        break;
-    }
-
-    setStorageSettings(prev => ({
-      ...prev,
-      s3Config: { ...prev.s3Config, endpoint, region }
-    }));
-  };
 
   const handleTestPrint = () => {
       const dummyOrder: any = {
@@ -194,40 +140,35 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
   };
 
   // 添加同步状态
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  // const [isSyncing, setIsSyncing] = useState(false);
+  // const [syncStatus, setSyncStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
   // 添加手动同步函数
-  const handleManualSync = async () => {
-    if (storageSettings.type !== 'github') return;
-    
-    setIsSyncing(true);
-    setSyncStatus('idle');
-    
-    try {
-      // 调用新的同步函数
-      const success = await fetchAndSyncAllDataToGitHub(storageSettings.githubConfig);
-      
-      if (success) {
-        setSyncStatus('success');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } else {
-        setSyncStatus('error');
-      }
-    } catch (error) {
-      console.error('Sync error:', error);
-      setSyncStatus('error');
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+  // const handleManualSync = async () => {
+  //   // Manual sync removed as we're only using Vercel Blob Storage now
+  //   // All data is automatically synced by the Vercel Blob Storage client
+  //   setIsSyncing(true);
+  //   setSyncStatus('idle');
+  //   
+  //   try {
+  //     // Simulate sync process
+  //     await new Promise(resolve => setTimeout(resolve, 1000));
+  //     setSyncStatus('success');
+  //     setTimeout(() => setSyncStatus('idle'), 3000);
+  //   } catch (error) {
+  //     console.error('Sync error:', error);
+  //     setSyncStatus('error');
+  //   } finally {
+  //     setIsSyncing(false);
+  //   }
+  // };
 
   return (
     <div className="space-y-6 animate-fade-in pb-20">
       <div className="flex justify-between items-center">
         <div>
            <h2 className="text-2xl font-bold text-slate-800">系统设置 Settings</h2>
-           <p className="text-slate-500 text-sm mt-1">店铺信息、支付方式、云同步</p>
+           <p className="text-slate-500 text-sm mt-1">全局配置与权限管理</p>
         </div>
         <button 
           onClick={handleSave}
@@ -243,14 +184,14 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
         {/* 1. Store Information */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center justify-between">
-             <span className="flex items-center gap-2"><Store className="text-slate-400" size={20} /> 店铺信息 (H5 Display)</span>
+             <span className="flex items-center gap-2"><Store className="text-slate-400" size={20} /> 店铺信息</span>
              <button onClick={handleTestPrint} className="text-xs bg-slate-100 px-2 py-1 rounded hover:bg-slate-200 text-slate-600 flex items-center gap-1">
                <Printer size={12} /> Test Print
              </button>
            </h3>
            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">店铺名称 (Name)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">店铺名称</label>
                 <input 
                   type="text" 
                   value={storeInfo.name}
@@ -259,7 +200,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">地址 (Address)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">地址</label>
                 <input 
                   type="text" 
                   value={storeInfo.address}
@@ -269,7 +210,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">电话 (Phone)</label>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">电话</label>
                    <input 
                      type="text" 
                      value={storeInfo.phone}
@@ -309,7 +250,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Kitchen Printer URL / 厨房打印机地址</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Kitchen Printer URL</label>
                  <input 
                    type="text" 
                    value={storeInfo.kitchenPrinterUrl || ''}
@@ -321,121 +262,50 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
            </div>
         </div>
 
-        {/* 2. Menu Categories */}
-        {/* Moved to MenuManagement component for better organization */}
-
-        {/* 3. Payment Methods */}
+        {/* 2. System Information */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <CreditCard className="text-slate-400" size={20} /> H5 支付方式配置
+              <Info className="text-slate-400" size={20} /> 系统信息
             </h3>
             <div className="space-y-4">
                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
                  <div className="flex items-center gap-3">
-                   <span className="font-bold text-slate-800 flex items-center gap-2">
-                     💳 现金支付 Cash
-                   </span>
-                   <span className="text-xs text-slate-500 bg-slate-200 px-2 py-1 rounded">Always On</span>
+                   <span className="font-bold text-slate-800">系统名称</span>
                  </div>
-                 <span className="text-sm text-slate-500">无需配置 / No Setup Required</span>
+                 <span className="text-sm text-slate-500">{SYSTEM_NAME}</span>
                </div>
                
-               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
                  <div className="flex items-center gap-3">
-                   <span className="font-bold text-slate-800 flex items-center gap-2">
-                     📱 GCash
-                   </span>
-                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
-                     {paymentConfig.gCashEnabled ? 'ENABLED' : 'DISABLED'}
-                   </span>
+                   <span className="font-bold text-slate-800">系统版本</span>
                  </div>
-                 <div className="flex items-center gap-3">
-                   <span className="text-sm text-slate-500">菲律宾主流支付</span>
-                   <input 
-                      type="checkbox" 
-                      checked={paymentConfig.gCashEnabled}
-                      onChange={e => setPaymentConfig({ ...paymentConfig, gCashEnabled: e.target.checked })}
-                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                   />
-                 </div>
+                 <span className="text-sm text-slate-500">{SYSTEM_VERSION}</span>
                </div>
                
-               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
                  <div className="flex items-center gap-3">
-                   <span className="font-bold text-slate-800 flex items-center gap-2">
-                     💚 Maya
-                   </span>
-                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
-                     {paymentConfig.mayaEnabled ? 'ENABLED' : 'DISABLED'}
-                   </span>
+                   <span className="font-bold text-slate-800">系统编码</span>
                  </div>
-                 <div className="flex items-center gap-3">
-                   <span className="text-sm text-slate-500">菲律宾主流支付</span>
-                   <input 
-                      type="checkbox" 
-                      checked={paymentConfig.mayaEnabled}
-                      onChange={e => setPaymentConfig({ ...paymentConfig, mayaEnabled: e.target.checked })}
-                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                   />
-                 </div>
+                 <span className="text-sm text-slate-500">{SYSTEM_CODE}</span>
                </div>
                
-               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200">
                  <div className="flex items-center gap-3">
-                   <span className="font-bold text-slate-800 flex items-center gap-2">
-                     🔵 Alipay 支付宝
-                   </span>
-                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
-                     {paymentConfig.aliPayEnabled ? 'ENABLED' : 'DISABLED'}
-                   </span>
+                   <span className="font-bold text-slate-800">数据存储</span>
                  </div>
-                 <div className="flex items-center gap-3">
-                   <span className="text-sm text-slate-500">中国用户首选</span>
-                   <input 
-                      type="checkbox" 
-                      checked={paymentConfig.aliPayEnabled}
-                      onChange={e => setPaymentConfig({ ...paymentConfig, aliPayEnabled: e.target.checked })}
-                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                   />
-                 </div>
+                 <span className="text-sm text-slate-500">Vercel Blob Storage</span>
                </div>
                
-               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+               <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-slate-200">
                  <div className="flex items-center gap-3">
-                   <span className="font-bold text-slate-800 flex items-center gap-2">
-                     🟢 WeChat Pay 微信支付
-                   </span>
-                   <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded">
-                     {paymentConfig.weChatEnabled ? 'ENABLED' : 'DISABLED'}
-                   </span>
+                   <span className="font-bold text-slate-800">部署环境</span>
                  </div>
-                 <div className="flex items-center gap-3">
-                   <span className="text-sm text-slate-500">中国用户首选</span>
-                   <input 
-                      type="checkbox" 
-                      checked={paymentConfig.weChatEnabled}
-                      onChange={e => setPaymentConfig({ ...paymentConfig, weChatEnabled: e.target.checked })}
-                      className="w-5 h-5 text-slate-900 rounded focus:ring-slate-900"
-                   />
-                 </div>
+                 <span className="text-sm text-slate-500">Production</span>
                </div>
-            </div>
-            
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
-                <Info size={16} /> 支付配置说明
-              </h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• 启用的支付方式将在客户下单时显示</li>
-                <li>• 现金支付始终可用，无法禁用</li>
-                <li>• 移动支付将引导客户至相应应用完成付款</li>
-                <li>• 所有交易需手动确认收款</li>
-                <li>• <a href="#" onClick={(e) => { e.preventDefault(); /* Navigate to payment management */ }} className="text-blue-600 underline">点击这里管理详细的支付方式信息</a></li>
-              </ul>
             </div>
         </div>
 
-        {/* 4. Financials */}
+        {/* 3. Financial Parameters */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                <DollarSign className="text-slate-400" size={20} /> 财务参数
@@ -468,14 +338,14 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
             </div>
         </div>
 
-        {/* 5. Data Storage & Sync */}
+        {/* 4. Data Storage */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden">
            <div className="absolute top-0 right-0 p-4 opacity-5">
               <Cloud size={120} />
            </div>
            
            <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-             <Cloud className="text-blue-500" size={20} /> 数据存储与云同步
+             <Cloud className="text-blue-500" size={20} /> 数据存储
            </h3>
 
            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
@@ -483,8 +353,7 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                <Info size={16} /> 系统数据存储说明
              </h4>
              <p className="text-sm text-blue-700">
-               本系统现在使用 TiDB Cloud 作为主要数据存储方案，所有数据（菜单、订单、财务等）都实时存储在云端数据库中。
-               下面的配置选项仅用于特定场景的数据备份和同步。
+               本系统现在使用 Vercel Blob Storage 作为主要数据存储方案，所有数据（菜单、订单、财务等）都实时存储在云端存储中。
              </p>
            </div>
 
@@ -493,218 +362,39 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
                  <label className="block text-sm font-medium text-slate-700 mb-1">存储方式</label>
                  
                  <button 
-                   onClick={() => setStorageSettings({ ...storageSettings, type: 'local' })}
-                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${storageSettings.type === 'local' ? 'border-slate-800 bg-slate-50' : 'border-slate-100 hover:border-slate-300'}`}
-                 >
-                    <HardDrive size={20} className="text-slate-600" />
-                    <div>
-                       <div className="font-bold text-sm">本机缓存</div>
-                       <div className="text-xs text-slate-500">Local Only</div>
-                    </div>
-                 </button>
-
-                 <button 
-                   onClick={() => setStorageSettings({ ...storageSettings, type: 'github' })}
-                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${storageSettings.type === 'github' ? 'border-slate-800 bg-slate-50' : 'border-slate-100 hover:border-slate-300'}`}
-                 >
-                    <Github size={20} className="text-slate-600" />
-                    <div>
-                       <div className="font-bold text-sm">GitHub 云同步</div>
-                       <div className="text-xs text-slate-500">Git Storage</div>
-                    </div>
-                 </button>
-                 
-                 <button 
-                   onClick={() => setStorageSettings({ ...storageSettings, type: 's3' })}
-                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${storageSettings.type === 's3' ? 'border-slate-800 bg-slate-50' : 'border-slate-100 hover:border-slate-300'}`}
+                   onClick={() => setStorageSettings({ ...storageSettings, type: 'blob' })}
+                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left ${storageSettings.type === 'blob' ? 'border-slate-800 bg-slate-50' : 'border-slate-100 hover:border-slate-300'}`}
                  >
                     <Cloud size={20} className="text-slate-600" />
                     <div>
-                       <div className="font-bold text-sm">S3 对象存储</div>
-                       <div className="text-xs text-slate-500">Enterprise</div>
+                       <div className="font-bold text-sm">Vercel Blob Storage</div>
+                       <div className="text-xs text-slate-500">Cloud Storage</div>
                     </div>
                  </button>
               </div>
 
               <div className="flex-1 bg-slate-50 rounded-xl p-6 border border-slate-200">
                  
-                 {storageSettings.type === 'local' && (
+                 {storageSettings.type === 'blob' && (
                     <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 space-y-4 py-6">
-                       <HardDrive size={48} className="opacity-20" />
-                       <p>数据存储在当前浏览器的 LocalStorage 中。<br/>清理浏览器缓存会导致数据丢失。</p>
-                       <div className="flex gap-4">
-                          <button onClick={handleResetData} className="text-red-600 hover:underline text-sm flex items-center gap-1">
-                             <RotateCcw size={14} /> 恢复出厂设置 (Reset)
-                          </button>
-                       </div>
-                    </div>
-                 )}
-
-                 {storageSettings.type === 'github' && (
-                    <div className="space-y-4 animate-in fade-in">
-                       <div className="flex justify-between items-center">
-                          <h4 className="font-bold flex items-center gap-2"><Github size={18} /> GitHub 云同步配置</h4>
-                          {usingGithubEnv && (
-                             <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">
-                                <ShieldCheck size={12} /> Environment Configured
-                             </span>
-                          )}
-                       </div>
-                       <div className="p-3 bg-blue-50 text-blue-800 text-xs rounded-lg border border-blue-100 mb-4">
-                          {usingGithubEnv 
-                             ? '已检测到 Vercel 环境变量配置。系统将自动连接到指定仓库。' 
-                             : '推荐使用此方式。配置后，所有订单和菜单数据将自动保存到您的 GitHub 私有仓库，实现多台电脑/手机数据同步。'}
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">用户名 (Owner)</label>
-                            <input type="text" value={storageSettings.githubConfig.owner} onChange={e => setStorageSettings({...storageSettings, githubConfig: {...storageSettings.githubConfig, owner: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" />
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">仓库名 (Repository)</label>
-                            <input type="text" value={storageSettings.githubConfig.repo} onChange={e => setStorageSettings({...storageSettings, githubConfig: {...storageSettings.githubConfig, repo: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" />
-                          </div>
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">分支 (Branch)</label>
-                            <div className="relative">
-                               <GitBranch size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                               <input type="text" value={storageSettings.githubConfig.branch} onChange={e => setStorageSettings({...storageSettings, githubConfig: {...storageSettings.githubConfig, branch: e.target.value}})} className="w-full pl-8 pr-3 py-2 rounded border border-slate-300 text-sm" />
-                            </div>
-                          </div>
-                          <div>
-                             <label className="text-xs font-bold text-slate-500 uppercase">访问令牌 (Token)</label>
-                             <input type="password" value={storageSettings.githubConfig.token} onChange={e => setStorageSettings({...storageSettings, githubConfig: {...storageSettings.githubConfig, token: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" placeholder="ghp_..." />
-                          </div>
-                       </div>
-                       
-                       // 添加手动同步按钮和状态显示
-                       <div className="pt-4 mt-4 border-t border-slate-200">
-                         <div className="flex items-center justify-between mb-2">
-                           <h4 className="font-bold text-slate-700">数据同步</h4>
-                           <div className="flex items-center gap-2">
-                             {syncStatus === 'success' && (
-                               <span className="text-green-600 text-xs font-bold flex items-center gap-1">
-                                 <Check size={14} /> 同步成功
-                               </span>
-                             )}
-                             {syncStatus === 'error' && (
-                               <span className="text-red-600 text-xs font-bold flex items-center gap-1">
-                                 <AlertTriangle size={14} /> 同步失败
-                               </span>
-                             )}
-                             {isSyncing && (
-                               <span className="text-slate-400 text-xs flex items-center gap-1">
-                                 <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                                 同步中...
-                               </span>
-                             )}
-                           </div>
-                         </div>
-                         <p className="text-xs text-slate-500 mb-3">
-                           点击下面的按钮将所有数据备份到您的 GitHub 仓库
-                         </p>
-                         <button 
-                           onClick={handleManualSync}
-                           disabled={isSyncing}
-                           className="w-full text-sm font-medium text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                         >
-                           {isSyncing ? (
-                             <>
-                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                               正在同步数据...
-                             </>
-                           ) : (
-                             <>
-                               <Github size={16} />
-                               备份所有数据到 GitHub
-                             </>
-                           )}
-                         </button>
-                       </div>
-                    </div>
-                 )}
-
-                 {storageSettings.type === 's3' && (
-                    <div className="space-y-4 animate-in fade-in">
-                       <div className="flex justify-between items-center">
-                          <h4 className="font-bold flex items-center gap-2"><Cloud size={18} /> S3 对象存储配置</h4>
-                          {usingS3Env && (
-                             <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded flex items-center gap-1">
-                                <ShieldCheck size={12} /> Environment Configured
-                             </span>
-                          )}
-                          <select 
-                             value={s3Provider} 
-                             onChange={(e) => handleS3ProviderChange(e.target.value)}
-                             className="text-xs border border-slate-300 rounded px-2 py-1 bg-white"
-                          >
-                             <option value="custom">自定义 S3</option>
-                             <option value="google">Google Cloud Storage</option>
-                             <option value="cloudflare">Cloudflare R2</option>
-                             <option value="minio">MinIO (自建)</option>
-                          </select>
-                       </div>
-                       
-                       <div className="p-3 bg-blue-50 text-blue-800 text-xs rounded-lg border border-blue-100 mb-4">
-                          {usingS3Env 
-                             ? '已检测到 S3 环境变量配置。系统将自动连接。' 
-                             : '可连接 Cloudflare R2 (免费) 或 MinIO (自建)。'}
-                       </div>
-
-                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">Bucket Name</label>
-                            <input type="text" value={storageSettings.s3Config.bucket} onChange={e => setStorageSettings({...storageSettings, s3Config: {...storageSettings.s3Config, bucket: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" />
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">Region</label>
-                            <input type="text" value={storageSettings.s3Config.region} onChange={e => setStorageSettings({...storageSettings, s3Config: {...storageSettings.s3Config, region: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" />
-                          </div>
-                       </div>
-                       <div>
-                          <label className="text-xs font-bold text-slate-500 uppercase">Endpoint (服务器地址)</label>
-                          <input type="text" value={storageSettings.s3Config.endpoint || ''} onChange={e => setStorageSettings({...storageSettings, s3Config: {...storageSettings.s3Config, endpoint: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" placeholder="https://..." />
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">Access Key ID</label>
-                            <input type="text" value={storageSettings.s3Config.accessKeyId} onChange={e => setStorageSettings({...storageSettings, s3Config: {...storageSettings.s3Config, accessKeyId: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" />
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase">Secret Access Key</label>
-                            <input type="password" value={storageSettings.s3Config.secretAccessKey} onChange={e => setStorageSettings({...storageSettings, s3Config: {...storageSettings.s3Config, secretAccessKey: e.target.value}})} className="w-full px-3 py-2 rounded border border-slate-300 text-sm" />
-                          </div>
-                       </div>
+                       <Cloud size={48} className="opacity-20" />
+                       <p>数据存储在 Vercel Blob Storage 中。<br/>所有数据实时备份到云端，确保数据安全。</p>
                     </div>
                  )}
               </div>
            </div>
-
-           {storageSettings.type !== 'local' && (
-                    <div className="pt-4 mt-4 border-t border-slate-200 flex items-center justify-between">
-                       <div className="flex items-center gap-2">
-                          {testStatus === 'success' && <span className="text-green-600 text-xs font-bold flex items-center gap-1"><Wifi size={14} /> 连接成功 Connected</span>}
-                          {testStatus === 'failure' && <span className="text-red-600 text-xs font-bold flex items-center gap-1"><WifiOff size={14} /> 连接失败 Failed</span>}
-                          {testStatus === 'none' && <span className="text-slate-400 text-xs flex items-center gap-1">Checking connection...</span>}
-                       </div>
-                       <button 
-                         onClick={() => handleTestConnection(storageSettings)}
-                         disabled={isTestLoading}
-                         className="text-sm font-medium text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-50 disabled:opacity-50"
-                       >
-                         {isTestLoading ? '测试中...' : '重试 Test Again'}
-                       </button>
-                    </div>
-                 )}
-
-           <div className="bg-orange-50 border border-orange-100 p-4 rounded-xl flex items-start gap-3 mt-6">
-              <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={20} />
-              <div className="text-sm text-orange-800">
-                 <strong>数据安全提示：</strong><br/>
-                 GitHub 令牌 (Token) 已加密存储。如需更换设备，请确保已通过环境变量配置或记住您的 Token。
+           
+           <div className="pt-4 mt-4 border-t border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-green-600 text-xs font-bold flex items-center gap-1"><Wifi size={14} /> 连接成功 Connected</span>
               </div>
+              <button 
+                onClick={() => handleTestConnection()}
+                disabled={true}
+                className="text-sm font-medium text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-50 disabled:opacity-50"
+              >
+                自动连接 Automatic Connection
+              </button>
            </div>
         </div>
 

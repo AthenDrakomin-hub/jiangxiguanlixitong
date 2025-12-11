@@ -1,4 +1,4 @@
-// Enhanced API Client with Full CRUD Support
+// Enhanced API Client with Full CRUD Support for Blob Storage
 export const apiClient = {
   // Generic GET request
   get: async (endpoint: string) => {
