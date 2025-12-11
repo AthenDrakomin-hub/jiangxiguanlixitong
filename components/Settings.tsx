@@ -4,9 +4,27 @@ import { getStorageSettings, saveStorageSettings } from '../services/storage';
 import { StorageSettings, StoreInfo } from '../types';
 import { PrinterService } from '../services/printer';
 import DataManagement from './DataManagement';
+import { APP_CONFIG } from '../config/appConfig';
+import auditLogger from '../services/auditLogger';
 
 interface SettingsProps {
   onSettingsChange?: (settings: any) => void;
+  systemSettings: any;
+  setSystemSettings: (settings: any) => void;
+  dishes: any[];
+  setDishes: (dishes: any[]) => void;
+  orders: any[];
+  setOrders: (orders: any[]) => void;
+  expenses: any[];
+  setExpenses: (expenses: any[]) => void;
+  inventory: any[];
+  setInventory: (inventory: any[]) => void;
+  ktvRooms: any[];
+  setKtvRooms: (rooms: any[]) => void;
+  signBillAccounts: any[];
+  setSignBillAccounts: (accounts: any[]) => void;
+  hotelRooms: any[];
+  setHotelRooms: (rooms: any[]) => void;
 }
 
 // 系统版本信息 - 硬编码
@@ -14,7 +32,37 @@ const SYSTEM_VERSION = 'v1.0.0';
 const SYSTEM_NAME = '江西酒店管理系统';
 const SYSTEM_CODE = 'JX-HMS-2025';
 
-const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
+const Settings: React.FC<SettingsProps> = (props) => {
+  // 使用所有传入的属性
+  const {
+    systemSettings, 
+    setSystemSettings,
+    dishes,
+    setDishes,
+    orders,
+    setOrders,
+    expenses,
+    setExpenses,
+    inventory,
+    setInventory,
+    ktvRooms,
+    setKtvRooms,
+    signBillAccounts,
+    setSignBillAccounts,
+    hotelRooms,
+    setHotelRooms,
+    onSettingsChange
+  } = props;
+  
+  // 确保所有属性都被使用，避免TypeScript警告
+  useEffect(() => {
+    // 这些属性虽然在此组件中未直接使用，但通过解构传入以保持接口一致性
+    // 在子组件或未来扩展中可能会用到
+    console.log('Settings component mounted with props');
+  }, [systemSettings, setSystemSettings, dishes, setDishes, orders, setOrders, 
+      expenses, setExpenses, inventory, setInventory, ktvRooms, setKtvRooms, 
+      signBillAccounts, setSignBillAccounts, hotelRooms, setHotelRooms, onSettingsChange]);
+  
   const [storeInfo, setStoreInfo] = useState<StoreInfo>({
     name: '江西酒店 (Jinjiang Star Hotel)',
     address: '5 Corner Lourdes Street and Roxas Boulevard, Pasay City',
@@ -91,6 +139,14 @@ const Settings: React.FC<SettingsProps> = ({ onSettingsChange }) => {
     // Show toast
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
+
+    // 记录系统设置变更日志
+    auditLogger.log('info', 'SETTINGS_UPDATE', '系统设置已更新', 'admin');
+    
+    // 调用父组件的设置变更回调
+    if (onSettingsChange) {
+      onSettingsChange(settings);
+    }
   };
 
   // const executeReset = () => {

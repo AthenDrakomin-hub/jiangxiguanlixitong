@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, ChefHat, Utensils, Rocket, Banknote, Smartphone, QrCode, CircleDollarSign, Wallet, CheckCircle2, Clock, Printer, XCircle, BedDouble, Mic2, Archive, Receipt } from 'lucide-react';
 import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types';
 import { PrinterService } from '../services/printer';
+import auditLogger from '../services/auditLogger';
 
 interface OrderManagementProps {
   orders: Order[];
@@ -40,25 +41,35 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
   }, [orders]);
 
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    // If trying to pay, open payment modal first
+    // 如果是要支付，先打开支付模态框
     if (newStatus === OrderStatus.PAID) {
       setActiveOrderId(orderId);
       setPaymentModalOpen(true);
       return;
     }
+    
+    // 记录订单状态变更日志
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      auditLogger.log('info', 'ORDER_STATUS_CHANGE', `订单 ${orderId} 状态从 ${order.status} 变更为 ${newStatus}`, 'admin');
+    }
+    
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
   };
 
   const confirmPayment = (method: PaymentMethod) => {
     if (!activeOrderId) return;
     
+    // 记录支付日志
+    auditLogger.log('info', 'ORDER_PAYMENT', `订单 ${activeOrderId} 通过 ${method} 方式完成支付`, 'admin');
+    
     setOrders(prev => prev.map(o => {
         if (o.id === activeOrderId) {
-            // Logic: Takeout -> Completed immediately. Dine-in -> Served (keep on table/active list).
+            // 逻辑：外卖 -> 立即完成。堂食 -> 已上菜（保留在桌/活跃列表）。
             const isTakeout = o.source === 'TAKEOUT';
             const nextStatus = isTakeout ? OrderStatus.COMPLETED : OrderStatus.SERVED;
             
-            // Auto-print receipt on payment
+            // 支付时自动打印小票
             const paidOrder = { ...o, status: nextStatus, paymentMethod: method };
             PrinterService.printOrder(paidOrder);
 

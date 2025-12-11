@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, Image as ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2, Download, FileSpreadsheet } from 'lucide-react';
-import { Dish, Ingredient, DishIngredient } from '../types';
+import { Plus, Edit2, Trash2, Search, ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2, Download, FileSpreadsheet } from 'lucide-react';
+import { Dish, Category } from '../types';
+import auditLogger from '../services/auditLogger';
 
 // dnd-kit imports
 import {
@@ -25,9 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface MenuManagementProps {
   dishes: Dish[];
   setDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
-  inventory: Ingredient[];
-  categories: string[];
-  setCategories: React.Dispatch<React.SetStateAction<string[]>>;
+  categories: Category[];
 }
 
 // Sortable Item Component
@@ -141,7 +140,7 @@ const SortableDishCard = ({ dish, isSelected, toggleSelection, handleOpenModal, 
   );
 };
 
-const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inventory, categories, setCategories }) => {
+const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, categories }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -269,15 +268,43 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, inve
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingDish) {
-      setDishes(prev => prev.map(d => d.id === editingDish.id ? { ...d, ...formData } as Dish : d));
+      handleUpdateDish();
     } else {
-      const newDish: Dish = {
-        ...formData as Dish,
-        id: Math.random().toString(36).substr(2, 9)
-      };
-      setDishes(prev => [...prev, newDish]);
+      handleAddDish();
     }
     setIsModalOpen(false);
+  };
+
+  const handleAddDish = () => {
+    const newDish: Dish = {
+      ...formData as Dish,
+      id: Math.random().toString(36).substr(2, 9)
+    };
+    setDishes(prev => [...prev, newDish]);
+    
+    // 记录添加菜品日志
+    auditLogger.log('info', 'DISH_ADD', `添加新菜品: ${newDish.name}`, 'admin');
+  };
+
+  const handleUpdateDish = () => {
+    setDishes(prev => prev.map(d => d.id === editingDish.id ? { ...d, ...formData } as Dish : d));
+    
+    // 记录更新菜品日志
+    auditLogger.log('info', 'DISH_UPDATE', `更新菜品: ${editingDish.name}`, 'admin');
+  };
+
+  const handleDeleteDish = (id: string, name: string) => {
+    if (confirm('Delete this dish? 确定要删除这道菜吗？')) {
+      setDishes(prev => prev.filter(d => d.id !== id));
+      if (selectedIds.has(id)) {
+        const newSet = new Set(selectedIds);
+        newSet.delete(id);
+        setSelectedIds(newSet);
+      }
+    }
+    
+    // 记录删除菜品日志
+    auditLogger.log('warn', 'DISH_DELETE', `删除菜品: ${name}`, 'admin');
   };
 
   const handleAddIngredient = () => {

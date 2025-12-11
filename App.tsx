@@ -12,7 +12,8 @@ import {
   OrderStatus,
   Page
 } from './types';
-import { APP_CONFIG } from './config/appConfig.ts';
+import { APP_CONFIG } from './config/appConfig';
+import auditLogger from './services/auditLogger';
 import AutoDetectTest from './src/AutoDetectTest.tsx';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
@@ -307,6 +308,17 @@ const App: React.FC = () => {
   const handleLoginSuccess = () => {
     sessionStorage.setItem('jx_auth', 'true');
     setIsAuthenticated(true);
+    
+    // 记录登录日志
+    auditLogger.log('info', 'USER_LOGIN', '用户成功登录系统', 'admin');
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('jx_auth');
+    setIsAuthenticated(false);
+    
+    // 记录登出日志
+    auditLogger.log('info', 'USER_LOGOUT', '用户退出系统', 'admin');
   };
 
   // 在开发环境中始终显示主界面，生产环境中才需要认证

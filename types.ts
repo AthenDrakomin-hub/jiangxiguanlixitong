@@ -224,3 +224,13 @@ export interface CarRecord {
   status: CarRecordStatus;
   date: string; // ISO string
 }
+
+// 审计日志类型
+export interface AuditLog {
+  id: string;
+  timestamp: string; // ISO string
+  level: 'info' | 'warn' | 'error';
+  action: string;
+  details: string;
+  userId: string;
+}
