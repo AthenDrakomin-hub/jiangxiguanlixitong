@@ -80,6 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
           } catch (error) {
             console.error('Error fetching data from blob storage:', error);
+            // Return empty data array on error but still success status
             res.status(200).json({ 
               success: true,
               data: [],
