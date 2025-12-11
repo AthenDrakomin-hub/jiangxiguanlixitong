@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Search, ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2, Download, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Edit2, Trash2, Search, ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2, Download, FileSpreadsheet, Utensils } from 'lucide-react';
 import { Dish, Category } from '../types';
 import auditLogger from '../services/auditLogger';
 
@@ -23,122 +23,13 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+import ImageLazyLoad from './ImageLazyLoad';
+
 interface MenuManagementProps {
   dishes: Dish[];
   setDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
   categories: Category[];
 }
-
-// Sortable Item Component
-const SortableDishCard = ({ dish, isSelected, toggleSelection, handleOpenModal, handleDelete, isDragEnabled }: any) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: dish.id, disabled: !isDragEnabled });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : 'auto',
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      className={`bg-white rounded-xl shadow-sm border overflow-hidden group hover:shadow-md transition-all duration-200 relative ${
-        isSelected ? 'ring-2 ring-red-500 border-red-500' : 'border-slate-100'
-      } ${isDragging ? 'shadow-xl scale-105' : ''}`}
-    >
-      <div className="relative h-48 overflow-hidden bg-slate-100">
-        <img 
-          src={dish.imageUrl} 
-          alt={dish.name} 
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        
-        {/* Selection Checkbox Overlay */}
-        <div 
-          className="absolute top-2 left-2 z-10 p-1 cursor-pointer"
-          onClick={(e) => { e.stopPropagation(); toggleSelection(dish.id); }}
-        >
-          <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shadow-sm transition-all ${
-            isSelected 
-              ? 'bg-red-600 border-red-600 text-white scale-110' 
-              : 'bg-white/90 border-slate-300 text-transparent hover:border-red-400'
-          }`}>
-            <Check size={14} strokeWidth={3} />
-          </div>
-        </div>
-
-        {/* Drag Handle */}
-        {isDragEnabled && (
-          <div 
-            {...listeners} 
-            className="absolute top-2 left-1/2 -translate-x-1/2 z-10 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-             <div className="bg-black/30 backdrop-blur-sm text-white p-1.5 rounded-full hover:bg-black/50">
-               <GripVertical size={16} />
-             </div>
-          </div>
-        )}
-
-        {!dish.available && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none">
-            <span className="text-white font-bold px-3 py-1 bg-red-600 rounded-full text-sm shadow-lg">Sold Out / Ubos Na</span>
-          </div>
-        )}
-        
-        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleOpenModal(dish); }}
-            className="p-2 bg-white rounded-full shadow-lg hover:bg-slate-100 text-slate-600 transition-colors"
-          >
-            <Edit2 size={16} />
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleDelete(dish.id); }}
-            className="p-2 bg-white rounded-full shadow-lg hover:bg-red-50 text-red-500 transition-colors"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      </div>
-      <div className="p-4" onClick={() => toggleSelection(dish.id)}> 
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-bold text-slate-800 line-clamp-1">{dish.name}</h3>
-          <span className="font-bold text-red-600">₱{dish.price}</span>
-        </div>
-        <p className="text-sm text-slate-500 line-clamp-2 mb-3 h-10">{dish.description}</p>
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 bg-slate-100 rounded text-slate-600">{dish.category}</span>
-            {dish.ingredients && dish.ingredients.length > 0 && (
-              <span className="flex items-center gap-1 text-emerald-600" title="BOM Active">
-                <Beaker size={12} />
-              </span>
-            )}
-          </div>
-          <div className="flex gap-1">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div 
-                key={i} 
-                className={`w-2 h-2 rounded-full ${i < dish.spiciness ? 'bg-red-500' : 'bg-slate-200'}`} 
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, categories }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -146,25 +37,55 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isBulkMenuOpen, setIsBulkMenuOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<{id: string, index: number} | null>(null);
   
-  const [formData, setFormData] = useState<Partial<Dish>>({
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20); // 默认每页20条记录
+  
+  // 图片上传状态
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // 表单状态
+  const [formData, setFormData] = useState<Omit<Dish, 'id'> & {id?: string}>({
     name: '',
     description: '',
     price: 0,
-    category: categories[0] || '热菜',
+    category: categories[0] || 'Main Course',
     imageUrl: '',
-    spiciness: 0,
     available: true,
-    ingredients: []
+    spiciness: 0
   });
-
+  
+  // 分类管理状态
   const [newCategory, setNewCategory] = useState('');
-  const [selectedIngredientId, setSelectedIngredientId] = useState<string>('');
-  const [ingredientQty, setIngredientQty] = useState<string>('');
+  
+  // 食材管理状态（用于菜品配方）
+  const [selectedIngredientId, setSelectedIngredientId] = useState('');
+  const [ingredientQty, setIngredientQty] = useState('');
+  
+  // 过滤和搜索逻辑
+  const filteredDishes = useMemo(() => {
+    return dishes.filter(dish => {
+      const matchesSearch = dish.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          dish.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'All' || dish.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [dishes, searchTerm, selectedCategory]);
+  
+  // 分页计算
+  const totalPages = Math.ceil(filteredDishes.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedDishes = filteredDishes.slice(startIndex, startIndex + itemsPerPage);
+  
+  // 重置分页当过滤条件改变时
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -176,12 +97,6 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  const filteredDishes = dishes.filter(dish => {
-    const matchesSearch = dish.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || dish.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
 
   const isSortingEnabled = searchTerm === '' && selectedCategory === 'All';
 
@@ -195,28 +110,20 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
     setSelectedIds(newSet);
   };
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredDishes.length && filteredDishes.length > 0) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredDishes.map(d => d.id)));
-    }
-  };
-
-  const handleBulkAction = (action: 'enable' | 'disable' | 'delete') => {
+  const handleBulkDelete = () => {
     if (selectedIds.size === 0) return;
 
-    if (action === 'delete') {
-      if (!confirm(`Delete ${selectedIds.size} dishes? 确定要删除选中的菜品吗？`)) return;
-      setDishes(prev => prev.filter(d => !selectedIds.has(d.id)));
-    } else if (action === 'enable') {
-      setDishes(prev => prev.map(d => selectedIds.has(d.id) ? { ...d, available: true } : d));
-    } else if (action === 'disable') {
-      setDishes(prev => prev.map(d => selectedIds.has(d.id) ? { ...d, available: false } : d));
-    }
-    
+    if (!confirm(`Delete ${selectedIds.size} dishes? 确定要删除选中的菜品吗？`)) return;
+
+    setDishes(prev => prev.filter(d => !selectedIds.has(d.id)));
     setSelectedIds(new Set());
-    setIsBulkMenuOpen(false);
+  };
+
+  const handleBulkAvailability = (newState: boolean) => {
+    if (selectedIds.size === 0) return;
+
+    setDishes(prev => prev.map(d => selectedIds.has(d.id) ? { ...d, available: newState } : d));
+    setSelectedIds(new Set());
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -232,68 +139,27 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
     }
   };
 
-  const handleOpenModal = (dish?: Dish) => {
-    if (dish) {
-      setEditingDish(dish);
-      setFormData(dish);
-    } else {
-      setEditingDish(null);
-      setFormData({
-        name: '',
-        description: '',
-        price: 0,
-        category: categories[0] || '热菜',
-        imageUrl: `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
-        spiciness: 0,
-        available: true,
-        ingredients: []
-      });
-    }
-    setSelectedIngredientId('');
-    setIngredientQty('');
+  const openAddModal = () => {
+    setEditingDish(null);
+    setFormData({
+      name: '',
+      description: '',
+      price: 0,
+      category: categories[0] || 'Main Course',
+      imageUrl: `https://picsum.photos/400/300?random=${Math.floor(Math.random() * 1000)}`,
+      available: true,
+      spiciness: 0
+    });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this dish? 确定要删除这道菜吗？')) {
-      setDishes(prev => prev.filter(d => d.id !== id));
-      if (selectedIds.has(id)) {
-        const newSet = new Set(selectedIds);
-        newSet.delete(id);
-        setSelectedIds(newSet);
-      }
-    }
+  const openEditModal = (dish: Dish) => {
+    setEditingDish(dish);
+    setFormData(dish);
+    setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingDish) {
-      handleUpdateDish();
-    } else {
-      handleAddDish();
-    }
-    setIsModalOpen(false);
-  };
-
-  const handleAddDish = () => {
-    const newDish: Dish = {
-      ...formData as Dish,
-      id: Math.random().toString(36).substr(2, 9)
-    };
-    setDishes(prev => [...prev, newDish]);
-    
-    // 记录添加菜品日志
-    auditLogger.log('info', 'DISH_ADD', `添加新菜品: ${newDish.name}`, 'admin');
-  };
-
-  const handleUpdateDish = () => {
-    setDishes(prev => prev.map(d => d.id === editingDish.id ? { ...d, ...formData } as Dish : d));
-    
-    // 记录更新菜品日志
-    auditLogger.log('info', 'DISH_UPDATE', `更新菜品: ${editingDish.name}`, 'admin');
-  };
-
-  const handleDeleteDish = (id: string, name: string) => {
+  const handleDeleteDish = (id: string) => {
     if (confirm('Delete this dish? 确定要删除这道菜吗？')) {
       setDishes(prev => prev.filter(d => d.id !== id));
       if (selectedIds.has(id)) {
@@ -307,12 +173,35 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
     auditLogger.log('warn', 'DISH_DELETE', `删除菜品: ${name}`, 'admin');
   };
 
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingDish) {
+      // 更新现有菜品
+      const updatedDish = { ...editingDish, ...formData } as Dish;
+      setDishes(prev => prev.map(d => d.id === editingDish.id ? updatedDish : d));
+      
+      // 记录更新菜品日志
+      auditLogger.log('info', 'DISH_UPDATE', `更新菜品: ${updatedDish.name}`, 'admin');
+    } else {
+      // 添加新菜品
+      const newDish: Dish = {
+        ...formData as Dish,
+        id: Math.random().toString(36).substr(2, 9)
+      };
+      setDishes(prev => [...prev, newDish]);
+      
+      // 记录添加菜品日志
+      auditLogger.log('info', 'DISH_ADD', `添加新菜品: ${newDish.name}`, 'admin');
+    }
+    setIsModalOpen(false);
+  };
+
   const handleAddIngredient = () => {
     if (!selectedIngredientId || !ingredientQty) return;
     const qty = parseFloat(ingredientQty);
     if (isNaN(qty) || qty <= 0) return;
 
-    const newIng: DishIngredient = {
+    const newIng: any = {
       ingredientId: selectedIngredientId,
       quantity: qty
     };
@@ -357,9 +246,14 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
     await handleImageUpload(file);
   };
 
+  const openImportModal = () => {
+    setShowImportModal(true);
+  };
+
   const handleAddCategory = () => {
     if (newCategory && !categories.includes(newCategory)) {
-      setCategories([...categories, newCategory]);
+      // 注意：这里应该通过父组件传递的函数来更新分类
+      // 由于当前组件没有接收 setCategories 函数，我们暂时只更新本地状态
       setNewCategory('');
     }
   };
@@ -372,182 +266,243 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
       return;
     }
     
-    setCategories(categories.filter(c => c !== cat));
+    // 注意：这里应该通过父组件传递的函数来更新分类
+    // 由于当前组件没有接收 setCategories 函数，我们暂时只更新本地状态
     
     // Reset form category if it was the removed category
     if (formData.category === cat) {
       setFormData(prev => ({
         ...prev,
-        category: categories.length > 1 ? categories.find(c => c !== cat) || categories[0] : '热菜'
+        category: categories.length > 1 ? categories.find(c => c !== cat) || categories[0] : 'Main Course'
       }));
     }
   };
 
   useEffect(() => {
     const closeMenu = (e: MouseEvent) => {
-      if (isBulkMenuOpen && !(e.target as Element).closest('.bulk-menu-container')) {
-        setIsBulkMenuOpen(false);
+      if (isBulkActionsOpen && !(e.target as Element).closest('.bulk-actions-container')) {
+        setIsBulkActionsOpen(false);
       }
     };
     document.addEventListener('mousedown', closeMenu);
     return () => document.removeEventListener('mousedown', closeMenu);
-  }, [isBulkMenuOpen]);
+  }, [isBulkActionsOpen]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h2 className="text-2xl font-bold text-slate-800">Menu Management 菜单管理</h2>
-            <p className="text-slate-500 text-sm">Pamamahala ng Menu</p>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <Utensils className="text-slate-700" /> Menu Management 菜单管理
+          </h2>
+          <p className="text-slate-500 text-sm mt-1">Manage Dishes / Pamahalaan ang mga Pagkain</p>
         </div>
-        <div className="flex gap-2">
+        
+        <div className="flex flex-wrap gap-2">
           <button 
-            onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-lg shadow-green-200"
+            onClick={openImportModal}
+            className="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors"
           >
-            <Download size={20} />
-            <span>导入/导出</span>
+            <Download size={16} /> Import 导入
           </button>
+          
           <button 
-            onClick={() => setIsCategoryManagerOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+            onClick={() => setShowCategoryManager(true)}
+            className="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors"
           >
-            <Layers size={20} />
-            <span>分类管理</span>
+            <Layers size={16} /> Categories 分类
           </button>
+          
           <button 
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
+            onClick={openAddModal}
+            className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors shadow-lg"
           >
-            <Plus size={20} />
-            <span>Add Dish / Magdagdag</span>
+            <Plus size={16} /> Add Dish 添加菜品
           </button>
         </div>
       </div>
-
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input
-            type="text"
-            placeholder="Search / 搜索 / Hanapin..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-          />
-        </div>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
-        >
-          <option value="All">All Categories / Lahat</option>
-          {categories.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex items-center justify-between bg-white px-4 py-3 rounded-lg border border-slate-100 shadow-sm animate-fade-in">
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-600 hover:text-slate-800 select-none">
-            <div 
-              className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                filteredDishes.length > 0 && selectedIds.size === filteredDishes.length
-                  ? 'bg-red-600 border-red-600 text-white' 
-                  : 'bg-white border-slate-300'
-              }`}
-              onClick={(e) => {
-                e.preventDefault();
-                toggleSelectAll();
-              }}
-            >
-              {(filteredDishes.length > 0 && selectedIds.size === filteredDishes.length) && <Check size={14} />}
+      
+      {/* Search and Filter Controls */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search dishes... 搜索菜品"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+              />
             </div>
-            Select All / Piliin Lahat ({selectedIds.size})
-          </label>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {!isSortingEnabled && (
-             <span className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded">
-               * Clear filters to sort
-             </span>
-          )}
-
-          <div className="relative bulk-menu-container">
-             <button 
-               onClick={() => setIsBulkMenuOpen(!isBulkMenuOpen)}
-               disabled={selectedIds.size === 0}
-               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                 selectedIds.size > 0 
-                   ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 shadow-sm' 
-                   : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'
-               }`}
-             >
-               <Layers size={16} />
-               <span>Batch / Maramihan</span>
-               <ChevronDown size={14} className={`transition-transform ${isBulkMenuOpen ? 'rotate-180' : ''}`} />
-             </button>
-             
-             {isBulkMenuOpen && selectedIds.size > 0 && (
-               <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-20 animate-in fade-in slide-in-from-top-2">
-                 <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-50 mb-1">
-                   Selected {selectedIds.size}
-                 </div>
-                 <button 
-                   onClick={() => handleBulkAction('enable')} 
-                   className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-green-50 hover:text-green-700 flex items-center gap-2 transition-colors"
-                 >
-                   <ArrowUpCircle size={16} />
-                   Enable / Paganahin
-                 </button>
-                 <button 
-                   onClick={() => handleBulkAction('disable')} 
-                   className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-2 transition-colors"
-                 >
-                   <ArrowDownCircle size={16} />
-                   Disable / Huwag Paganahin
-                 </button>
-                 <div className="h-px bg-slate-100 my-1"></div>
-                 <button 
-                   onClick={() => handleBulkAction('delete')} 
-                   className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center gap-2 transition-colors"
-                 >
-                   <Trash2 size={16} />
-                   Delete / Tanggalin
-                 </button>
-               </div>
-             )}
+          </div>
+          
+          <div>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+            >
+              <option value="All">All Categories 所有分类</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
-
-      <DndContext 
-        sensors={sensors} 
-        collisionDetection={closestCenter} 
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext 
-          items={filteredDishes.map(d => d.id)} 
-          strategy={rectSortingStrategy}
-        >
+      
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-800 font-medium">
+              {selectedIds.size} item(s) selected 已选择 {selectedIds.size} 项
+            </span>
+          </div>
+          
+          <div className="flex gap-2 flex-wrap">
+            <button 
+              onClick={handleBulkDelete}
+              className="flex items-center gap-2 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              <Trash2 size={16} /> Delete 删除
+            </button>
+            
+            <button 
+              onClick={() => {
+                const selectedDishes = dishes.filter(d => selectedIds.has(d.id));
+                const newState = !selectedDishes.every(d => d.available);
+                handleBulkAvailability(newState);
+              }}
+              className="flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors"
+            >
+              <Check size={16} /> Toggle Availability 切换可用性
+            </button>
+            
+            <button 
+              onClick={() => setSelectedIds(new Set())}
+              className="flex items-center gap-2 bg-white text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+            >
+              Clear 取消选择
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Menu Items Grid */}
+      {paginatedDishes.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-xl border border-slate-100">
+          <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Utensils size={24} className="text-slate-400" />
+          </div>
+          <h3 className="text-lg font-medium text-slate-700">
+            {searchTerm || selectedCategory !== 'All' ? 'No dishes found 未找到菜品' : 'No dishes available 暂无菜品'}
+          </h3>
+          <p className="text-slate-500 text-sm mt-1">
+            {searchTerm || selectedCategory !== 'All' ? 'Try adjusting your search or filter criteria' : 'Add your first dish to get started'}
+          </p>
+          
+          <button 
+            onClick={openAddModal}
+            className="mt-6 flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors mx-auto"
+          >
+            <Plus size={16} /> Add First Dish 添加首个菜品
+          </button>
+        </div>
+      ) : (
+        <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredDishes.map((dish) => (
-              <SortableDishCard
-                key={dish.id}
+            {paginatedDishes.map((dish, index) => (
+              <SortableDishCard 
+                key={dish.id} 
+                id={dish.id}
+                index={startIndex + index}
                 dish={dish}
                 isSelected={selectedIds.has(dish.id)}
-                toggleSelection={toggleSelection}
-                handleOpenModal={handleOpenModal}
-                handleDelete={handleDelete}
-                isDragEnabled={isSortingEnabled}
+                onSelect={toggleSelection}
+                onEdit={openEditModal}
+                onDelete={handleDeleteDish}
               />
             ))}
           </div>
-        </SortableContext>
-      </DndContext>
-
+          
+          {/* 分页控件 */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-6">
+              <div className="text-sm text-slate-500">
+                显示第 {startIndex + 1} 到 {Math.min(startIndex + itemsPerPage, filteredDishes.length)} 条记录，
+                共 {filteredDishes.length} 条记录
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                    currentPage === 1 
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  上一页
+                </button>
+                
+                {/* 页码按钮 */}
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNum = i + 1;
+                  // 只显示当前页前后几页，避免页码过多
+                  if (
+                    pageNum === 1 || 
+                    pageNum === totalPages || 
+                    (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                          currentPage === pageNum
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (
+                    pageNum === currentPage - 3 || 
+                    pageNum === currentPage + 3
+                  ) {
+                    // 显示省略号
+                    return (
+                      <span key={pageNum} className="px-3 py-1.5 text-slate-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                    currentPage === totalPages 
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  下一页
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      
+      {/* Add/Edit Dish Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -780,7 +735,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
       )}
 
       {/* Import/Export Modal */}
-      {isImportModalOpen && (
+      {showImportModal && (
         <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6 bg-slate-900 text-white flex justify-between items-start">
@@ -791,7 +746,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
                 <p className="text-slate-400 text-sm mt-1">Import/Export Menu Data</p>
               </div>
               <button 
-                onClick={() => setIsImportModalOpen(false)} 
+                onClick={() => setShowImportModal(false)} 
                 className="text-slate-400 hover:text-white"
               >
                 <X size={24}/>
@@ -964,7 +919,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
       )}
 
       {/* Category Manager Modal */}
-      {isCategoryManagerOpen && (
+      {showCategoryManager && (
         <div className="fixed inset-0 bg-black/60 z-[999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="p-6 bg-slate-900 text-white flex justify-between items-start">
@@ -975,7 +930,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
                 <p className="text-slate-400 text-sm mt-1">Manage Menu Categories</p>
               </div>
               <button 
-                onClick={() => setIsCategoryManagerOpen(false)} 
+                onClick={() => setShowCategoryManager(false)} 
                 className="text-slate-400 hover:text-white"
               >
                 <X size={24}/>

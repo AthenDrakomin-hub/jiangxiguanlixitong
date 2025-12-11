@@ -1,30 +1,96 @@
 import React, { useState } from 'react';
-import { Utensils, X, Plus, User, Receipt, ChefHat } from 'lucide-react';
+import { Utensils, X, Plus, User, Receipt, ChefHat, Minus } from 'lucide-react';
 import { HotelRoom, Dish, OrderItem, Order, OrderStatus, HotelRoomStatus } from '../types';
+import ImageLazyLoad from './ImageLazyLoad';
 
 interface HotelSystemProps {
   rooms: HotelRoom[];
   setRooms: React.Dispatch<React.SetStateAction<HotelRoom[]>>;
   dishes: Dish[];
   onPlaceOrder: (newOrder: Order) => void;
+  myOrders: Order[];
+  systemSettings: {
+    exchangeRate: number;
+  };
 }
 
-const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPlaceOrder }) => {
+const HotelSystem: React.FC<HotelSystemProps> = ({ 
+  rooms, 
+  setRooms, 
+  dishes, 
+  onPlaceOrder,
+  myOrders,
+  systemSettings
+}) => {
   const [activeFloor, setActiveFloor] = useState<number>(2);
   const [selectedRoom, setSelectedRoom] = useState<HotelRoom | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentCart, setCurrentCart] = useState<OrderItem[]>([]); 
+  const [cart, setCart] = useState<OrderItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
-  const displayRooms = rooms.filter(r => r.floor === activeFloor);
+  // Filter rooms by active floor
+  const displayRooms = rooms.filter((r: HotelRoom) => r.floor === activeFloor);
+  
+  // Update room status
+  const updateRoomStatus = (roomId: string, newStatus: HotelRoomStatus) => {
+    const updateFn = (prevRooms: HotelRoom[]) => 
+      prevRooms.map(room => 
+        room.id === roomId ? { ...room, status: newStatus } : room
+      );
+    setRooms(updateFn);
+  };
+  
+  // Add item to cart
+  const addToCart = (dish: Dish) => {
+    setCart(prev => {
+      const existingItem = prev.find(item => item.dishId === dish.id);
+      if (existingItem) {
+        return prev.map(item => 
+          item.dishId === dish.id 
+            ? { ...item, quantity: item.quantity + 1 } 
+            : item
+        );
+      } else {
+        return [...prev, { 
+          dishId: dish.id, 
+          dishName: dish.name, 
+          quantity: 1, 
+          price: dish.price 
+        }];
+      }
+    });
+    setIsCartOpen(true);
+  };
+  
+  // Remove item from cart
+  const removeFromCart = (dishId: string) => {
+    setCart(prev => {
+      const existingItem = prev.find(item => item.dishId === dishId);
+      if (existingItem && existingItem.quantity > 1) {
+        return prev.map(item => 
+          item.dishId === dishId 
+            ? { ...item, quantity: item.quantity - 1 } 
+            : item
+        );
+      } else {
+        return prev.filter(item => item.dishId !== dishId);
+      }
+    });
+  };
+  
+  // Calculate cart total
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  // Calculate room total
+  const roomTotal = selectedRoom?.orders.reduce((sum: number, item: OrderItem) => sum + (item.price * item.quantity), 0) || 0;
 
-  // 按房间号排序
+  // Sort rooms by room number
   const sortedRooms = [...displayRooms].sort((a, b) => {
     return parseInt(a.number) - parseInt(b.number);
   });
 
   const handleRoomClick = (room: HotelRoom) => {
     setSelectedRoom(room);
-    // 不清空购物车，允许跨房间添加商品
     setIsModalOpen(true);
   };
 
@@ -35,30 +101,16 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
     alert('此系统专为客房送餐服务设计，房间占用状态不影响点餐功能。');
   };
 
-  const addToCart = (dish: Dish) => {
-    setCurrentCart(prev => {
-      const existing = prev.find(i => i.dishId === dish.id);
-      if (existing) {
-        return prev.map(i => i.dishId === dish.id ? { ...i, quantity: i.quantity + 1 } : i);
-      }
-      return [...prev, { dishId: dish.id, dishName: dish.name, quantity: 1, price: dish.price }];
-    });
-  };
-
-  const removeFromCart = (dishId: string) => {
-    setCurrentCart(prev => prev.filter(i => i.dishId !== dishId));
-  };
-
   const handleSubmitOrder = () => {
-    if (!selectedRoom || currentCart.length === 0) return;
+    if (!selectedRoom || cart.length === 0) return;
 
     const newOrder: Order = {
       id: `ORD-${Date.now()}`,
       tableNumber: selectedRoom.number, 
       source: 'ROOM_SERVICE',
-      items: currentCart,
+      items: cart,
       status: OrderStatus.PENDING,
-      totalAmount: currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+      totalAmount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
       createdAt: new Date().toISOString(),
       notes: '客房点餐 Room Service'
     };
@@ -67,7 +119,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
     const updateFn = (r: HotelRoom) => {
       if (r.id === selectedRoom.id) {
         const updatedOrders = [...r.orders];
-        currentCart.forEach(cartItem => {
+        cart.forEach(cartItem => {
           const existing = updatedOrders.find(o => o.dishId === cartItem.dishId);
           if (existing) existing.quantity += cartItem.quantity;
           else updatedOrders.push(cartItem);
@@ -88,15 +140,11 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
     setRooms(prev => prev.map(updateFn));
     
     alert(`订单已发送至厨房！Order Sent!\n房号: ${selectedRoom.number}`);
-    setCurrentCart([]); // 清空购物车而不是关闭模态框，允许继续点餐
+    setCart([]); // 清空购物车而不是关闭模态框，允许继续点餐
   };
 
-  const cartTotal = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
-  const roomTotal = selectedRoom?.orders.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0;
-
   return (
-    <div className="space-y-6 animate-fade-in pb-20">
+    <div className="min-h-screen bg-slate-50 pb-24 max-w-md mx-auto shadow-2xl overflow-hidden relative font-sans">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -192,13 +240,13 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
                     <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
                       <ChefHat size={16} /> New Order (待提交)
                     </h4>
-                    {currentCart.length === 0 ? (
+                    {cart.length === 0 ? (
                       <div className="text-center py-4 text-slate-400 text-xs border border-dashed border-slate-300 rounded-lg">
                         Select items from menu
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {currentCart.map((item, idx) => (
+                        {cart.map((item, idx) => (
                           <div key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded shadow-sm">
                              <div>
                                <div className="text-slate-800 font-medium">{item.dishName}</div>

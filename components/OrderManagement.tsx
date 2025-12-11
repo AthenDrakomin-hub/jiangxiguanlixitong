@@ -16,6 +16,10 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [newOrderNotification, setNewOrderNotification] = useState<{count: number, timestamp: number} | null>(null);
   
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20); // 默认每页20条记录
+  
   // 检查是否有新订单
   useEffect(() => {
     if (orders && orders.length > 0) {
@@ -107,8 +111,14 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
     }
   };
 
+  // 计算分页数据
   const filteredOrders = (orders || []).filter(o => filterStatus === 'All' || o.status === filterStatus)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+  // 分页计算
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
 
   // Payment methods configuration
   const paymentMethods: { id: PaymentMethod; label: string; enLabel: string; icon: any; color: string }[] = [
@@ -142,55 +152,54 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-           <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-             <ClipboardList className="text-slate-700" /> Order Center 订单中心
-           </h2>
-           <p className="text-slate-500 text-sm mt-1">Manage Orders / Pamahalaan ang mga Order</p>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <ClipboardList className="text-slate-700" /> Order Center 订单中心
+          </h2>
+          <p className="text-slate-500 text-sm mt-1">Manage Orders / Pamahalaan ang mga Order</p>
         </div>
         
         <div className="flex items-center gap-4">
           <div className="flex gap-2 bg-white p-1 rounded-lg border border-slate-200 overflow-x-auto">
-             <button
-                onClick={() => setFilterStatus('All')}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                  filterStatus === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-             >
-                All / Lahat
-             </button>
-             {Object.values(OrderStatus).map((status) => {
-               const conf = getStatusConfig(status as OrderStatus);
-               return (
-                 <button
-                   key={status}
-                   onClick={() => setFilterStatus(status as OrderStatus | 'All')}
-                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-1 ${
-                     filterStatus === status 
-                       ? 'bg-slate-900 text-white shadow-sm' 
-                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                   }`}
-                 >
-                   {conf.label.split(' ')[1]} 
-                 </button>
-               );
-             })}
+            <button
+              onClick={() => setFilterStatus('All')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                filterStatus === 'All' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              All / Lahat
+            </button>
+            {Object.values(OrderStatus).map((status) => {
+              const conf = getStatusConfig(status as OrderStatus);
+              return (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status as OrderStatus | 'All')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-1 ${
+                    filterStatus === status 
+                      ? 'bg-slate-900 text-white shadow-sm' 
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  {conf.label.split(' ')[1]} 
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
 
       <div className="grid gap-4">
-        {filteredOrders.length === 0 ? (
+        {paginatedOrders.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-xl border border-slate-100">
             <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <ClipboardList size={24} className="text-slate-400" />
             </div>
             <h3 className="text-lg font-medium text-slate-700">暂无订单 No Orders</h3>
-            <p className="text-slate-500">当前没有需要处理的订单 / Walang order</p>
+            <p className="text-slate-500 text-sm mt-1">No orders match your filters</p>
           </div>
         ) : (
-          filteredOrders.map((order) => {
-            const statusConf = getStatusConfig(order.status);
-            return (
+          <>
+            {paginatedOrders.map(order => (
               <div key={order.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 transition-all hover:shadow-md animate-fade-in">
                 <div className="flex flex-col lg:flex-row justify-between gap-6">
                   
@@ -327,8 +336,79 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
                   </div>
                 </div>
               </div>
-            );
-          })
+            ))}
+            
+            {/* 分页控件 */}
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-6">
+                <div className="text-sm text-slate-500">
+                  显示第 {startIndex + 1} 到 {Math.min(startIndex + itemsPerPage, filteredOrders.length)} 条记录，
+                  共 {filteredOrders.length} 条记录
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                      currentPage === 1 
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    上一页
+                  </button>
+                  
+                  {/* 页码按钮 */}
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    // 只显示当前页前后几页，避免页码过多
+                    if (
+                      pageNum === 1 || 
+                      pageNum === totalPages || 
+                      (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                            currentPage === pageNum
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      pageNum === currentPage - 3 || 
+                      pageNum === currentPage + 3
+                    ) {
+                      // 显示省略号
+                      return (
+                        <span key={pageNum} className="px-3 py-1.5 text-slate-400">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                      currentPage === totalPages 
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    下一页
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
