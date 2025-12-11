@@ -207,13 +207,38 @@ const App: React.FC = () => {
 
     if (sound) {
       try {
-        const audio = new Audio(NOTIFICATION_SOUND_URL);
-        audio.play().catch(err => console.error("Audio playback failed:", err));
-      } catch (e) { console.error(e); }
+        // 检查音频文件是否存在
+        fetch(NOTIFICATION_SOUND_URL)
+          .then(response => {
+            if (response.ok) {
+              const audio = new Audio(NOTIFICATION_SOUND_URL);
+              audio.play().catch(err => console.error("Audio playback failed:", err));
+            } else {
+              // 如果通知音效文件不存在，使用系统默认通知音
+              console.log("通知音效文件不存在，使用系统默认通知音");
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { 
+                  body: body, 
+                  icon: '/favicon.ico',
+                  silent: false // 允许系统播放默认通知音
+                });
+              }
+            }
+          })
+          .catch(err => {
+            console.error("检查音频文件失败:", err);
+          });
+      } catch (e) { 
+        console.error("播放通知音效失败:", e); 
+      }
     }
 
     if (desktop && 'Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body: body, icon: '/favicon.ico' });
+      new Notification(title, { 
+        body: body, 
+        icon: '/favicon.ico',
+        silent: !sound // 如果已经播放了音效，就不重复播放系统通知音
+      });
     }
   };
 
