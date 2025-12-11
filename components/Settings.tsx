@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Store, Printer, Cloud, Check, DollarSign, AlertTriangle, Wifi, Info, Upload } from 'lucide-react';
+import { Save, Store, Printer, Cloud, Check, DollarSign, AlertTriangle, Wifi, Info } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings } from '../services/storage';
 import { StorageSettings, StoreInfo } from '../types';
 import { PrinterService } from '../services/printer';

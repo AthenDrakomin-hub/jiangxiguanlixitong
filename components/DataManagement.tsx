@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Upload, Download, Trash2 } from 'lucide-react';
+import { Plus, Upload, Download } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
 
 interface DataManagementProps {
