@@ -6,6 +6,13 @@ interface DataManagementProps {
   onDataUpdate?: () => void;
 }
 
+interface FieldDefinition {
+  key: string;
+  label: string;
+  type: string;
+  options?: string[];
+}
+
 const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
   const [activeTab, setActiveTab] = useState('dishes');
   const [showForm, setShowForm] = useState(false);
@@ -25,7 +32,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
   ];
 
   // 字段定义
-  const fieldDefinitions: Record<string, Array<{key: string, label: string, type: string}>> = {
+  const fieldDefinitions: Record<string, FieldDefinition[]> = {
     dishes: [
       { key: 'name', label: '菜品名称', type: 'text' },
       { key: 'description', label: '描述', type: 'text' },
@@ -226,14 +233,14 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                     onChange={e => handleFormChange(field.key, e.target.checked)}
                     className="rounded border-slate-300"
                   />
-                ) : field.type === 'select' && 'options' in field ? (
+                ) : field.type === 'select' && field.options ? (
                   <select
                     value={formData[field.key] || ''}
                     onChange={e => handleFormChange(field.key, e.target.value)}
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                   >
                     <option value="">请选择</option>
-                    {field.options?.map(option => (
+                    {field.options.map((option: string) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
