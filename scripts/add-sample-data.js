@@ -157,11 +157,15 @@ const sampleKtvRooms = [
 const sampleSignBillAccounts = [
   {
     id: generateId(),
-    customerName: 'ABC公司',
-    balance: 1200.00,
+    name: 'ABC公司',
+    cooperationMethod: '协议单位',
+    settlementMethod: '月结',
+    approver: '张经理',
+    phoneNumber: '+639123456789',
     creditLimit: 5000.00,
-    status: '正常',
-    createdAt: getCurrentTimestamp()
+    currentDebt: 1200.00,
+    status: 'Active',
+    lastTransactionDate: getCurrentTimestamp()
   }
 ];
 

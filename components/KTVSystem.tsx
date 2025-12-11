@@ -428,6 +428,7 @@ const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
                     
                     <div className="text-5xl font-bold text-slate-900 mb-10">
                       ₱{calculateTotal(selectedRoom).total.toFixed(0)}
+                      <div className="text-base font-normal mt-2 text-slate-500">参考价 Reference: ≈ ¥{(calculateTotal(selectedRoom).total / 8.2).toFixed(1)}</div>
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">

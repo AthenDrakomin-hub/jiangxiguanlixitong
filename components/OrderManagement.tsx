@@ -192,7 +192,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
                         ₱{order.totalAmount}
                         {order.paymentMethod && <span className="text-xs ml-1 text-emerald-500 font-medium">(PAID)</span>}
                       </div>
-                      <div className="text-xs text-slate-400">≈ ¥{(order.totalAmount / 8.2).toFixed(1)}</div>
+                      <div className="text-xs text-slate-400">参考价 Reference: ≈ ¥{(order.totalAmount / 8.2).toFixed(1)}</div>
                     </div>
 
                     <div className="flex flex-col gap-2 w-full">

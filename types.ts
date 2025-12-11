@@ -100,6 +100,9 @@ export interface KTVRoom {
 }
 
 // Hotel Room Types (Dining Focused)
+// 注意：此系统专为客房送餐服务设计，房间状态仅用于标识房间是否曾经有过订单
+// Vacant: 房间当前没有未完成的订单
+// Occupied: 房间有未完成的订单
 export type HotelRoomStatus = 'Vacant' | 'Occupied'; 
 
 export interface HotelRoom {

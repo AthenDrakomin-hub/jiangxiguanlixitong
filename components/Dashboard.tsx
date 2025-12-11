@@ -142,8 +142,8 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
         {/* Pie Chart: Revenue Composition */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
           <h3 className="text-lg font-bold text-slate-800 mb-2">收入构成分析</h3>
-          <div className="h-64 relative">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-64 min-h-[256px] relative">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
                   data={revenueComposition}

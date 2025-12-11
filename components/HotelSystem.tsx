@@ -17,23 +17,22 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
   
   const displayRooms = rooms.filter(r => r.floor === activeFloor);
 
+  // 按房间号排序
+  const sortedRooms = [...displayRooms].sort((a, b) => {
+    return parseInt(a.number) - parseInt(b.number);
+  });
+
   const handleRoomClick = (room: HotelRoom) => {
     setSelectedRoom(room);
-    setCurrentCart([]); 
+    // 不清空购物车，允许跨房间添加商品
     setIsModalOpen(true);
   };
 
   const toggleRoomStatus = () => {
     if (!selectedRoom) return;
-    const newStatus: HotelRoomStatus = selectedRoom.status === 'Vacant' ? 'Occupied' : 'Vacant';
-    const guestName = newStatus === 'Vacant' ? undefined : (selectedRoom.guestName || '临时客人');
-    
-    const newOrders = newStatus === 'Vacant' ? [] : selectedRoom.orders;
-
-    const updateFn = (r: HotelRoom) => r.id === selectedRoom.id ? { ...r, status: newStatus, guestName, orders: newOrders } : r;
-    
-    setRooms(prev => prev.map(updateFn));
-    setSelectedRoom(prev => prev ? { ...prev, status: newStatus, guestName, orders: newOrders } : null);
+    // For dining-only service, we don't need to toggle room occupancy status
+    // This function can be repurposed or removed based on actual business needs
+    alert('此系统专为客房送餐服务设计，房间占用状态不影响点餐功能。');
   };
 
   const addToCart = (dish: Dish) => {
@@ -76,9 +75,11 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
 
         return {
           ...r,
+          // 对于纯送餐服务，房间状态始终保持为Occupied以表示该房间有订单历史
           status: 'Occupied' as HotelRoomStatus,
           orders: updatedOrders,
-          guestName: r.guestName || '点餐客人 Guest'
+          guestName: r.guestName || '点餐客人 Guest',
+          lastOrderTime: new Date().toISOString()
         };
       }
       return r;
@@ -87,7 +88,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
     setRooms(prev => prev.map(updateFn));
     
     alert(`订单已发送至厨房！Order Sent!\n房号: ${selectedRoom.number}`);
-    setIsModalOpen(false);
+    setCurrentCart([]); // 清空购物车而不是关闭模态框，允许继续点餐
   };
 
   const cartTotal = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -102,6 +103,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
              <Utensils className="text-orange-500" /> 客房餐饮服务
            </h2>
            <p className="text-slate-500 text-sm mt-1">为客房下单，订单将自动流转至后厨</p>
+           <p className="text-slate-500 text-xs mt-1">房间号范围: 8201-8232 (2楼) 和 8301-8332 (3楼)</p>
         </div>
         
         <div className="flex bg-white rounded-lg p-1 border border-slate-200 shadow-sm">
@@ -121,7 +123,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
       </div>
 
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
-        {displayRooms.map(room => {
+        {sortedRooms.map(room => {
           const hasOrders = room.orders.length > 0;
           return (
             <button
@@ -145,7 +147,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
                  </div>
               )}
               {room.status === 'Occupied' && !hasOrders && (
-                <span className="text-[10px] mt-1 text-blue-500">In Use</span>
+                <span className="text-[10px] mt-1 text-blue-500">有历史订单</span>
               )}
             </button>
           );
@@ -182,7 +184,7 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
                        }`}
                      >
                        <User size={16} />
-                       {selectedRoom.status === 'Occupied' ? 'Check Out / Empty' : 'Check In / Occupy'}
+                       房间状态说明
                      </button>
                   </div>
                   
@@ -213,10 +215,15 @@ const HotelSystem: React.FC<HotelSystemProps> = ({ rooms, setRooms, dishes, onPl
                   </div>
 
                   <div className="p-4 border-t border-slate-100 bg-slate-50">
-                     <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 flex justify-between">
-                       <span>Total Unpaid Bill</span>
-                       <span>₱{roomTotal}</span>
-                     </h4>
+                    <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 flex justify-between">
+                      <span>历史订单总额</span>
+                      <span>₱{roomTotal}</span>
+                    </h4>
+                    {selectedRoom.lastOrderTime && (
+                      <p className="text-xs text-slate-400">
+                        最近订单: {new Date(selectedRoom.lastOrderTime).toLocaleString('zh-CN')}
+                      </p>
+                    )}
                   </div>
 
                   <div className="p-4 bg-white border-t border-slate-100 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-10">

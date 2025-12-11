@@ -342,7 +342,7 @@ const PaymentManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-slate-900">{method.currency}</div>
                     {method.exchangeRate !== 1.0000 && (
-                      <div className="text-sm text-slate-500">汇率: {method.exchangeRate.toFixed(4)}</div>
+                      <div className="text-sm text-slate-500">参考汇率 Reference Rate: {method.exchangeRate.toFixed(4)}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

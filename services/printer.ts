@@ -109,9 +109,12 @@ export const PrinterService = {
           <span>TOTAL:</span>
           <span>${formatPrice(order.totalAmount)}</span>
         </div>
+        <div style="text-align:right; font-size:11px; margin-top:2px;">
+          参考价 Reference: ¥${(order.totalAmount / 8.2).toFixed(1)}
+        </div>
         
         <div style="text-align:right; margin-top:5px; font-size:12px; font-weight:bold;">
-           ${order.paymentMethod || 'Unpaid'}
+          ${order.paymentMethod || 'Unpaid'}
         </div>
 
         <div class="footer">
@@ -178,6 +181,9 @@ export const PrinterService = {
         <div class="total-row">
           <span>TOTAL REVENUE 总营收:</span>
           <span>${formatPrice(data.total)}</span>
+        </div>
+        <div style="text-align:right; font-size:11px; margin-top:2px;">
+          参考价 Reference: ¥${(data.total / 8.2).toFixed(1)}
         </div>
 
         <div class="divider"></div>

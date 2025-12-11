@@ -462,7 +462,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
                              <div className="flex justify-between items-end mt-1">
                                 <div>
                                    <div className="font-bold text-red-600 text-lg">₱{dish.price}</div>
-                                   <div className="text--[10px] text-slate-400">≈ ¥{(dish.price / exchangeRate).toFixed(0)}</div>
+                                   <div className="text--[10px] text-slate-400">参考价 Ref: ¥{(dish.price / exchangeRate).toFixed(0)}</div>
                                 </div>
                                 {inCartQty > 0 ? (
                                   <div className="flex items-center gap-3 bg-slate-50 rounded-full px-1 py-1 border border-slate-200 shadow-inner">
@@ -695,6 +695,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
                       {currentLang === 'zh-CN' ? 'Total Amount 应付金额' : 'Kabuuang Halaga'}
                     </p>
                     <div className="text-4xl font-bold text-slate-900">₱{totalAmount.toFixed(0)}</div>
+                    <div className="text-xs text-slate-400 mt-1">参考价 Reference: ≈ ¥{(totalAmount / exchangeRate).toFixed(1)}</div>
                  </div>
 
                  {!selectedPaymentMethod ? (

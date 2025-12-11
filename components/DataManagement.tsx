@@ -202,13 +202,215 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
         
         <button
           onClick={() => {
-            const textarea = document.createElement('textarea');
-            textarea.value = JSON.stringify([], null, 2);
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            alert('已复制模板到剪贴板');
+            // 生成当前表格类型的模板数据
+            const fields = fieldDefinitions[activeTab] || [];
+            let templateItems: any[] = [];
+            
+            // 根据不同表格类型生成不同的示例数据
+            switch (activeTab) {
+              case 'dishes':
+                templateItems = [
+                  {
+                    name: "宫保鸡丁",
+                    description: "经典川菜，微辣口感",
+                    price: 38.00,
+                    category: "主食",
+                    available: true,
+                    spiciness: 2
+                  },
+                  {
+                    name: "麻婆豆腐",
+                    description: "嫩滑豆腐配麻辣酱汁",
+                    price: 28.00,
+                    category: "主食",
+                    available: true,
+                    spiciness: 3
+                  }
+                ];
+                break;
+                
+              case 'orders':
+                templateItems = [
+                  {
+                    tableNumber: "A01",
+                    source: "LOBBY",
+                    status: "Pending",
+                    totalAmount: 128.50,
+                    notes: "不要香菜，少盐",
+                    paymentMethod: "CASH"
+                  }
+                ];
+                break;
+                
+              case 'expenses':
+                templateItems = [
+                  {
+                    amount: 1250.00,
+                    category: "食材采购",
+                    description: "采购新鲜蔬菜和肉类",
+                    date: new Date().toISOString().split('T')[0]
+                  }
+                ];
+                break;
+                
+              case 'inventory':
+                templateItems = [
+                  {
+                    name: "鸡胸肉",
+                    quantity: 10,
+                    unit: "公斤",
+                    minThreshold: 5
+                  }
+                ];
+                break;
+                
+              case 'ktv_rooms':
+                templateItems = [
+                  {
+                    name: "VIP01",
+                    status: "Available",
+                    hourlyRate: 88.00
+                  }
+                ];
+                break;
+                
+              case 'sign_bill_accounts':
+                templateItems = [
+                  {
+                    name: "ABC贸易公司",
+                    cooperationMethod: "协议单位",
+                    settlementMethod: "月结",
+                    approver: "李经理",
+                    phoneNumber: "+639123456789",
+                    creditLimit: 10000.00,
+                    currentDebt: 2500.00,
+                    status: "Active"
+                  }
+                ];
+                break;
+                
+              case 'hotel_rooms':
+                templateItems = [
+                  {
+                    number: "8201",
+                    floor: 2,
+                    status: "Vacant",
+                    guestName: "",
+                    dailyRate: 288.00
+                  },
+                  {
+                    number: "8202",
+                    floor: 2,
+                    status: "Vacant",
+                    guestName: "",
+                    dailyRate: 288.00
+                  },
+                  {
+                    number: "8301",
+                    floor: 3,
+                    status: "Vacant",
+                    guestName: "",
+                    dailyRate: 288.00
+                  },
+                  {
+                    number: "8302",
+                    floor: 3,
+                    status: "Vacant",
+                    guestName: "",
+                    dailyRate: 288.00
+                  }
+                ];
+                break;
+                
+              case 'payment_methods':
+                templateItems = [
+                  {
+                    name: "现金支付",
+                    englishName: "Cash",
+                    isEnabled: true,
+                    paymentType: "CASH",
+                    currency: "PHP",
+                    exchangeRate: 1.0000,
+                    sortOrder: 1
+                  }
+                ];
+                break;
+                
+              default:
+                // 默认情况下，为每个字段生成示例值
+                const templateItem: any = {};
+                fields.forEach(field => {
+                  switch (field.type) {
+                    case 'number':
+                      templateItem[field.key] = field.key.includes('price') || field.key.includes('Amount') || field.key.includes('Rate') ? 25.00 : 
+                                              field.key.includes('quantity') || field.key.includes('Quantity') ? 5 : 0;
+                      break;
+                    case 'checkbox':
+                      templateItem[field.key] = true;
+                      break;
+                    case 'select':
+                      templateItem[field.key] = field.options && field.options.length > 0 ? field.options[0] : '';
+                      break;
+                    case 'date':
+                      templateItem[field.key] = new Date().toISOString().split('T')[0];
+                      break;
+                    default:
+                      if (field.key === 'name') {
+                        templateItem[field.key] = `示例${field.label}`;
+                      } else if (field.key === 'description') {
+                        templateItem[field.key] = `这是${field.label}的示例描述`;
+                      } else {
+                        templateItem[field.key] = `请输入${field.label}`;
+                      }
+                  }
+                });
+                templateItems = [templateItem];
+            }
+            
+            const formattedJson = JSON.stringify(templateItems, null, 2);
+            
+            // 复制到剪贴板，兼容更多浏览器
+            if (navigator.clipboard && window.isSecureContext) {
+              // 使用现代clipboard API
+              navigator.clipboard.writeText(formattedJson).then(() => {
+                alert(`已复制${tables.find(t => t.id === activeTab)?.name}模板到剪贴板\n\n模板内容:\n${formattedJson}`);
+              }).catch(err => {
+                console.error('复制失败:', err);
+                fallbackCopyTextToClipboard(formattedJson);
+              });
+            } else {
+              // 降级到document.execCommand方法
+              fallbackCopyTextToClipboard(formattedJson);
+            }
+            
+            // 降级复制方法
+            function fallbackCopyTextToClipboard(text: string) {
+              const textArea = document.createElement("textarea");
+              textArea.value = text;
+              
+              // 避免滚动到底部
+              textArea.style.top = "0";
+              textArea.style.left = "0";
+              textArea.style.position = "fixed";
+              textArea.style.opacity = "0";
+              
+              document.body.appendChild(textArea);
+              textArea.focus();
+              textArea.select();
+              
+              try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                  alert(`已复制${tables.find(t => t.id === activeTab)?.name}模板到剪贴板\n\n模板内容:\n${text}`);
+                } else {
+                  alert(`复制失败，请手动复制以下内容:\n\n${text}`);
+                }
+              } catch (err) {
+                alert(`复制失败，请手动复制以下内容:\n\n${text}`);
+              }
+              
+              document.body.removeChild(textArea);
+            }
           }}
           className="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200"
         >

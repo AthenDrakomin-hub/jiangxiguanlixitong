@@ -34,8 +34,8 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({ accounts, setAccounts }
   const activeCount = accounts.filter(a => a.status === 'Active').length;
 
   const filteredAccounts = accounts.filter(acc => 
-    acc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    acc.approver.toLowerCase().includes(searchTerm.toLowerCase())
+    (acc.name && acc.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
+    (acc.approver && acc.approver.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleOpenModal = (account?: SignBillAccount) => {
