@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ClipboardList, ChefHat, Utensils, Rocket, Banknote, Smartphone, QrCode, CircleDollarSign, Wallet, CheckCircle2, Clock, Printer, XCircle, BedDouble, Mic2, Archive, Receipt } from 'lucide-react';
 import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types';
 import { PrinterService } from '../services/printer';
@@ -13,7 +13,32 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'All'>('All');
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [newOrderNotification, setNewOrderNotification] = useState<{count: number, timestamp: number} | null>(null);
   
+  // 检查是否有新订单
+  useEffect(() => {
+    if (orders && orders.length > 0) {
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000; // 5分钟内
+      const recentOrders = orders.filter(order => 
+        new Date(order.createdAt).getTime() > fiveMinutesAgo
+      );
+      
+      if (recentOrders.length > 0) {
+        setNewOrderNotification({
+          count: recentOrders.length,
+          timestamp: Date.now()
+        });
+        
+        // 5秒后隐藏通知
+        const timer = setTimeout(() => {
+          setNewOrderNotification(null);
+        }, 5000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [orders]);
+
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     // If trying to pay, open payment modal first
     if (newStatus === OrderStatus.PAID) {
@@ -87,6 +112,23 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
 
   return (
     <div className="space-y-6">
+      {/* 新订单通知横幅 */}
+      {newOrderNotification && (
+        <div className="fixed top-20 right-4 z-50 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg animate-bounce flex items-center gap-2">
+          <div className="w-3 h-3 bg-white rounded-full animate-ping absolute"></div>
+          <span className="font-bold">新订单提醒</span>
+          <span>收到 {newOrderNotification.count} 个新订单</span>
+          <button 
+            onClick={() => setNewOrderNotification(null)}
+            className="ml-2 text-white hover:text-gray-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      )}
+      
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">

@@ -166,14 +166,14 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
     let finalNotes = notes;
 
     if (method === 'CASH') {
-        finalStatus = OrderStatus.PENDING; // Staff needs to verify/collect cash
-        if (cashAmountTendered) {
-             const tender = parseFloat(cashAmountTendered);
-             const change = tender - totalAmount;
-             finalNotes = `${notes ? notes + ' | ' : ''}Pay with ${tender}, Change: ${change.toFixed(0)}`;
-        }
+      finalStatus = OrderStatus.PENDING; // Staff needs to verify/collect cash
+      if (cashAmountTendered) {
+        const tender = parseFloat(cashAmountTendered);
+        const change = tender - totalAmount;
+        finalNotes = `${notes ? notes + ' | ' : ''}Pay with ${tender}, Change: ${change.toFixed(0)}`;
+      }
     } else {
-        finalStatus = OrderStatus.PAID; // Digital payments assumed successful
+      finalStatus = OrderStatus.PAID; // Digital payments assumed successful
     }
 
     const orderId = `WEB-${Date.now().toString().slice(-6)}`;
@@ -196,10 +196,19 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
     setSuccessOrderData({ id: orderId, method: method, total: totalAmount });
     setShowSuccess(true);
     
+    // 添加新订单通知
+    if (typeof window !== 'undefined' && window.ReactNativeWebView) {
+      // 如果在React Native WebView中运行，发送消息到原生应用
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'NEW_ORDER',
+        order: newOrder
+      }));
+    }
+    
     setTimeout(() => {
-       setShowSuccess(false);
-       setSuccessOrderData(null);
-       setActiveTab('ORDERS'); // Switch to history tab
+      setShowSuccess(false);
+      setSuccessOrderData(null);
+      setActiveTab('ORDERS'); // Switch to history tab
     }, 4000);
   };
 

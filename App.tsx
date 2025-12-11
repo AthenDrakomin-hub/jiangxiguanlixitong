@@ -170,6 +170,30 @@ const App: React.FC = () => {
         
         if (brandNewOrders.length > 0) {
            triggerNotification('新订单提醒 / New Order', `收到 ${brandNewOrders.length} 个新订单，请及时处理！`);
+           
+           // 同时在页面上显示一个明显的提示
+           const notificationElement = document.createElement('div');
+           notificationElement.innerHTML = `
+             <div id="new-order-notification" class="fixed top-4 right-4 z-50 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg animate-bounce flex items-center gap-2">
+               <div class="w-3 h-3 bg-white rounded-full animate-ping absolute"></div>
+               <span class="font-bold">新订单提醒 / New Order</span>
+               <span>收到 ${brandNewOrders.length} 个新订单</span>
+               <button onclick="document.getElementById('new-order-notification').remove()" class="ml-2 text-white hover:text-gray-200">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                 </svg>
+               </button>
+             </div>
+           `;
+           document.body.appendChild(notificationElement);
+           
+           // 5秒后自动移除通知
+           setTimeout(() => {
+             const element = document.getElementById('new-order-notification');
+             if (element) {
+               element.remove();
+             }
+          }, 5000);
         }
     }
     
