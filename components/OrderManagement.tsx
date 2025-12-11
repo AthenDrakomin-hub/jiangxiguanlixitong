@@ -71,7 +71,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
     }
   };
 
-  const filteredOrders = orders.filter(o => filterStatus === 'All' || o.status === filterStatus)
+  const filteredOrders = (orders || []).filter(o => filterStatus === 'All' || o.status === filterStatus)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Payment methods configuration
@@ -166,7 +166,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
                     </div>
                     
                     <div className="space-y-2 max-w-2xl">
-                      {order.items.map((item, idx) => (
+                      {(order.items || []).map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-50 pb-1 last:border-0">
                           <div className="flex items-center gap-3">
                             <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold min-w-[2rem] text-center">x{item.quantity}</span>
