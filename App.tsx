@@ -313,14 +313,6 @@ const App: React.FC = () => {
     auditLogger.log('info', 'USER_LOGIN', '用户成功登录系统', 'admin');
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('jx_auth');
-    setIsAuthenticated(false);
-    
-    // 记录登出日志
-    auditLogger.log('info', 'USER_LOGOUT', '用户退出系统', 'admin');
-  };
-
   // 在开发环境中始终显示主界面，生产环境中才需要认证
   const shouldShowLogin = () => {
     if (typeof window !== 'undefined') {
@@ -364,9 +356,9 @@ const App: React.FC = () => {
               return <MenuManagement 
                 dishes={dishes || []} 
                 setDishes={setDishes} 
-                inventory={inventory || []} 
                 categories={systemSettings.categories || []} 
                 setCategories={handleCategoriesUpdate} 
+                inventory={inventory || []}
               />;
             case 'orders':
               return <OrderManagement orders={orders || []} setOrders={setOrders} />; 
@@ -381,7 +373,25 @@ const App: React.FC = () => {
             case 'inventory':
               return <InventoryManagement inventory={inventory || []} setInventory={setInventory} />;
             case 'settings':
-              return <Settings onSettingsChange={handleSettingsUpdate} />;
+              return <Settings 
+                onSettingsChange={handleSettingsUpdate}
+                systemSettings={systemSettings}
+                setSystemSettings={setSystemSettings}
+                dishes={dishes}
+                setDishes={setDishes}
+                orders={orders}
+                setOrders={setOrders}
+                expenses={expenses}
+                setExpenses={setExpenses}
+                inventory={inventory}
+                setInventory={setInventory}
+                ktvRooms={ktvRooms}
+                setKtvRooms={setKtvRooms}
+                signBillAccounts={signBillAccounts}
+                setSignBillAccounts={setSignBillAccounts}
+                hotelRooms={hotelRooms}
+                setHotelRooms={setHotelRooms}
+              />;
             case 'ktv':
               return <KTVSystem rooms={ktvRooms || []} setRooms={setKtvRooms} dishes={dishes || []} />;
             case 'signbill':
@@ -392,6 +402,9 @@ const App: React.FC = () => {
                 setRooms={setHotelRooms} 
                 dishes={dishes || []}
                 onPlaceOrder={handlePlaceOrder}
+                systemSettings={{
+                  exchangeRate: systemSettings.exchangeRate || 8.2
+                }}
               />;
             case 'qrcode':
               return <QRCodeManager hotelRooms={hotelRooms || []} ktvRooms={ktvRooms || []} />;

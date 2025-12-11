@@ -4,7 +4,7 @@ import { getStorageSettings, saveStorageSettings } from '../services/storage';
 import { StorageSettings, StoreInfo } from '../types';
 import { PrinterService } from '../services/printer';
 import DataManagement from './DataManagement';
-import { APP_CONFIG } from '../config/appConfig';
+
 import auditLogger from '../services/auditLogger';
 
 interface SettingsProps {

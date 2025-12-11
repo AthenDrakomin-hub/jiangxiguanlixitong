@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit2, Trash2, Search, ImageIcon, Upload, X, ChevronDown, Check, Layers, ArrowUpCircle, ArrowDownCircle, GripVertical, Beaker, Loader2, Download, FileSpreadsheet, Utensils } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, ImageIcon, Upload, X, Check, Layers, Beaker, Loader2, Download, FileSpreadsheet, Utensils } from 'lucide-react';
 import { Dish, Category } from '../types';
 import auditLogger from '../services/auditLogger';
 
-// dnd-kit imports
+// dnd-kit imports (commented out as not currently used)
+/*
 import {
   DndContext, 
   closestCenter,
@@ -22,6 +23,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+*/
 
 import ImageLazyLoad from './ImageLazyLoad';
 
@@ -29,9 +31,93 @@ interface MenuManagementProps {
   dishes: Dish[];
   setDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
   categories: Category[];
+  setCategories?: React.Dispatch<React.SetStateAction<Category[]>>;
+  inventory: any[]; // 添加inventory属性
 }
 
-const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, categories }) => {
+const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, categories, inventory }) => {
+  
+  interface DishCardProps {
+    dish: Dish;
+    isSelected: boolean;
+    onSelect: (id: string) => void;
+    onEdit: (dish: Dish) => void;
+    onDelete: (id: string) => void;
+  }
+
+  const DishCard: React.FC<DishCardProps> = ({ dish, isSelected, onSelect, onEdit, onDelete }) => {
+    return (
+      <div 
+        className={`bg-white rounded-xl border-2 transition-all duration-200 overflow-hidden shadow-sm hover:shadow-md ${isSelected ? 'border-red-500 ring-2 ring-red-100' : 'border-slate-100'}`}
+      >
+        <div className="relative">
+          <div className="aspect-square relative overflow-hidden bg-slate-100">
+            {dish.imageUrl ? (
+              <ImageLazyLoad 
+                src={dish.imageUrl} 
+                alt={dish.name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-slate-400">
+                <Utensils size={32} />
+              </div>
+            )}
+            
+            <div className="absolute top-2 left-2 flex gap-1">
+              {dish.spiciness > 0 && (
+                <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center">
+                  {Array(dish.spiciness).fill(0).map((_, i) => <span key={i}>🌶️</span>)}
+                </span>
+              )}
+            </div>
+            
+            <button 
+              onClick={() => onSelect(dish.id)}
+              className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-red-500 border-red-500 text-white' : 'bg-white border-slate-300 text-white hover:border-red-500'}`}
+            >
+              {isSelected && <Check size={14} />}
+            </button>
+            
+            {!dish.available && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">Sold Out</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4">
+            <div className="flex justify-between items-start gap-2">
+              <h3 className="font-bold text-slate-800 truncate">{dish.name}</h3>
+              <span className="font-bold text-red-600 whitespace-nowrap">₱{dish.price.toFixed(2)}</span>
+            </div>
+            
+            <p className="text-slate-500 text-sm mt-1 line-clamp-2">{dish.description}</p>
+            
+            <div className="flex justify-between items-center mt-3">
+              <span className="inline-block bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded">{dish.category}</span>
+              <div className="flex gap-1">
+                <button 
+                  onClick={() => onEdit(dish)}
+                  className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Edit 编辑"
+                >
+                  <Edit2 size={16} />
+                </button>
+                <button 
+                  onClick={() => onDelete(dish.id)}
+                  className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete 删除"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,11 +126,9 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
   const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
-  const [draggedItem, setDraggedItem] = useState<{id: string, index: number} | null>(null);
-  
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20); // 默认每页20条记录
+  const itemsPerPage = 20; // 默认每页20条记录
   
   // 图片上传状态
   const [isUploading, setIsUploading] = useState(false);
@@ -87,19 +171,6 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
     setCurrentPage(1);
   }, [searchTerm, selectedCategory]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, 
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const isSortingEnabled = searchTerm === '' && selectedCategory === 'All';
-
   const toggleSelection = (id: string) => {
     const newSet = new Set(selectedIds);
     if (newSet.has(id)) {
@@ -124,19 +195,6 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
 
     setDishes(prev => prev.map(d => selectedIds.has(d.id) ? { ...d, available: newState } : d));
     setSelectedIds(new Set());
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setDishes((items) => {
-        const oldIndex = items.findIndex((i) => i.id === active.id);
-        const newIndex = items.findIndex((i) => i.id === over.id);
-        
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
   };
 
   const openAddModal = () => {
@@ -415,11 +473,9 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {paginatedDishes.map((dish, index) => (
-              <SortableDishCard 
+            {paginatedDishes.map((dish) => (
+              <DishCard 
                 key={dish.id} 
-                id={dish.id}
-                index={startIndex + index}
                 dish={dish}
                 isSelected={selectedIds.has(dish.id)}
                 onSelect={toggleSelection}
@@ -666,8 +722,8 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
                            className="flex-1 text-sm border border-slate-200 rounded-lg px-2 py-1.5"
                         >
                            <option value="">Select Ingredient 选择食材...</option>
-                           {inventory.map(ing => (
-                             <option key={ing.id} value={ing.id}>{ing.name} ({ing.unit})</option>
+                           {inventory.map((ing: any) => (
+                             <option key={ing.id?.toString() || `ing-${Math.random()}`} value={ing.id}>{ing.name} ({ing.unit})</option>
                            ))}
                         </select>
                         <input 
@@ -889,7 +945,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ dishes, setDishes, cate
                                 alert('导入成功但保存到数据库失败，请手动保存');
                               }
                               
-                              setIsImportModalOpen(false);
+                              setShowImportModal(false);
                             } catch (error) {
                               console.error('导入失败:', error);
                               alert('导入失败，请检查文件格式是否正确');

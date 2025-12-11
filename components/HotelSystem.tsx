@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Utensils, X, Plus, User, Receipt, ChefHat, Minus } from 'lucide-react';
+import { Utensils, X, Plus, User, Receipt, ChefHat, Loader2 } from 'lucide-react';
 import { HotelRoom, Dish, OrderItem, Order, OrderStatus, HotelRoomStatus } from '../types';
 import ImageLazyLoad from './ImageLazyLoad';
 
@@ -8,7 +8,6 @@ interface HotelSystemProps {
   setRooms: React.Dispatch<React.SetStateAction<HotelRoom[]>>;
   dishes: Dish[];
   onPlaceOrder: (newOrder: Order) => void;
-  myOrders: Order[];
   systemSettings: {
     exchangeRate: number;
   };
@@ -18,27 +17,17 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
   rooms, 
   setRooms, 
   dishes, 
-  onPlaceOrder,
-  myOrders,
-  systemSettings
+  onPlaceOrder
 }) => {
   const [activeFloor, setActiveFloor] = useState<number>(2);
   const [selectedRoom, setSelectedRoom] = useState<HotelRoom | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cart, setCart] = useState<OrderItem[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('加载中...');
   
   // Filter rooms by active floor
   const displayRooms = rooms.filter((r: HotelRoom) => r.floor === activeFloor);
-  
-  // Update room status
-  const updateRoomStatus = (roomId: string, newStatus: HotelRoomStatus) => {
-    const updateFn = (prevRooms: HotelRoom[]) => 
-      prevRooms.map(room => 
-        room.id === roomId ? { ...room, status: newStatus } : room
-      );
-    setRooms(updateFn);
-  };
   
   // Add item to cart
   const addToCart = (dish: Dish) => {
@@ -59,7 +48,6 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
         }];
       }
     });
-    setIsCartOpen(true);
   };
   
   // Remove item from cart
@@ -101,50 +89,75 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
     alert('此系统专为客房送餐服务设计，房间占用状态不影响点餐功能。');
   };
 
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (!selectedRoom || cart.length === 0) return;
 
-    const newOrder: Order = {
-      id: `ORD-${Date.now()}`,
-      tableNumber: selectedRoom.number, 
-      source: 'ROOM_SERVICE',
-      items: cart,
-      status: OrderStatus.PENDING,
-      totalAmount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-      createdAt: new Date().toISOString(),
-      notes: '客房点餐 Room Service'
-    };
-    onPlaceOrder(newOrder);
+    setIsLoading(true);
+    setLoadingText('正在提交订单...');
 
-    const updateFn = (r: HotelRoom) => {
-      if (r.id === selectedRoom.id) {
-        const updatedOrders = [...r.orders];
-        cart.forEach(cartItem => {
-          const existing = updatedOrders.find(o => o.dishId === cartItem.dishId);
-          if (existing) existing.quantity += cartItem.quantity;
-          else updatedOrders.push(cartItem);
-        });
+    try {
+      // Simulate network request delay
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-        return {
-          ...r,
-          // 对于纯送餐服务，房间状态始终保持为Occupied以表示该房间有订单历史
-          status: 'Occupied' as HotelRoomStatus,
-          orders: updatedOrders,
-          guestName: r.guestName || '点餐客人 Guest',
-          lastOrderTime: new Date().toISOString()
-        };
-      }
-      return r;
-    };
+      const newOrder: Order = {
+        id: `ORD-${Date.now()}`,
+        tableNumber: selectedRoom.number, 
+        source: 'ROOM_SERVICE',
+        items: cart,
+        status: OrderStatus.PENDING,
+        totalAmount: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        createdAt: new Date().toISOString(),
+        notes: '客房点餐 Room Service'
+      };
+      
+      onPlaceOrder(newOrder);
 
-    setRooms(prev => prev.map(updateFn));
-    
-    alert(`订单已发送至厨房！Order Sent!\n房号: ${selectedRoom.number}`);
-    setCart([]); // 清空购物车而不是关闭模态框，允许继续点餐
+      const updateFn = (r: HotelRoom) => {
+        if (r.id === selectedRoom.id) {
+          const updatedOrders = [...r.orders];
+          cart.forEach(cartItem => {
+            const existing = updatedOrders.find(o => o.dishId === cartItem.dishId);
+            if (existing) existing.quantity += cartItem.quantity;
+            else updatedOrders.push(cartItem);
+          });
+
+          return {
+            ...r,
+            // 对于纯送餐服务，房间状态始终保持为Occupied以表示该房间有订单历史
+            status: 'Occupied' as HotelRoomStatus,
+            orders: updatedOrders,
+            guestName: r.guestName || '点餐客人 Guest',
+            lastOrderTime: new Date().toISOString()
+          };
+        }
+        return r;
+      };
+
+      setRooms(prev => prev.map(updateFn));
+      
+      // Success feedback
+      alert(`订单已发送至厨房！Order Sent!\n房号: ${selectedRoom.number}`);
+      setCart([]); // 清空购物车而不是关闭模态框，允许继续点餐
+    } catch (error) {
+      console.error('Failed to submit order:', error);
+      alert('订单提交失败，请重试。Order submission failed, please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 max-w-md mx-auto shadow-2xl overflow-hidden relative font-sans">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 flex flex-col items-center gap-3 shadow-2xl">
+            <Loader2 className="animate-spin text-orange-600" size={32} />
+            <p className="text-slate-700 font-medium">{loadingText}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
@@ -281,10 +294,19 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
                      </div>
                      <button 
                        onClick={handleSubmitOrder}
-                       disabled={cartTotal === 0}
+                       disabled={cartTotal === 0 || isLoading}
                        className="w-full py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-200 flex items-center justify-center gap-2"
                      >
-                       <Receipt size={18} /> Send to Kitchen
+                       {isLoading ? (
+                         <>
+                           <Loader2 className="animate-spin" size={18} />
+                           提交中...
+                         </>
+                       ) : (
+                         <>
+                           <Receipt size={18} /> Send to Kitchen
+                         </>
+                       )}
                      </button>
                   </div>
                </div>
@@ -301,10 +323,14 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
                          className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-orange-400 transition-all text-left group flex flex-col h-full"
                        >
                           <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden mb-2 relative shrink-0">
-                             <img src={dish.imageUrl} className="w-full h-full object-cover" alt={dish.name} />
-                             <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Plus className="text-white drop-shadow-md" size={24} />
-                             </div>
+                            <ImageLazyLoad 
+                              src={dish.imageUrl || '/placeholder-image.jpg'} 
+                              alt={dish.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                               <Plus className="text-white drop-shadow-md" size={24} />
+                            </div>
                           </div>
                           <div className="flex-1 flex flex-col justify-between">
                              <div className="font-bold text-slate-800 text-sm line-clamp-1">{dish.name}</div>

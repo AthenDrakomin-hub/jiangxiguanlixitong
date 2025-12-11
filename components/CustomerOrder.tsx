@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, History, Receipt, Home, Banknote, Smartphone, QrCode, Wallet, ArrowLeft, Wifi, Phone, Send, CheckCircle2 } from 'lucide-react';
-import { Dish, Order, OrderStatus, OrderItem, OrderSource, PaymentMethod, SystemSettings } from '../types';
+import { ShoppingBag, Plus, Minus, X, ChevronRight, UtensilsCrossed, MapPin, Search, History, Receipt, Home, Banknote, Smartphone, QrCode, Wallet, ArrowLeft, Wifi, Phone, Send, Loader2 } from 'lucide-react';
+import { Dish, Order, OrderStatus, PaymentMethod, SystemSettings } from '../types';
 import { setLanguage } from '../utils/i18n';
+import ImageLazyLoad from './ImageLazyLoad';
 
 interface CustomerOrderProps {
   dishes: Dish[];
@@ -18,24 +19,23 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [cart, setCart] = useState<{ dish: Dish; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successOrderData, setSuccessOrderData] = useState<{id: string, method: PaymentMethod, total: number} | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [notes, setNotes] = useState('');
 
   // Payment State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null);
-  const [cashAmountTendered, setCashAmountTendered] = useState<string>('');
+  const [cashAmountTendered, setCashAmountTendered] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Location State
   const [tableId, setTableId] = useState('');
-  const [isFixedLocation, setIsFixedLocation] = useState(false); 
-  const [showTableSelector, setShowTableSelector] = useState(false);
 
   // Language State
   const [currentLang, setCurrentLang] = useState<'zh-CN' | 'fil'>('zh-CN');
+
+  // Loading State
+  const [loadingText, setLoadingText] = useState('加载中...');
 
   // Settings
   const storeInfo = systemSettings?.storeInfo;
@@ -63,156 +63,144 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
     
     // Set language if provided in URL
     if (langParam === 'fil' || langParam === 'zh-CN') {
-      setCurrentLang(langParam);
+      setCurrentLang(langParam as 'zh-CN' | 'fil');
       setLanguage(langParam);
     }
     
+    // Set table ID if provided
     if (idParam) {
       setTableId(idParam);
-      setIsFixedLocation(true);
     } else {
-      setShowTableSelector(true); // Prompt user to select table if none provided
+      // Default to lobby if no ID provided
+      setTableId('LOBBY');
     }
   }, []);
 
-  // Determine Order Source based on ID format
-  const getOrderSource = (id: string): OrderSource => {
-    const upperId = id.toUpperCase();
-    if (upperId.startsWith('82') || upperId.startsWith('83') || upperId.startsWith('RM')) return 'ROOM_SERVICE';
-    if (upperId.includes('KTV') || upperId.includes('VIP')) return 'KTV';
-    if (upperId === 'TAKEOUT') return 'TAKEOUT';
-    return 'LOBBY';
-  };
+  // Filter dishes by category and search term
+  const displayedDishes = useMemo(() => {
+    return dishes.filter(dish => {
+      const matchesCategory = activeCategory === 'All' || dish.category === activeCategory;
+      const matchesSearch = dish.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           dish.description.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [dishes, activeCategory, searchTerm]);
 
-  const displayedDishes = (dishes || []).filter(d => {
-    const matchesCategory = activeCategory === 'All' || d.category === activeCategory;
-    const matchesSearch = d.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return d.available && matchesCategory && matchesSearch;
-  });
+  // Cart calculations
+  const totalCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+  const subTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.dish.price * item.quantity), 0), [cart]);
+  const serviceCharge = useMemo(() => subTotal * serviceChargeRate, [subTotal, serviceChargeRate]);
+  const totalAmount = useMemo(() => subTotal + serviceCharge, [subTotal, serviceCharge]);
 
-  // History Orders (Filter by Table ID)
+  // My Orders (filtered by tableId)
   const myOrders = useMemo(() => {
-     if (!tableId) return [];
-     return (orders || []).filter(o => o.tableNumber === tableId).sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return orders.filter(order => order.tableNumber === tableId).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }, [orders, tableId]);
 
-  // Cart Logic
+  // Add item to cart
   const addToCart = (dish: Dish) => {
     setCart(prev => {
-      const existing = prev.find(item => item.dish.id === dish.id);
-      if (existing) {
-        return prev.map(item => item.dish.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item);
+      const existingItem = prev.find(item => item.dish.id === dish.id);
+      if (existingItem) {
+        return prev.map(item => 
+          item.dish.id === dish.id 
+            ? { ...item, quantity: item.quantity + 1 } 
+            : item
+        );
+      } else {
+        return [...prev, { dish, quantity: 1 }];
       }
-      return [...prev, { dish, quantity: 1 }];
     });
   };
 
+  // Remove item from cart
   const removeFromCart = (dishId: string) => {
-    setCart(prev => prev.reduce((acc, item) => {
-      if (item.dish.id === dishId) {
-        if (item.quantity > 1) {
-          acc.push({ ...item, quantity: item.quantity - 1 });
-        }
+    setCart(prev => {
+      const existingItem = prev.find(item => item.dish.id === dishId);
+      if (existingItem && existingItem.quantity > 1) {
+        return prev.map(item => 
+          item.dish.id === dishId 
+            ? { ...item, quantity: item.quantity - 1 } 
+            : item
+        );
       } else {
-        acc.push(item);
+        return prev.filter(item => item.dish.id !== dishId);
       }
-      return acc;
-    }, [] as { dish: Dish; quantity: number }[]));
+    });
   };
 
-  // Totals Calculation
-  const subTotal = cart.reduce((sum, item) => sum + (item.dish.price * item.quantity), 0);
-  const serviceCharge = subTotal * serviceChargeRate;
-  const totalAmount = subTotal + serviceCharge;
-  const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Payment Handlers
+  // Initiate checkout process
   const handleInitiateCheckout = () => {
+    if (cart.length === 0) return;
     setIsCartOpen(false);
     setIsPaymentModalOpen(true);
-    setSelectedPaymentMethod(null);
-    setCashAmountTendered('');
   };
 
-  const handleConfirmPayment = () => {
+  // Confirm payment and place order
+  const handleConfirmPayment = async () => {
     if (!selectedPaymentMethod) return;
-
+    
     setIsProcessingPayment(true);
+    setLoadingText(currentLang === 'zh-CN' ? '正在处理支付...' : 'Pinoproseso ang pagbabayad...');
 
-    // Simulation of payment API latency
-    setTimeout(() => {
-        finalizeOrder(selectedPaymentMethod);
-        setIsProcessingPayment(false);
-        setIsPaymentModalOpen(false);
-    }, 2000);
-  };
+    try {
+      // Simulate network request
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-  const finalizeOrder = (method: PaymentMethod) => {
-    if (cart.length === 0 || !tableId) return;
+      const newOrder: Order = {
+        id: `ORD-${Date.now()}`,
+        tableNumber: tableId,
+        source: tableId.startsWith('8') ? 'ROOM_SERVICE' : 'LOBBY',
+        items: cart.map(item => ({
+          dishId: item.dish.id,
+          dishName: item.dish.name,
+          quantity: item.quantity,
+          price: item.dish.price
+        })),
+        status: OrderStatus.PENDING,
+        totalAmount: totalAmount,
+        paymentMethod: selectedPaymentMethod,
+        createdAt: new Date().toISOString(),
+        notes: notes || ''
+      };
 
-    const orderItems: OrderItem[] = cart.map(c => ({
-      dishId: c.dish.id,
-      dishName: c.dish.name,
-      quantity: c.quantity,
-      price: c.dish.price
-    }));
-
-    // If CASH, we note the change.
-    // Order status: For Digital, we can assume PAID. For CASH, technically user hands cash to waiter or pays at counter.
-    // Since "Pay before order" usually implies the transaction is secured, we mark digital as PAID.
-    // For Cash, we mark as PENDING but with paymentMethod attached, so staff knows to collect.
-    
-    let finalStatus = OrderStatus.PENDING;
-    let finalNotes = notes;
-
-    if (method === 'CASH') {
-      finalStatus = OrderStatus.PENDING; // Staff needs to verify/collect cash
-      if (cashAmountTendered) {
-        const tender = parseFloat(cashAmountTendered);
-        const change = tender - totalAmount;
-        finalNotes = `${notes ? notes + ' | ' : ''}Pay with ${tender}, Change: ${change.toFixed(0)}`;
+      onPlaceOrder(newOrder);
+      
+      // Post message to React Native WebView if available
+      if (typeof window !== 'undefined' && (window as any).ReactNativeWebView) {
+        (window as any).ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'NEW_ORDER',
+          order: newOrder
+        }));
       }
-    } else {
-      finalStatus = OrderStatus.PAID; // Digital payments assumed successful
+      
+      // Reset cart and payment state
+      setCart([]);
+      setIsPaymentModalOpen(false);
+      setSelectedPaymentMethod(null);
+      setCashAmountTendered('');
+      setNotes('');
+      
+      // Switch to history tab
+      setActiveTab('ORDERS');
+    } catch (error) {
+      console.error('Failed to process payment:', error);
+      alert(currentLang === 'zh-CN' ? '支付处理失败，请重试。' : 'Nabigo ang pagproseso ng pagbabayad, pakisubukan muli.');
+    } finally {
+      setIsProcessingPayment(false);
     }
-
-    const orderId = `WEB-${Date.now().toString().slice(-6)}`;
-    const newOrder: Order = {
-      id: orderId,
-      tableNumber: tableId,
-      source: getOrderSource(tableId),
-      items: orderItems,
-      status: finalStatus,
-      totalAmount: totalAmount, 
-      createdAt: new Date().toISOString(),
-      notes: finalNotes || 'Mobile Order',
-      paymentMethod: method
-    };
-
-    onPlaceOrder(newOrder);
-    setCart([]);
-    setNotes('');
-    
-    setSuccessOrderData({ id: orderId, method: method, total: totalAmount });
-    setShowSuccess(true);
-    
-    // 添加新订单通知
-    if (typeof window !== 'undefined' && window.ReactNativeWebView) {
-      // 如果在React Native WebView中运行，发送消息到原生应用
-      window.ReactNativeWebView.postMessage(JSON.stringify({
-        type: 'NEW_ORDER',
-        order: newOrder
-      }));
-    }
-    
-    setTimeout(() => {
-      setShowSuccess(false);
-      setSuccessOrderData(null);
-      setActiveTab('ORDERS'); // Switch to history tab
-    }, 4000);
   };
 
-  // Render Functions
+  // Toggle language
+  const toggleLanguage = () => {
+    const newLang = currentLang === 'zh-CN' ? 'fil' : 'zh-CN';
+    setCurrentLang(newLang);
+    setLanguage(newLang);
+  };
+
+  // Render status badge
   const renderStatusBadge = (status: OrderStatus) => {
       switch (status) {
           case OrderStatus.PENDING: 
@@ -229,128 +217,25 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
               <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded text-xs font-bold">Nai-serve na</span>;
           case OrderStatus.PAID: 
             return currentLang === 'zh-CN' ? 
-              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">已支付 Paid</span> :
-              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">Bayad na</span>;
-          default: 
-            return currentLang === 'zh-CN' ? 
-              <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-xs font-bold">已取消 Cancelled</span> :
-              <span className="bg-red-100 text-red-600 px-2 py-0.5 rounded text-xs font-bold">Kinansela</span>;
+              <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded text-xs font-bold">已支付 Paid</span> :
+              <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded text-xs font-bold">Nabayaran</span>;
+          default:
+            return <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold">Unknown</span>;
       }
   };
 
-  const toggleLanguage = () => {
-    const newLang = currentLang === 'zh-CN' ? 'fil' : 'zh-CN';
-    setCurrentLang(newLang);
-    setLanguage(newLang);
-  };
-
-  if (showTableSelector && !isFixedLocation) {
-     return (
-        <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col items-center justify-center p-6 animate-fade-in">
-           <div className="bg-white w-full max-w-sm p-8 rounded-2xl shadow-xl text-center">
-              <MapPin size={48} className="text-red-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                {currentLang === 'zh-CN' ? 'Welcome 欢迎光临' : 'Maligayang Pagdating'}
-              </h2>
-              <p className="text-slate-500 mb-6">
-                {currentLang === 'zh-CN' ? 'Please select your location 请选择您的位置' : 'Mangyaring piliin ang iyong lokasyon'}
-              </p>
-              
-              <div className="space-y-3">
-                 <button 
-                   onClick={() => { setTableId('LOBBY'); setShowTableSelector(false); }} 
-                   className="w-full py-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-700 hover:border-red-500 hover:text-red-600 transition-colors"
-                 >
-                   {currentLang === 'zh-CN' ? 'Lobby Hall 大厅' : 'Lobby Hall'}
-                 </button>
-                 <button 
-                   onClick={() => { setTableId('TAKEOUT'); setShowTableSelector(false); }} 
-                   className="w-full py-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 transition-colors"
-                 >
-                   {currentLang === 'zh-CN' ? 'Takeout 外卖' : 'Takeout'}
-                 </button>
-                 <div className="relative">
-                    <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-px bg-slate-200 z-0"></span>
-                    <span className="relative z-10 bg-white px-2 text-xs text-slate-400">
-                      {currentLang === 'zh-CN' ? 'OR INPUT ROOM NO' : 'O ILAGAY ANG ROOM NO'}
-                    </span>
-                 </div>
-                 <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      placeholder={currentLang === 'zh-CN' ? 'e.g. 8201' : 'hal. 8201'} 
-                      className="flex-1 border-2 border-slate-200 rounded-xl px-4 py-2 text-center font-bold focus:border-red-500 outline-none uppercase"
-                      id="custom-room-input"
-                    />
-                    <button 
-                       onClick={() => {
-                          const val = (document.getElementById('custom-room-input') as HTMLInputElement).value;
-                          if (val) { setTableId(val); setShowTableSelector(false); }
-                       }}
-                       className="bg-red-600 text-white px-6 rounded-xl font-bold"
-                    >
-                      Go
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-     )
-  }
-
-  if (showSuccess && successOrderData) {
-    const isDigital = successOrderData.method !== 'CASH';
-    return (
-      <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-6 text-center animate-fade-in ${isDigital ? 'bg-emerald-600' : 'bg-orange-500'} text-white`}>
-         <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mb-6 backdrop-blur-sm animate-bounce">
-            {isDigital ? <CheckCircle2 size={48} /> : <UtensilsCrossed size={48} />}
-         </div>
-         <h2 className="text-3xl font-bold mb-2">
-           {isDigital ? 
-             (currentLang === 'zh-CN' ? 'Payment Successful!' : 'Matagumpay ang Pagbabayad!') : 
-             (currentLang === 'zh-CN' ? 'Order Placed!' : 'Naisumite ang Order!')}
-         </h2>
-         <p className="text-xl font-medium opacity-90 mb-1">
-           {isDigital ? 
-             (currentLang === 'zh-CN' ? '支付成功' : 'Matagumpay ang Pagbabayad') : 
-             (currentLang === 'zh-CN' ? '下单成功' : 'Matagumpay ang Pag-order')}
-         </p>
-         <p className="opacity-80 mb-6 max-w-xs leading-relaxed">
-            {isDigital 
-               ? (currentLang === 'zh-CN' ? 'Thank you! Your order has been confirmed.' : 'Salamat! Nakumpirma na ang iyong order.')
-               : (currentLang === 'zh-CN' ? 'Please wait for staff to collect payment.' : 'Mangyaring maghintay para kolektahin ng staff ang bayad.')} <br/>
-            {isDigital ? 
-              (currentLang === 'zh-CN' ? '订单已确认，后厨正在制作。' : 'Nakumpirma na ang order, ginagawa na ng kusina.') : 
-              (currentLang === 'zh-CN' ? '请等待服务员前来确认。' : 'Mangyaring maghintay para dumating ang staff.')}
-         </p>
-         
-         <div className="bg-white/10 rounded-xl p-4 w-full max-w-xs backdrop-blur-md border border-white/20">
-            <div className="flex justify-between text-sm mb-2">
-               <span className="opacity-75">
-                 {currentLang === 'zh-CN' ? 'Order ID' : 'Order ID'}
-               </span>
-               <span className="font-mono font-bold">#{successOrderData.id.slice(-6)}</span>
-            </div>
-            <div className="flex justify-between text-sm mb-2">
-               <span className="opacity-75">
-                 {currentLang === 'zh-CN' ? 'Amount' : 'Halaga'}
-               </span>
-               <span className="font-bold">₱{successOrderData.total.toFixed(0)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-               <span className="opacity-75">
-                 {currentLang === 'zh-CN' ? 'Location' : 'Lokasyon'}
-               </span>
-               <span className="font-bold">{tableId}</span>
-            </div>
-         </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 pb-24 max-w-md mx-auto shadow-2xl overflow-hidden relative font-sans">
-      
+      {/* Loading Overlay */}
+      {isProcessingPayment && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 flex flex-col items-center gap-3 shadow-2xl">
+            <Loader2 className="animate-spin text-red-600" size={32} />
+            <p className="text-slate-700 font-medium">{loadingText}</p>
+          </div>
+        </div>
+      )}
+
       {/* Language Toggle Button */}
       <button 
         onClick={toggleLanguage}
@@ -363,7 +248,11 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
       {activeTab === 'MENU' && (
         <div className="relative bg-slate-800 shrink-0 pb-6">
            <div className="absolute inset-0 overflow-hidden opacity-60">
-              <img src="https://picsum.photos/800/400?random=restaurant" className="w-full h-full object-cover" alt="Banner" />
+              <ImageLazyLoad 
+                src="https://picsum.photos/800/400?random=restaurant" 
+                alt="Restaurant Banner" 
+                className="w-full h-full object-cover" 
+              />
            </div>
            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
            
@@ -402,8 +291,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
            
            {/* Table ID Badge */}
            <div 
-             onClick={() => !isFixedLocation && setShowTableSelector(true)}
-             className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold border border-white/30 flex items-center gap-1 cursor-pointer z-20"
+             className="absolute top-4 left-4 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold border border-white/30 flex items-center gap-1 z-20"
            >
               <MapPin size={12} /> {tableId}
            </div>
@@ -461,7 +349,11 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
                      return (
                        <div key={dish.id} className="flex gap-3 bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
                           <div className="w-24 h-24 rounded-xl bg-slate-100 shrink-0 overflow-hidden">
-                            <img src={dish.imageUrl} alt={dish.name} className="w-full h-full object-cover" />
+                            <ImageLazyLoad 
+                              src={dish.imageUrl || '/placeholder-image.jpg'} 
+                              alt={dish.name} 
+                              className="w-full h-full object-cover" 
+                            />
                           </div>
                           <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
                              <div>
@@ -670,7 +562,8 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
                   
                   <button 
                      onClick={handleInitiateCheckout}
-                     className="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-lg hover:bg-red-700 shadow-xl shadow-red-200 active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                     disabled={cart.length === 0}
+                     className="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-lg hover:bg-red-700 shadow-xl shadow-red-200 active:scale-[0.98] transition-transform flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {currentLang === 'zh-CN' ? 'Checkout 去支付' : 'Mag-checkout'}
                   </button>

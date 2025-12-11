@@ -18,7 +18,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
   
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(20); // 默认每页20条记录
+  const itemsPerPage = 20; // 默认每页20条记录
   
   // 检查是否有新订单
   useEffect(() => {
@@ -210,9 +210,9 @@ const OrderManagement: React.FC<OrderManagementProps> = ({ orders, setOrders }) 
                          {order.tableNumber}
                       </span>
                       {getSourceBadge(order.source)}
-                      <div className={`flex flex-col border rounded px-2.5 py-0.5 ${statusConf.color}`}>
-                         <span className="text-xs font-bold leading-tight">{statusConf.label}</span>
-                         <span className="text-[10px] opacity-80 leading-tight">{statusConf.tagalog}</span>
+                      <div className={`flex flex-col border rounded px-2.5 py-0.5 ${getStatusConfig(order.status).color}`}>
+                         <span className="text-xs font-bold leading-tight">{getStatusConfig(order.status).label}</span>
+                         <span className="text-[10px] opacity-80 leading-tight">{getStatusConfig(order.status).tagalog}</span>
                       </div>
                       {order.paymentMethod && (
                         <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded border border-green-100 flex items-center gap-1">
