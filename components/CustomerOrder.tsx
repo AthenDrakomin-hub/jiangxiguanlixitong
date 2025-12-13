@@ -198,9 +198,11 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
   
   // Apply custom styles if enabled
   useEffect(() => {
+    let styleElement: HTMLStyleElement | null = null;
+    
     if (h5PageSettings?.enableCustomStyling) {
-      const style = document.createElement('style');
-      style.innerHTML = `
+      styleElement = document.createElement('style');
+      styleElement.innerHTML = `
         .custom-header {
           background-color: ${h5PageSettings.customHeaderColor} !important;
         }
@@ -208,12 +210,15 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({ dishes = [], orders = [],
           background-color: ${h5PageSettings.customButtonColor} !important;
         }
       `;
-      document.head.appendChild(style);
-      
-      return () => {
-        document.head.removeChild(style);
-      };
+      document.head.appendChild(styleElement);
     }
+    
+    // 返回清理函数
+    return () => {
+      if (styleElement && document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
+    };
   }, [h5PageSettings]);
 
   // Initialize from URL Params or Cookie

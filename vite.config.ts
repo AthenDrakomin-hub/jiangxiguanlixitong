@@ -16,6 +16,9 @@ export default defineConfig({
         short_name: '江西酒店',
         description: '江西酒店管理系统 - 桌面和移动端点餐解决方案',
         theme_color: '#4F46E5',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
         icons: [
           {
             src: 'logo.svg',
@@ -30,7 +33,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,webmanifest}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\/api\/.*/,
