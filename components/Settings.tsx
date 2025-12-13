@@ -1,30 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Store, Printer, Cloud, Check, DollarSign, AlertTriangle, Wifi, Info } from 'lucide-react';
+import { Save, Store, Printer, Cloud, Check, DollarSign, AlertTriangle, Wifi, Info, Monitor } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings } from '../services/storage';
-import { StorageSettings, StoreInfo } from '../types';
+import { StorageSettings, StoreInfo, Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, SystemSettings } from '../types';
 import { PrinterService } from '../services/printer';
 import DataManagement from './DataManagement';
 
 import auditLogger from '../services/auditLogger';
 
 interface SettingsProps {
-  onSettingsChange?: (settings: any) => void;
-  systemSettings: any;
-  setSystemSettings: (settings: any) => void;
-  dishes: any[];
-  setDishes: (dishes: any[]) => void;
-  orders: any[];
-  setOrders: (orders: any[]) => void;
-  expenses: any[];
-  setExpenses: (expenses: any[]) => void;
-  inventory: any[];
-  setInventory: (inventory: any[]) => void;
-  ktvRooms: any[];
-  setKtvRooms: (rooms: any[]) => void;
-  signBillAccounts: any[];
-  setSignBillAccounts: (accounts: any[]) => void;
-  hotelRooms: any[];
-  setHotelRooms: (rooms: any[]) => void;
+  onSettingsChange?: (settings: SystemSettings) => void;
+  systemSettings: SystemSettings;
+  setSystemSettings: (settings: SystemSettings) => void;
+  dishes: Dish[];
+  setDishes: (dishes: Dish[]) => void;
+  orders: Order[];
+  setOrders: (orders: Order[]) => void;
+  expenses: Expense[];
+  setExpenses: (expenses: Expense[]) => void;
+  inventory: Ingredient[];
+  setInventory: (inventory: Ingredient[]) => void;
+  ktvRooms: KTVRoom[];
+  setKtvRooms: (rooms: KTVRoom[]) => void;
+  signBillAccounts: SignBillAccount[];
+  setSignBillAccounts: (accounts: SignBillAccount[]) => void;
+  hotelRooms: HotelRoom[];
+  setHotelRooms: (rooms: HotelRoom[]) => void;
 }
 
 // 系统版本信息 - 硬编码
@@ -69,9 +69,12 @@ const Settings: React.FC<SettingsProps> = (props) => {
     phone: '+639084156449',
     openingHours: '10:00 - 02:00',
     kitchenPrinterUrl: '',
-    wifiSsid: 'jx88888888',
+    wifiSsid: 'ChangeMe_WIFI_SSID',
     wifiPassword: '',
-    telegram: '@jx555999'
+    telegram: '@jx555999',
+    h5PageTitle: '江西酒店 - 在线点餐',
+    h5PageDescription: '江西酒店在线点餐系统，为您提供便捷的客房送餐和大厅点餐服务',
+    h5PageKeywords: '江西酒店,在线点餐,客房送餐,餐厅服务'
   });
 
   const [categories, setCategories] = useState<string[]>(['热菜', '凉菜', '汤羹', '主食', '酒水', '特色菜']);
@@ -84,6 +87,15 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const [localFinancials, setLocalFinancials] = useState({
     exchangeRate: 8.2,
     serviceCharge: 10
+  });
+  
+  // H5 Page Settings State
+  const [h5PageSettings, setH5PageSettings] = useState({
+    enableCustomStyling: true,
+    customHeaderColor: '#4F46E5',
+    customButtonColor: '#DC2626',
+    showStoreInfo: true,
+    showWiFiInfo: true
   });
 
   // Storage State
@@ -111,6 +123,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
       if (parsed.exchangeRate) setLocalFinancials(prev => ({ ...prev, exchangeRate: parsed.exchangeRate }));
       if (parsed.serviceChargeRate) setLocalFinancials(prev => ({ ...prev, serviceCharge: parsed.serviceChargeRate * 100 }));
       if (parsed.categories && Array.isArray(parsed.categories)) setCategories(parsed.categories);
+      if (parsed.h5PageSettings) setH5PageSettings(parsed.h5PageSettings);
     }
 
     // Auto-test connection if configured
@@ -124,7 +137,8 @@ const Settings: React.FC<SettingsProps> = (props) => {
       notifications,
       exchangeRate: localFinancials.exchangeRate,
       serviceChargeRate: localFinancials.serviceCharge / 100,
-      categories
+      categories,
+      h5PageSettings
     };
     localStorage.setItem('jx_settings', JSON.stringify(settings));
 
@@ -149,24 +163,22 @@ const Settings: React.FC<SettingsProps> = (props) => {
     }
   };
 
-  // const executeReset = () => {
-  //     localStorage.removeItem('jx_dishes');
-  //     localStorage.removeItem('jx_orders');
-  //     localStorage.removeItem('jx_expenses');
-  //     localStorage.removeItem('jx_settings');
-  //     localStorage.removeItem('jx_inventory');
-  //     window.location.reload();
+  // Handle Settings Update from Settings Component
+  // const handleSettingsUpdate = (newSettings: SystemSettings) => {
+  //    setSystemSettings(newSettings);
   // };
 
-  // const handleResetData = () => {
-  //     setConfirmInput('');
-  //     setConfirmModal({
-  //         open: true,
-  //         level: 'high',
-  //         title: '系统级警告 System Warning',
-  //         message: '此操作将永久清除浏览器中的所有本地数据！包括订单、菜单和财务记录。如果是“本地存储”模式，数据将无法恢复。\n\n如需继续，请在下方输入 "RESET"',
-  //         action: executeReset
-  //     });
+  // Handle Categories Update from MenuManagement Component
+  // const handleCategoriesUpdate = (newCategories: string[] | ((prev: string[]) => string[])) => {
+  //   // If it's a function, we need to get the actual value
+  //   const categories = typeof newCategories === 'function' 
+  //     ? newCategories(systemSettings.categories || []) 
+  //     : newCategories;
+  //     
+  //   setSystemSettings({
+  //     ...systemSettings,
+  //     categories: categories as string[]
+  //   });
   // };
 
   const handleTestConnection = async () => {
@@ -454,6 +466,119 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 自动连接 Automatic Connection
               </button>
            </div>
+        </div>
+
+        {/* 5. H5 Page Settings */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+            <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+               <Monitor className="text-slate-400" size={20} /> H5页面设置
+            </h3>
+            <div className="space-y-4">
+               <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">页面标题</label>
+                  <input 
+                      type="text" 
+                      value={storeInfo.h5PageTitle || ''}
+                      onChange={e => setStoreInfo({ ...storeInfo, h5PageTitle: e.target.value })}
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg"
+                      placeholder="江西酒店 - 在线点餐"
+                  />
+               </div>
+               <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">页面描述</label>
+                  <textarea 
+                      value={storeInfo.h5PageDescription || ''}
+                      onChange={e => setStoreInfo({ ...storeInfo, h5PageDescription: e.target.value })}
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm"
+                      placeholder="江西酒店在线点餐系统，为您提供便捷的客房送餐和大厅点餐服务"
+                      rows={3}
+                  />
+               </div>
+               <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">SEO关键词</label>
+                  <input 
+                      type="text" 
+                      value={storeInfo.h5PageKeywords || ''}
+                      onChange={e => setStoreInfo({ ...storeInfo, h5PageKeywords: e.target.value })}
+                      className="w-full px-4 py-2 border border-slate-200 rounded-lg"
+                      placeholder="江西酒店,在线点餐,客房送餐,餐厅服务"
+                  />
+               </div>
+               
+               <div className="pt-4 border-t border-slate-100">
+                  <h4 className="font-bold text-slate-800 mb-3">页面样式设置</h4>
+                  <div className="space-y-3">
+                     <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-700">启用自定义样式</label>
+                        <button 
+                          onClick={() => setH5PageSettings({ ...h5PageSettings, enableCustomStyling: !h5PageSettings.enableCustomStyling })}
+                          className={`w-12 h-6 rounded-full transition-all ${h5PageSettings.enableCustomStyling ? 'bg-slate-900' : 'bg-slate-300'}`}
+                        >
+                          <div className={`w-5 h-5 bg-white rounded-full transition-transform ${h5PageSettings.enableCustomStyling ? 'translate-x-6' : 'translate-x-0.5'}`}></div>
+                        </button>
+                     </div>
+                     
+                     {h5PageSettings.enableCustomStyling && (
+                        <>
+                           <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">头部背景色</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                    type="color" 
+                                    value={h5PageSettings.customHeaderColor}
+                                    onChange={e => setH5PageSettings({ ...h5PageSettings, customHeaderColor: e.target.value })}
+                                    className="w-10 h-10 border-0 rounded cursor-pointer"
+                                />
+                                <input 
+                                    type="text" 
+                                    value={h5PageSettings.customHeaderColor}
+                                    onChange={e => setH5PageSettings({ ...h5PageSettings, customHeaderColor: e.target.value })}
+                                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono"
+                                />
+                              </div>
+                           </div>
+                           <div>
+                              <label className="block text-sm font-medium text-slate-700 mb-1">按钮颜色</label>
+                              <div className="flex items-center gap-2">
+                                <input 
+                                    type="color" 
+                                    value={h5PageSettings.customButtonColor}
+                                    onChange={e => setH5PageSettings({ ...h5PageSettings, customButtonColor: e.target.value })}
+                                    className="w-10 h-10 border-0 rounded cursor-pointer"
+                                />
+                                <input 
+                                    type="text" 
+                                    value={h5PageSettings.customButtonColor}
+                                    onChange={e => setH5PageSettings({ ...h5PageSettings, customButtonColor: e.target.value })}
+                                    className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-mono"
+                                />
+                              </div>
+                           </div>
+                        </>
+                     )}
+                     
+                     <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-700">显示店铺信息</label>
+                        <button 
+                          onClick={() => setH5PageSettings({ ...h5PageSettings, showStoreInfo: !h5PageSettings.showStoreInfo })}
+                          className={`w-12 h-6 rounded-full transition-all ${h5PageSettings.showStoreInfo ? 'bg-slate-900' : 'bg-slate-300'}`}
+                        >
+                          <div className={`w-5 h-5 bg-white rounded-full transition-transform ${h5PageSettings.showStoreInfo ? 'translate-x-6' : 'translate-x-0.5'}`}></div>
+                        </button>
+                     </div>
+                     
+                     <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-700">显示WiFi信息</label>
+                        <button 
+                          onClick={() => setH5PageSettings({ ...h5PageSettings, showWiFiInfo: !h5PageSettings.showWiFiInfo })}
+                          className={`w-12 h-6 rounded-full transition-all ${h5PageSettings.showWiFiInfo ? 'bg-slate-900' : 'bg-slate-300'}`}
+                        >
+                          <div className={`w-5 h-5 bg-white rounded-full transition-transform ${h5PageSettings.showWiFiInfo ? 'translate-x-6' : 'translate-x-0.5'}`}></div>
+                        </button>
+                     </div>
+                  </div>
+               </div>
+            </div>
         </div>
 
       </div>

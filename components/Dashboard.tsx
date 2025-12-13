@@ -11,14 +11,14 @@ interface DashboardProps {
 }
 
 const StatCard = ({ title, value, icon: Icon, color, subValue, footer }: any) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow flex flex-col justify-between">
+  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow flex flex-col justify-between card-hover">
     <div>
       <div className="flex justify-between items-start mb-2">
         <div>
           <p className="text-sm font-medium text-slate-500">{title}</p>
           <h3 className="text-2xl font-bold text-slate-800 mt-1">{value}</h3>
         </div>
-        <div className={`p-3 rounded-lg ${color}`}>
+        <div className={`p-3 rounded-lg ${color} transition-smooth`}>
           <Icon size={20} className="text-white" />
         </div>
       </div>
@@ -90,57 +90,65 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6 fade-in">
+      <div className="flex justify-between items-center mb-6 slide-in-left">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">运营总览</h2>
           <p className="text-slate-500 text-sm">江西酒店 (Pasay City) - 实时经营数据</p>
         </div>
-        <div className="text-sm font-medium px-3 py-1 bg-white rounded-lg border border-slate-200 text-slate-600 shadow-sm">
+        <div className="text-sm font-medium px-3 py-1 bg-white rounded-lg border border-slate-200 text-slate-600 shadow-sm transition-smooth">
            {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
-          title="餐饮总营收" 
-          value={`₱${diningRevenue.toLocaleString()}`} 
-          icon={DollarSign} 
-          color="bg-emerald-500" 
-          footer="包含堂食与外卖"
-        />
+        <div className="slide-in-left">
+          <StatCard 
+            title="餐饮总营收" 
+            value={`₱${diningRevenue.toLocaleString()}`} 
+            icon={DollarSign} 
+            color="bg-emerald-500" 
+            footer="包含堂食与外卖"
+          />
+        </div>
 
-        <StatCard 
-          title="客房点餐" 
-          value={`₱${hotelDiningRevenue.toLocaleString()}`} 
-          icon={Utensils} 
-          color="bg-orange-500" 
-          footer={`${activeHotelDining} 个房间正在用餐`}
-        />
+        <div className="slide-in-left delay-75">
+          <StatCard 
+            title="客房点餐" 
+            value={`₱${hotelDiningRevenue.toLocaleString()}`} 
+            icon={Utensils} 
+            color="bg-orange-500" 
+            footer={`${activeHotelDining} 个房间正在用餐`}
+          />
+        </div>
 
-        <StatCard 
-          title="KTV 实时营收" 
-          value={`₱${activeKtvRevenue.toLocaleString()}`} 
-          icon={Mic2} 
-          color="bg-purple-500" 
-          footer="正在使用包厢预计收入"
-        />
+        <div className="slide-in-right delay-100">
+          <StatCard 
+            title="KTV 实时营收" 
+            value={`₱${activeKtvRevenue.toLocaleString()}`} 
+            icon={Mic2} 
+            color="bg-purple-500" 
+            footer="正在使用包厢预计收入"
+          />
+        </div>
 
-        <StatCard 
-          title="应收挂账款" 
-          value={`₱${totalReceivables.toLocaleString()}`} 
-          icon={FileSignature} 
-          color="bg-yellow-500" 
-          footer={`${signBillAccounts.filter((a: SignBillAccount) => a.currentDebt > 0).length} 个单位欠款`}
-        />
+        <div className="slide-in-right delay-150">
+          <StatCard 
+            title="应收挂账款" 
+            value={`₱${totalReceivables.toLocaleString()}`} 
+            icon={FileSignature} 
+            color="bg-yellow-500" 
+            footer={`${signBillAccounts.filter((a: SignBillAccount) => a.currentDebt > 0).length} 个单位欠款`}
+          />
+        </div>
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 fade-in delay-200">
         
         {/* Pie Chart: Revenue Composition */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover">
           <h3 className="text-lg font-bold text-slate-800 mb-2">收入构成分析</h3>
           <div className="h-64 min-h-[256px] relative">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
@@ -174,7 +182,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
         {/* Alerts & Tasks */}
         <div className="lg:col-span-2 space-y-6">
            {/* Active Dining Rooms */}
-           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover">
              <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-slate-800 flex items-center gap-2"><BedDouble size={18} /> 客房用餐监控</h3>
              </div>
@@ -183,7 +191,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
              ) : (
                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                  {hotelRooms.filter((r: HotelRoom) => r.orders && r.orders.length > 0).map((room: HotelRoom) => (
-                   <div key={room.id} className="bg-orange-50 border border-orange-200 p-3 rounded-lg flex justify-between items-center">
+                   <div key={room.id} className="bg-orange-50 border border-orange-200 p-3 rounded-lg flex justify-between items-center transition-smooth transform-scale-hover">
                       <span className="font-bold text-orange-800">{room.number}</span>
                       <span className="text-xs bg-white px-2 py-1 rounded text-orange-600 font-bold">₱{room.orders ? room.orders.reduce((s: number, i: any) => s + i.price * i.quantity, 0) : 0}</span>
                    </div>
@@ -192,7 +200,7 @@ const Dashboard: React.FC<DashboardProps> = ({ orders, ktvRooms, signBillAccount
              )}
            </div>
 
-           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+           <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 card-hover">
              <div className="flex justify-between items-center mb-4">
                 <h3 className="font-bold text-slate-800 flex items-center gap-2"><Mic2 size={18} /> KTV 包厢状态 (4F)</h3>
              </div>

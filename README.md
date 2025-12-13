@@ -1,8 +1,17 @@
-# 江西酒店餐厅管理系统
+# 江西酒店管理系统
+
+<div align="center">
+
+[![License](https://img.shields.io/badge/license-Proprietary-blue.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue.svg)](https://www.typescriptlang.org/)
+[![Vercel](https://img.shields.io/badge/Vercel-Deployed-black.svg)](https://vercel.com)
+
+</div>
 
 ## 📋 项目简介
 
-江西酒店餐厅管理系统是一个专为酒店餐饮服务设计的综合管理系统，支持客房送餐和餐厅点餐两种场景。系统采用现代化的前后端技术栈构建，具有响应式设计，可在各种设备上良好运行。
+江西酒店管理系统是一款专为酒店餐饮服务设计的全功能管理系统，支持客房送餐和餐厅点餐两种场景。系统采用现代化的前端技术栈，具备响应式设计，可在手机、平板、电脑等多种设备上使用。
 
 ### 核心功能
 - **客房送餐服务**：通过房间专属二维码实现点餐溯源
@@ -14,23 +23,19 @@
 ## 🛠 技术架构
 
 ### 前端技术栈
-- **框架**：React 18 (Hooks)
-- **语言**：TypeScript
-- **构建工具**：Vite 5
-- **样式**：Tailwind CSS 3
-- **状态管理**：React Context API
-- **图标库**：Lucide React
+- React 18 (Hooks)
+- TypeScript (严格类型检查)
+- Vite 5 (构建工具)
+- Tailwind CSS 3 (样式框架)
+- React Context API (状态管理)
+- Lucide React (图标库)
+- Recharts (数据可视化)
+- PWA (渐进式Web应用)
 
 ### 后端技术栈
-- **运行环境**：Vercel Serverless Functions
-- **API 风格**：RESTful API
-- **数据存储**：Vercel Blob Storage
-- **存储驱动**：@vercel/blob
-
-### 开发规范
-- **模块规范**：ES Module（`"type": "module"`）
-- **TypeScript 配置**：严格类型检查
-- **代码质量**：遵循最佳实践，无未使用变量/导入警告
+- Vercel Serverless Functions
+- RESTful API
+- Vercel Blob Storage (@vercel/blob)
 
 ## 📁 项目结构
 

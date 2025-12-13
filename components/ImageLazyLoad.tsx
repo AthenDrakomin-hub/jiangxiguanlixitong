@@ -5,13 +5,19 @@ interface ImageLazyLoadProps {
   alt: string;
   className?: string;
   placeholderColor?: string;
+  blurDataURL?: string; // 低质量图片占位符
+  width?: number;
+  height?: number;
 }
 
 const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({ 
   src, 
   alt, 
   className = '',
-  placeholderColor = '#f1f5f9' // 默认浅灰色占位符
+  placeholderColor = '#f1f5f9', // 默认浅灰色占位符
+  blurDataURL,
+  width,
+  height
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -76,15 +82,26 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
       className={`relative overflow-hidden ${className}`}
       style={{
         backgroundColor: isLoaded ? 'transparent' : placeholderColor,
-        transition: 'background-color 0.3s ease'
+        transition: 'background-color 0.3s ease',
+        width: width ? `${width}px` : '100%',
+        height: height ? `${height}px` : '100%'
       }}
     >
+      {/* Blur placeholder */}
+      {blurDataURL && !isLoaded && (
+        <img
+          src={blurDataURL}
+          alt=""
+          className="w-full h-full object-cover blur-sm scale-105"
+        />
+      )}
+      
       {isInView && (
         <img
           src={src}
           alt={alt}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
+          className={`w-full h-full object-cover transition-all duration-300 ${
+            isLoaded ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-sm scale-105'
           }`}
           onLoad={handleImageLoad}
           onError={handleImageError}
@@ -93,7 +110,7 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
       )}
       
       {/* 渐变加载效果 */}
-      {!isLoaded && (
+      {!isLoaded && !blurDataURL && (
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
       )}
     </div>

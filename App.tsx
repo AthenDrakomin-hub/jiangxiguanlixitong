@@ -1,20 +1,10 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import { apiClient } from './services/apiClient';
-import { 
-  Dish, 
-  Order, 
-  Expense, 
-  Ingredient, 
-  KTVRoom, 
-  SignBillAccount, 
-  HotelRoom, 
-  OrderStatus,
-  Page
-} from './types';
-import { APP_CONFIG } from './config/appConfig';
+import Login from './components/Login';
 import auditLogger from './services/auditLogger';
-import AutoDetectTest from './src/AutoDetectTest.tsx';
+import { useAppData } from './hooks/useAppData';
+import { Order, OrderStatus, Dish, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, Page, SystemSettings } from './types';
+import { APP_CONFIG } from './config/appConfig';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const MenuManagement = React.lazy(() => import('./components/MenuManagement'));
@@ -28,14 +18,12 @@ const HotelSystem = React.lazy(() => import('./components/HotelSystem'));
 const QRCodeManager = React.lazy(() => import('./components/QRCodeManager'));
 const KitchenDisplay = React.lazy(() => import('./components/KitchenDisplay'));
 const CustomerOrder = React.lazy(() => import('./components/CustomerOrder'));
-const Login = React.lazy(() => import('./components/Login'));
 const Sidebar = React.lazy(() => import('./components/Sidebar'));
 const PaymentManagement = React.lazy(() => import('./components/PaymentManagement'));
 const PermissionManagement = React.lazy(() => import('./components/PermissionManagement'));
+const AutoDetectTest = React.lazy(() => import('./components/AutoDetectTest.tsx'));
 
-const NOTIFICATION_SOUND_URL = APP_CONFIG.NOTIFICATION.soundUrl;
-
-const App: React.FC = () => {
+const App = () => {
   // Page Routing State
   const [currentPage, setCurrentPage] = useState<Page>(() => {
     // Check URL params for customer/kitchen views
@@ -84,7 +72,7 @@ const App: React.FC = () => {
 
   
   // Global Settings State
-  const [systemSettings, setSystemSettings] = useState<any>({
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({
       storeInfo: APP_CONFIG.DEFAULT_STORE_INFO,
       notifications: {
           sound: true,
@@ -103,40 +91,35 @@ const App: React.FC = () => {
   });
 
   // --- Data Initialization ---
+  const { data, loading, error } = useAppData();
+
+  // Update state when data changes
   useEffect(() => {
-    const initData = async () => {
-      try {
-        setLoadingText('正在同步云端数据... / Syncing Cloud Data');
-        
-        // Fetch all data from API with automatic fallback
-        const response: any = await apiClient.fetchAll();
-        
-        // Update state with fetched data
-        setDishes(response.dishes || []);
-        setOrders(response.orders || []);
-        setExpenses(response.expenses || []);
-        setInventory(response.inventory || []);
-        setKtvRooms(response.ktvRooms || []);
-        setSignBillAccounts(response.signBillAccounts || []);
-        setHotelRooms(response.hotelRooms || []);
-
-        
-        // Load settings
-        const savedSettings = localStorage.getItem('jx_settings');
-        if (savedSettings) {
-           setSystemSettings(JSON.parse(savedSettings));
-        }
-      } catch (error) {
-        console.error("Failed to load initial data", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isAuthenticated || currentPage === 'customer') {
-        initData();
+    if (data) {
+      setDishes(data.dishes);
+      setOrders(data.orders);
+      setExpenses(data.expenses);
+      setInventory(data.inventory);
+      setKtvRooms(data.ktvRooms);
+      setSignBillAccounts(data.signBillAccounts);
+      setHotelRooms(data.hotelRooms);
     }
-  }, [isAuthenticated, currentPage]);
+  }, [data]);
+
+  // Update loading state
+  useEffect(() => {
+    setIsLoading(loading);
+    if (loading) {
+      setLoadingText('正在同步云端数据... / Syncing Cloud Data');
+    }
+  }, [loading]);
+
+  // Handle data fetch errors
+  useEffect(() => {
+    if (error) {
+      console.error("Failed to load initial data", error);
+    }
+  }, [error]);
 
   // --- Optimized Persistence Layer (Debounced) ---
 
@@ -209,10 +192,10 @@ const App: React.FC = () => {
     if (sound) {
       try {
         // 检查音频文件是否存在
-        fetch(NOTIFICATION_SOUND_URL)
+        fetch(APP_CONFIG.NOTIFICATION.soundUrl)
           .then(response => {
             if (response.ok) {
-              const audio = new Audio(NOTIFICATION_SOUND_URL);
+              const audio = new Audio(APP_CONFIG.NOTIFICATION.soundUrl);
               audio.play().catch(err => console.error("Audio playback failed:", err));
             } else {
               // 如果通知音效文件不存在，使用系统默认通知音
@@ -339,7 +322,15 @@ const App: React.FC = () => {
   const renderContent = () => {
     // 如果是自动检测页面，直接返回测试组件
     if (currentPage === 'autodetect') {
-      return <AutoDetectTest />;
+      return (
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-64 text-slate-400 gap-2">
+            <Loader2 className="animate-spin" /> Loading Module...
+          </div>
+        }>
+          <AutoDetectTest />
+        </Suspense>
+      );
     }
     
     return (
@@ -432,6 +423,67 @@ const App: React.FC = () => {
       </div>
     );
   }
+
+  // Network status effect
+  useEffect(() => {
+    const handleOnline = () => {
+      // Show online notification
+      const notificationElement = document.createElement('div');
+      notificationElement.innerHTML = `
+        <div id="online-notification" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <span class="font-bold">已连接网络</span>
+          <span>系统已恢复在线状态</span>
+          <button onclick="document.getElementById('online-notification').remove()" class="ml-2 text-white hover:text-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      `;
+      document.body.appendChild(notificationElement);
+      
+      // Auto remove after 3 seconds
+      setTimeout(() => {
+        const element = document.getElementById('online-notification');
+        if (element) {
+          element.remove();
+        }
+      }, 3000);
+    };
+
+    const handleOffline = () => {
+      // Show offline notification
+      const notificationElement = document.createElement('div');
+      notificationElement.innerHTML = `
+        <div id="offline-notification" class="fixed top-4 right-4 z-50 bg-orange-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <span class="font-bold">网络连接已断开</span>
+          <span>系统正在使用缓存数据</span>
+          <button onclick="document.getElementById('offline-notification').remove()" class="ml-2 text-white hover:text-gray-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      `;
+      document.body.appendChild(notificationElement);
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        const element = document.getElementById('offline-notification');
+        if (element) {
+          element.remove();
+        }
+      }, 5000);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Customer View & Kitchen View & AutoDetect View (No Sidebar)
   if (currentPage === 'customer' || currentPage === 'kitchen' || currentPage === 'autodetect') {

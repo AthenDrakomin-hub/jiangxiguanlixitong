@@ -25,7 +25,7 @@ export const saveStorageSettings = (settings: StorageSettings) => {
 };
 
 // Deprecated: Old storage methods kept only if needed for migration utilities later
-// Actual data logic is now handled by TiDB in tidbAPI.ts
+// All data logic is now handled exclusively by Vercel Blob Storage
 export const loadData = async <T>(_key: string, defaultData: T): Promise<T> => {
     return defaultData;
 };

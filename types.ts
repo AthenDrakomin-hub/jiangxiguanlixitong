@@ -156,6 +156,11 @@ export interface StoreInfo {
     wifiSsid?: string;
     wifiPassword?: string;
     telegram?: string;
+    // H5页面配置
+    h5PageTitle?: string;
+    h5PageDescription?: string;
+    h5PageKeywords?: string;
+    h5CustomCSS?: string;
 }
 
 export interface SystemSettings {
@@ -168,6 +173,14 @@ export interface SystemSettings {
     exchangeRate?: number; // RMB to PHP
     serviceChargeRate?: number; // e.g., 0.10 for 10%
     categories?: string[]; // Dynamic categories
+    // H5页面配置
+    h5PageSettings?: {
+        enableCustomStyling?: boolean;
+        customHeaderColor?: string;
+        customButtonColor?: string;
+        showStoreInfo?: boolean;
+        showWiFiInfo?: boolean;
+    };
 }
 
 export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'payment' | 'permissions' | 'autodetect';

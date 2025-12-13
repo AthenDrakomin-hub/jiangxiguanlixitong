@@ -3,7 +3,7 @@ export const APP_CONFIG = {
   // Default admin credentials
   DEFAULT_ADMIN: {
     username: 'admin',
-    password: 'admin123'
+    password: 'ChangeMeAdminPass!2025'
   },
   
   // Default store information
@@ -13,9 +13,13 @@ export const APP_CONFIG = {
     phone: '+639084156449',
     openingHours: '10:00 - 02:00',
     kitchenPrinterUrl: '',
-    wifiSsid: 'jx88888888',
+    wifiSsid: 'ChangeMe_WIFI_SSID',
     wifiPassword: '',
-    telegram: '@jx555999'
+    telegram: '@jx555999',
+    // 默认H5页面配置
+    h5PageTitle: '江西酒店 - 在线点餐',
+    h5PageDescription: '江西酒店在线点餐系统，为您提供便捷的客房送餐和大厅点餐服务',
+    h5PageKeywords: '江西酒店,在线点餐,客房送餐,餐厅服务'
   },
   
   // Default financial settings
@@ -27,5 +31,14 @@ export const APP_CONFIG = {
   // Notification settings
   NOTIFICATION: {
     soundUrl: '/notification.mp3'
+  },
+  
+  // Default H5 page settings
+  DEFAULT_H5_PAGE_SETTINGS: {
+    enableCustomStyling: true,
+    customHeaderColor: '#4F46E5',
+    customButtonColor: '#DC2626',
+    showStoreInfo: true,
+    showWiFiInfo: true
   }
 };

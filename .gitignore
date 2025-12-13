@@ -3,8 +3,21 @@ dist
 .env
 .vercel
 .env*.local
-.env
 
 # PWA相关文件
-/src/assets/logo.svg
 /public/manifest.json
+/public/sw.js
+/workbox-*.js
+
+# 日志文件
+*.log
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
