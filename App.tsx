@@ -426,10 +426,18 @@ const App = () => {
 
   // Network status effect
   useEffect(() => {
+    let onlineNotificationElement: HTMLElement | null = null;
+    let offlineNotificationElement: HTMLElement | null = null;
+
     const handleOnline = () => {
+      // Remove any existing notification
+      if (onlineNotificationElement && document.body.contains(onlineNotificationElement)) {
+        document.body.removeChild(onlineNotificationElement);
+      }
+      
       // Show online notification
-      const notificationElement = document.createElement('div');
-      notificationElement.innerHTML = `
+      onlineNotificationElement = document.createElement('div');
+      onlineNotificationElement.innerHTML = `
         <div id="online-notification" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
           <span class="font-bold">已连接网络</span>
           <span>系统已恢复在线状态</span>
@@ -440,21 +448,26 @@ const App = () => {
           </button>
         </div>
       `;
-      document.body.appendChild(notificationElement);
+      document.body.appendChild(onlineNotificationElement);
       
       // Auto remove after 3 seconds
       setTimeout(() => {
-        const element = document.getElementById('online-notification');
-        if (element) {
-          element.remove();
+        if (onlineNotificationElement && document.body.contains(onlineNotificationElement)) {
+          document.body.removeChild(onlineNotificationElement);
+          onlineNotificationElement = null;
         }
       }, 3000);
     };
 
     const handleOffline = () => {
+      // Remove any existing notification
+      if (offlineNotificationElement && document.body.contains(offlineNotificationElement)) {
+        document.body.removeChild(offlineNotificationElement);
+      }
+      
       // Show offline notification
-      const notificationElement = document.createElement('div');
-      notificationElement.innerHTML = `
+      offlineNotificationElement = document.createElement('div');
+      offlineNotificationElement.innerHTML = `
         <div id="offline-notification" class="fixed top-4 right-4 z-50 bg-orange-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
           <span class="font-bold">网络连接已断开</span>
           <span>系统正在使用缓存数据</span>
@@ -465,13 +478,13 @@ const App = () => {
           </button>
         </div>
       `;
-      document.body.appendChild(notificationElement);
+      document.body.appendChild(offlineNotificationElement);
       
       // Auto remove after 5 seconds
       setTimeout(() => {
-        const element = document.getElementById('offline-notification');
-        if (element) {
-          element.remove();
+        if (offlineNotificationElement && document.body.contains(offlineNotificationElement)) {
+          document.body.removeChild(offlineNotificationElement);
+          offlineNotificationElement = null;
         }
       }, 5000);
     };
@@ -482,6 +495,14 @@ const App = () => {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      
+      // Clean up notification elements
+      if (onlineNotificationElement && document.body.contains(onlineNotificationElement)) {
+        document.body.removeChild(onlineNotificationElement);
+      }
+      if (offlineNotificationElement && document.body.contains(offlineNotificationElement)) {
+        document.body.removeChild(offlineNotificationElement);
+      }
     };
   }, []);
 
