@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import Login from './components/Login';
-import auditLogger from './services/auditLogger';
-import { useAppData } from './hooks/useAppData';
-import { Order, OrderStatus, Dish, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, Page, SystemSettings } from './types';
+import { useAppData } from './hooks/useAppData';import { Order, OrderStatus, Dish, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, Page, SystemSettings } from './types';
 import { APP_CONFIG } from './config/appConfig';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
@@ -239,29 +237,10 @@ const App = () => {
     setIsMobileMenuOpen(false); // Close sidebar on navigation
   };
   
-  // Handle Settings Update from Settings Component
-  const handleSettingsUpdate = (newSettings: any) => {
-     setSystemSettings(newSettings);
-  };
-
-  // Handle Categories Update from MenuManagement Component
-  const handleCategoriesUpdate = (newCategories: string[] | ((prev: string[]) => string[])) => {
-    // If it's a function, we need to get the actual value
-    const categories = typeof newCategories === 'function' 
-      ? newCategories(systemSettings.categories || []) 
-      : newCategories;
-      
-    setSystemSettings((prev: any) => ({
-      ...prev,
-      categories: categories
-    }));
-  };
-
   // Callback to allow other components (Hotel, KTV, Customer) to place orders
   const handlePlaceOrder = (newOrder: Order) => {
     setOrders(prev => [newOrder, ...(prev || [])]);
   };
-
   // Centralized Order Status Handler with Inventory Deduction
   const handleOrderStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     console.log(`Updating order ${orderId} status to ${newStatus}`);
@@ -291,220 +270,205 @@ const App = () => {
   const handleLoginSuccess = () => {
     sessionStorage.setItem('jx_auth', 'true');
     setIsAuthenticated(true);
-    
-    // 记录登录日志
-    auditLogger.log('info', 'USER_LOGIN', '用户成功登录系统', 'admin');
   };
 
-  // 在开发环境中始终显示主界面，生产环境中才需要认证
-  const shouldShowLogin = () => {
-    if (typeof window !== 'undefined') {
-      // 检查是否是开发环境
-      const isDev = window.location.hostname === 'localhost' || 
-                   window.location.hostname === '127.0.0.1' ||
-                   window.location.port !== '';
-      
-      // 在开发环境中不显示登录页面
-      if (isDev) {
-        return false;
-      }
-      
-      // 在生产环境中，非客户页面需要认证
-      return !isAuthenticated && currentPage !== 'customer';
-    }
-    return false;
-  };
+  // 移除网络状态监听器，避免React错误#310
+  // Network status effect has been removed to prevent React error #310
 
-  if (shouldShowLogin()) {
-    return <Login onLogin={handleLoginSuccess} />;
-  }
-
+  // Render content based on current page
   const renderContent = () => {
-    // 如果是自动检测页面，直接返回测试组件
-    if (currentPage === 'autodetect') {
+    // Loading state
+    if (isLoading) {
       return (
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-64 text-slate-400 gap-2">
-            <Loader2 className="animate-spin" /> Loading Module...
+        <div className="flex items-center justify-center min-h-screen bg-slate-50">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 text-slate-600 animate-spin mx-auto mb-4" />
+            <p className="text-slate-600 font-medium">{loadingText}</p>
           </div>
-        }>
-          <AutoDetectTest />
-        </Suspense>
+        </div>
       );
     }
-    
-    return (
-      <Suspense fallback={
-        <div className="flex items-center justify-center h-64 text-slate-400 gap-2">
-           <Loader2 className="animate-spin" /> Loading Module...
-        </div>
-      }>
-        {(() => {
-          switch (currentPage) {
-            case 'dashboard':
-              return <Dashboard orders={orders || []} ktvRooms={ktvRooms || []} signBillAccounts={signBillAccounts || []} hotelRooms={hotelRooms || []} />;
-            case 'menu':
-              return <MenuManagement 
-                dishes={dishes || []} 
-                setDishes={setDishes} 
-                categories={systemSettings.categories || []} 
-                setCategories={handleCategoriesUpdate} 
-                inventory={inventory || []}
-              />;
-            case 'orders':
-              return <OrderManagement orders={orders || []} setOrders={setOrders} />; 
-            case 'kitchen':
-              return <KitchenDisplay orders={orders || []} onStatusChange={handleOrderStatusChange} onBack={() => handleNavigate('dashboard')} />;
-            case 'finance':
-              return <FinanceSystem 
-                orders={orders || []} 
-                expenses={expenses || []} 
-                setExpenses={setExpenses}
-              />;
-            case 'inventory':
-              return <InventoryManagement inventory={inventory || []} setInventory={setInventory} />;
-            case 'settings':
-              return <Settings 
-                onSettingsChange={handleSettingsUpdate}
-                systemSettings={systemSettings}
-                setSystemSettings={setSystemSettings}
-                dishes={dishes}
-                setDishes={setDishes}
-                orders={orders}
-                setOrders={setOrders}
-                expenses={expenses}
-                setExpenses={setExpenses}
-                inventory={inventory}
-                setInventory={setInventory}
-                ktvRooms={ktvRooms}
-                setKtvRooms={setKtvRooms}
-                signBillAccounts={signBillAccounts}
-                setSignBillAccounts={setSignBillAccounts}
-                hotelRooms={hotelRooms}
-                setHotelRooms={setHotelRooms}
-              />;
-            case 'ktv':
-              return <KTVSystem rooms={ktvRooms || []} setRooms={setKtvRooms} dishes={dishes || []} />;
-            case 'signbill':
-              return <SignBillSystem accounts={signBillAccounts || []} setAccounts={setSignBillAccounts} />;
-            case 'hotel':
-              return <HotelSystem 
-                rooms={hotelRooms || []} 
-                setRooms={setHotelRooms} 
-                dishes={dishes || []}
-                onPlaceOrder={handlePlaceOrder}
-                systemSettings={{
-                  exchangeRate: systemSettings.exchangeRate || 8.2
-                }}
-              />;
-            case 'qrcode':
-              return <QRCodeManager hotelRooms={hotelRooms || []} ktvRooms={ktvRooms || []} />;
-            case 'customer':
-              return <CustomerOrder dishes={dishes || []} orders={orders || []} onPlaceOrder={handlePlaceOrder} systemSettings={systemSettings} />;
-            case 'payment':
-              return <PaymentManagement />;
-            case 'permissions':
-              return <PermissionManagement />;
 
-            default:
-              return <Dashboard orders={orders || []} ktvRooms={ktvRooms || []} signBillAccounts={signBillAccounts || []} hotelRooms={hotelRooms || []} />;
-          }
-        })()}
-      </Suspense>
-    );
+    // Authentication check
+    if (!isAuthenticated) {
+      return <Login onLogin={handleLoginSuccess} />;
+    }
+
+    // Page routing
+    switch (currentPage) {
+      case 'dashboard':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Dashboard...</div>}>
+            <Dashboard 
+              orders={orders}
+              ktvRooms={ktvRooms}
+              signBillAccounts={signBillAccounts}
+              hotelRooms={hotelRooms}
+            />
+          </Suspense>
+        );
+      case 'menu':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Menu Management...</div>}>
+            <MenuManagement 
+              dishes={dishes}
+              setDishes={setDishes}
+              categories={systemSettings.categories || []}
+              setCategories={(newCategories) => {
+                setSystemSettings(prev => ({
+                  ...prev,
+                  categories: typeof newCategories === 'function' 
+                    ? newCategories(prev.categories || []) 
+                    : newCategories
+                }));
+              }}
+              inventory={inventory}
+            />
+          </Suspense>
+        );
+      case 'orders':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Order Management...</div>}>
+            <OrderManagement 
+              orders={orders}
+              setOrders={setOrders}
+            />
+          </Suspense>
+        );
+      case 'finance':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Finance System...</div>}>
+            <FinanceSystem 
+              expenses={expenses}
+              setExpenses={setExpenses}
+              orders={orders}
+            />
+          </Suspense>
+        );
+      case 'inventory':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Inventory Management...</div>}>
+            <InventoryManagement 
+              inventory={inventory}
+              setInventory={setInventory}
+            />
+          </Suspense>
+        );
+      case 'settings':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Settings...</div>}>
+            <Settings 
+              systemSettings={systemSettings}
+              setSystemSettings={setSystemSettings}
+              dishes={dishes}
+              setDishes={setDishes}
+              orders={orders}
+              setOrders={setOrders}
+              expenses={expenses}
+              setExpenses={setExpenses}
+              inventory={inventory}
+              setInventory={setInventory}
+              ktvRooms={ktvRooms}
+              setKtvRooms={setKtvRooms}
+              signBillAccounts={signBillAccounts}
+              setSignBillAccounts={setSignBillAccounts}
+              hotelRooms={hotelRooms}
+              setHotelRooms={setHotelRooms}
+              onSettingsChange={(newSettings) => {
+                setSystemSettings(prev => ({...prev, ...newSettings}));
+              }}
+            />
+          </Suspense>
+        );
+      case 'ktv':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading KTV System...</div>}>
+            <KTVSystem 
+              rooms={ktvRooms}
+              setRooms={setKtvRooms}
+              dishes={dishes}
+            />
+          </Suspense>
+        );
+      case 'signbill':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Sign Bill System...</div>}>
+            <SignBillSystem 
+              accounts={signBillAccounts}
+              setAccounts={setSignBillAccounts}
+            />
+          </Suspense>
+        );
+      case 'hotel':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Hotel System...</div>}>
+            <HotelSystem 
+              rooms={hotelRooms}
+              setRooms={setHotelRooms}
+              dishes={dishes}
+              onPlaceOrder={handlePlaceOrder}
+              systemSettings={{
+                exchangeRate: systemSettings.exchangeRate || 8.2
+              }}
+            />
+          </Suspense>
+        );
+      case 'qrcode':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading QR Code Manager...</div>}>
+            <QRCodeManager 
+              hotelRooms={hotelRooms}
+              ktvRooms={ktvRooms}
+            />
+          </Suspense>
+        );
+      case 'kitchen':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Kitchen Display...</div>}>
+            <KitchenDisplay 
+              orders={orders}
+              onStatusChange={handleOrderStatusChange}
+              onBack={() => setCurrentPage('dashboard')}
+            />
+          </Suspense>
+        );
+      case 'customer':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Customer Order...</div>}>
+            <CustomerOrder 
+              dishes={dishes}
+              orders={orders}
+              onPlaceOrder={handlePlaceOrder}
+              systemSettings={systemSettings}
+            />
+          </Suspense>
+        );
+      case 'payment':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Payment Management...</div>}>
+            <PaymentManagement />
+          </Suspense>
+        );
+      case 'permissions':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Permission Management...</div>}>
+            <PermissionManagement />
+          </Suspense>
+        );
+      case 'autodetect':
+        return (
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading Auto Detect Test...</div>}>
+            <AutoDetectTest />
+          </Suspense>
+        );
+      default:
+        return (
+          <div className="p-8 text-center text-red-500">
+            Page not found: {currentPage}
+          </div>
+        );
+    }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-slate-500 gap-4">
-        <Loader2 size={40} className="animate-spin text-slate-800" />
-        <p className="font-medium text-lg">{loadingText}</p>
-        <p className="text-sm text-slate-400">正在同步数据资源 / Syncing Data</p>
-      </div>
-    );
-  }
-
-  // Network status effect
-  useEffect(() => {
-    let onlineNotificationElement: HTMLElement | null = null;
-    let offlineNotificationElement: HTMLElement | null = null;
-
-    const handleOnline = () => {
-      // Remove any existing notification
-      if (onlineNotificationElement && document.body.contains(onlineNotificationElement)) {
-        document.body.removeChild(onlineNotificationElement);
-      }
-      
-      // Show online notification
-      onlineNotificationElement = document.createElement('div');
-      onlineNotificationElement.innerHTML = `
-        <div id="online-notification" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <span class="font-bold">已连接网络</span>
-          <span>系统已恢复在线状态</span>
-          <button onclick="document.getElementById('online-notification').remove()" class="ml-2 text-white hover:text-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      `;
-      document.body.appendChild(onlineNotificationElement);
-      
-      // Auto remove after 3 seconds
-      setTimeout(() => {
-        if (onlineNotificationElement && document.body.contains(onlineNotificationElement)) {
-          document.body.removeChild(onlineNotificationElement);
-          onlineNotificationElement = null;
-        }
-      }, 3000);
-    };
-
-    const handleOffline = () => {
-      // Remove any existing notification
-      if (offlineNotificationElement && document.body.contains(offlineNotificationElement)) {
-        document.body.removeChild(offlineNotificationElement);
-      }
-      
-      // Show offline notification
-      offlineNotificationElement = document.createElement('div');
-      offlineNotificationElement.innerHTML = `
-        <div id="offline-notification" class="fixed top-4 right-4 z-50 bg-orange-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <span class="font-bold">网络连接已断开</span>
-          <span>系统正在使用缓存数据</span>
-          <button onclick="document.getElementById('offline-notification').remove()" class="ml-2 text-white hover:text-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      `;
-      document.body.appendChild(offlineNotificationElement);
-      
-      // Auto remove after 5 seconds
-      setTimeout(() => {
-        if (offlineNotificationElement && document.body.contains(offlineNotificationElement)) {
-          document.body.removeChild(offlineNotificationElement);
-          offlineNotificationElement = null;
-        }
-      }, 5000);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      
-      // Clean up notification elements
-      if (onlineNotificationElement && document.body.contains(onlineNotificationElement)) {
-        document.body.removeChild(onlineNotificationElement);
-      }
-      if (offlineNotificationElement && document.body.contains(offlineNotificationElement)) {
-        document.body.removeChild(offlineNotificationElement);
-      }
-    };
-  }, []);
 
   // Customer View & Kitchen View & AutoDetect View (No Sidebar)
   if (currentPage === 'customer' || currentPage === 'kitchen' || currentPage === 'autodetect') {
