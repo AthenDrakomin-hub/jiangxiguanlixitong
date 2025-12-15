@@ -219,13 +219,14 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
 
   // H5 Page Settings
   // 产品备注: 为h5PageSettings指定明确的类型，避免使用any
-  const h5PageSettings: SystemSettings['h5PageSettings'] = systemSettings?.h5PageSettings || {
-    enableCustomStyling: true,
-    customHeaderColor: '#4F46E5',
-    customButtonColor: '#DC2626',
-    showStoreInfo: true,
-    showWiFiInfo: true,
-  };
+  const h5PageSettings: SystemSettings['h5PageSettings'] =
+    systemSettings?.h5PageSettings || {
+      enableCustomStyling: true,
+      customHeaderColor: '#4F46E5',
+      customButtonColor: '#DC2626',
+      showStoreInfo: true,
+      showWiFiInfo: true,
+    };
 
   // Dynamic categories from settings
   const categories = ['All', ...(systemSettings?.categories || [])];
@@ -492,8 +493,19 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
       onPlaceOrder(newOrder);
 
       // Post message to React Native WebView if available
-      if (typeof window !== 'undefined' && (window as Window & { ReactNativeWebView?: { postMessage: (message: string) => void } }).ReactNativeWebView) {
-        (window as Window & { ReactNativeWebView?: { postMessage: (message: string) => void } }).ReactNativeWebView!.postMessage(
+      if (
+        typeof window !== 'undefined' &&
+        (
+          window as Window & {
+            ReactNativeWebView?: { postMessage: (message: string) => void };
+          }
+        ).ReactNativeWebView
+      ) {
+        (
+          window as Window & {
+            ReactNativeWebView?: { postMessage: (message: string) => void };
+          }
+        ).ReactNativeWebView!.postMessage(
           JSON.stringify({
             type: 'NEW_ORDER',
             order: newOrder,

@@ -2,7 +2,18 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import './index.css';
 import { APP_CONFIG } from './config/appConfig';
-import { Order, Dish, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, SystemSettings, Page, OrderStatus } from './types';
+import {
+  Order,
+  Dish,
+  Expense,
+  Ingredient,
+  KTVRoom,
+  SignBillAccount,
+  HotelRoom,
+  SystemSettings,
+  Page,
+  OrderStatus,
+} from './types';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -604,7 +615,9 @@ const App = () => {
         <div className="flex min-h-screen items-center justify-center bg-slate-50">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 text-red-600">⚠️</div>
-            <h2 className="mb-2 text-xl font-bold text-slate-800">页面加载错误</h2>
+            <h2 className="mb-2 text-xl font-bold text-slate-800">
+              页面加载错误
+            </h2>
             <p className="mb-4 text-slate-600">
               抱歉，页面加载时发生了错误。请刷新页面重试。
             </p>

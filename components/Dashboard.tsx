@@ -277,7 +277,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                         ₱
                         {room.orders
                           ? room.orders.reduce(
-                              (s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity,
+                              (
+                                s: number,
+                                i: { price: number; quantity: number }
+                              ) => s + i.price * i.quantity,
                               0
                             )
                           : 0}

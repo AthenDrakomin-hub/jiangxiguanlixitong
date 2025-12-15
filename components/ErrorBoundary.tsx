@@ -1,4 +1,3 @@
-import React from 'react';
 import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -33,7 +32,7 @@ class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) {
         return this.props.fallback;
       }
-
+      
       // 默认降级 UI
       return (
         <div className="flex min-h-screen items-center justify-center bg-slate-50">
