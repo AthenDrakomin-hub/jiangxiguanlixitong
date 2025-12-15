@@ -1,4 +1,3 @@
-
 import { Order } from '../types';
 
 // Helper to format currency
@@ -13,7 +12,7 @@ const getStoreInfo = () => {
       return parsed.storeInfo || {};
     }
   } catch (e) {
-    console.error("Error loading settings for print", e);
+    console.error('Error loading settings for print', e);
   }
   return {
     name: '江西酒店 Jiangxi Hotel',
@@ -21,17 +20,16 @@ const getStoreInfo = () => {
     phone: '',
     openingHours: '10:00 - 02:00',
     wifiSsid: '',
-    wifiPassword: ''
+    wifiPassword: '',
   };
 };
 
 export const PrinterService = {
-  
   // Print a single order receipt
   printOrder: (order: Order) => {
     const store = getStoreInfo();
     const date = new Date(order.createdAt).toLocaleString('zh-CN');
-    
+
     // Receipt HTML Template - Optimized for Thermal Printers (High Contrast, Bold)
     const htmlContent = `
       <!DOCTYPE html>
@@ -72,7 +70,7 @@ export const PrinterService = {
           <span class="title">${store.name}</span><br/>
           <div class="info">${store.address}</div>
           <div class="info">Tel: ${store.phone}</div>
-          <div class="subtitle">${order.source === 'TAKEOUT' ? '外卖 Takeout' : (order.source === 'ROOM_SERVICE' ? '客房送餐 Room' : '堂食 Dine-in')}</div>
+          <div class="subtitle">${order.source === 'TAKEOUT' ? '外卖 Takeout' : order.source === 'ROOM_SERVICE' ? '客房送餐 Room' : '堂食 Dine-in'}</div>
         </div>
 
         <div class="divider"></div>
@@ -90,20 +88,28 @@ export const PrinterService = {
         </div>
         <div class="divider"></div>
 
-        ${order.items.map(item => `
+        ${order.items
+          .map(
+            (item) => `
           <div class="item-row">
             <span class="item-name">${item.dishName}</span>
             <span class="item-qty">x${item.quantity}</span>
             <span class="item-price">${(item.price * item.quantity).toFixed(0)}</span>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
 
         <div class="divider"></div>
 
-        ${order.notes ? `
+        ${
+          order.notes
+            ? `
           <div style="font-weight:bold; font-size: 14px; margin: 5px 0;">* 备注: ${order.notes} *</div>
           <div class="divider"></div>
-        ` : ''}
+        `
+            : ''
+        }
 
         <div class="total-row">
           <span>TOTAL:</span>
@@ -131,7 +137,11 @@ export const PrinterService = {
   },
 
   // Print Shift Report (Finance)
-  printShiftReport: (data: { total: number; byMethod: Record<string, number>; count: number }) => {
+  printShiftReport: (data: {
+    total: number;
+    byMethod: Record<string, number>;
+    count: number;
+  }) => {
     const date = new Date().toLocaleString('zh-CN');
 
     const htmlContent = `
@@ -171,12 +181,16 @@ export const PrinterService = {
         <div class="divider"></div>
         <div class="section-title">Income Breakdown 收入明细:</div>
 
-        ${Object.entries(data.byMethod).map(([method, amount]) => `
+        ${Object.entries(data.byMethod)
+          .map(
+            ([method, amount]) => `
           <div class="row">
             <span class="label">${method}:</span>
             <span class="value">${formatPrice(amount)}</span>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
 
         <div class="total-row">
           <span>TOTAL REVENUE 总营收:</span>
@@ -214,7 +228,7 @@ export const PrinterService = {
     iframe.style.width = '0';
     iframe.style.height = '0';
     iframe.style.border = '0';
-    
+
     document.body.appendChild(iframe);
 
     const doc = iframe.contentWindow?.document;
@@ -230,11 +244,11 @@ export const PrinterService = {
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
           } catch (e) {
-            console.error("Printing failed", e);
-            alert("Printing failed. Please check printer connection.");
+            console.error('Printing failed', e);
+            alert('Printing failed. Please check printer connection.');
           }
         }, 500);
       };
     }
-  }
+  },
 };

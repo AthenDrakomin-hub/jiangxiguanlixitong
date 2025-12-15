@@ -5,7 +5,7 @@ import { put, list, del, head } from '@vercel/blob';
 
 // Blob Storage configuration
 const blobConfig = {
-  token: process.env.BLOB_READ_WRITE_TOKEN
+  token: process.env.BLOB_READ_WRITE_TOKEN,
 };
 
 // Validate required environment variables

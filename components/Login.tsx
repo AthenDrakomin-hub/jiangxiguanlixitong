@@ -20,67 +20,86 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     return strongRegex.test(password);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 登录尝试次数限制
-    if (loginAttempts >= 3) {
-      setError('登录失败次数过多，请5分钟后再试 / Too many failed attempts, please try again in 5 minutes');
-      return;
-    }
-    
-    // 获取环境变量或默认凭证
-    const env = (import.meta as any).env || {};
-    const validUser = env.VITE_ADMIN_USER || APP_CONFIG.DEFAULT_ADMIN.username;
-    const validPass = env.VITE_ADMIN_PASS || APP_CONFIG.DEFAULT_ADMIN.password;
+    try {
+      // 检查是否已达到最大登录尝试次数
+      if (loginAttempts >= 3) {
+        setError('登录尝试次数已达上限 / Max login attempts reached');
+        return;
+      }
 
-    if (username === validUser) {
-      // 检查密码
-      if (password === validPass) {
-        // 重置登录尝试次数
-        setLoginAttempts(0);
-        onLogin();
+      // 获取环境变量或默认凭证
+      // 产品备注: 使用类型安全的方式访问环境变量
+      const validUser = import.meta.env.VITE_ADMIN_USER || APP_CONFIG.DEFAULT_ADMIN.username;
+      const validPass = import.meta.env.VITE_ADMIN_PASS || APP_CONFIG.DEFAULT_ADMIN.password;
+
+      if (username === validUser) {
+        // 检查密码
+        if (password === validPass) {
+          // 重置登录尝试次数
+          setLoginAttempts(0);
+          onLogin();
+        } else {
+          // 增加登录尝试次数
+          const newAttempts = loginAttempts + 1;
+          setLoginAttempts(newAttempts);
+          setError(
+            `密码错误 / Invalid Password (${3 - newAttempts} attempts left)`
+          );
+        }
       } else {
         // 增加登录尝试次数
         const newAttempts = loginAttempts + 1;
         setLoginAttempts(newAttempts);
-        setError(`密码错误 / Invalid Password (${3 - newAttempts} attempts left)`);
+        setError(
+          `用户名不存在 / User not found (${3 - newAttempts} attempts left)`
+        );
       }
-    } else {
-      // 增加登录尝试次数
-      const newAttempts = loginAttempts + 1;
-      setLoginAttempts(newAttempts);
-      setError(`用户名不存在 / User not found (${3 - newAttempts} attempts left)`);
+    } catch (error) {
+      console.error('Login error:', error);
+      // 添加错误处理，防止白屏
+      setError('登录过程中发生错误: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-fade-in">
+    <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4">
+      <div className="animate-fade-in w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="p-8 pb-0 text-center">
-          <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-500/30">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-600 shadow-lg shadow-red-500/30">
             <Lock className="text-white" size={32} />
           </div>
           <h2 className="text-2xl font-bold text-slate-800">系统登录 Login</h2>
-          <p className="text-slate-500 text-sm mt-1">江西酒店后端管理系统<br/>Backend Management System</p>
+          <p className="mt-1 text-sm text-slate-500">
+            江西酒店后端管理系统
+            <br />
+            Backend Management System
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="p-8 space-y-6">
+        <form onSubmit={handleLogin} className="space-y-6 p-8">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
               <AlertCircle size={16} /> {error}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Username 账号</label>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Username 账号
+            </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-              <input 
-                type="text" 
+              <User
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                size={20}
+              />
+              <input
+                type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-4 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
                 placeholder="admin"
                 autoComplete="username"
               />
@@ -88,14 +107,19 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Password 密码</label>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Password 密码
+            </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-              <input 
-                type={showPassword ? "text" : "password"} 
+              <Lock
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                size={20}
+              />
+              <input
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-12 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-12 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
                 placeholder="••••••"
                 autoComplete="current-password"
               />
@@ -114,16 +138,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             )}
           </div>
 
-          <button 
+          <button
             type="submit"
-            className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-4 font-bold text-white shadow-lg transition-all hover:bg-slate-800 hover:shadow-xl"
             disabled={loginAttempts >= 3}
           >
             <LogIn size={20} /> Login 登录
           </button>
         </form>
-        
-        <div className="bg-slate-50 p-4 text-center text-xs text-slate-400 border-t border-slate-100">
+
+        <div className="border-t border-slate-100 bg-slate-50 p-4 text-center text-xs text-slate-400">
           Secure Access • Vercel Protected • 登录失败次数: {loginAttempts}/3
         </div>
       </div>

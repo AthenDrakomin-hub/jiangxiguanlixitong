@@ -26,14 +26,18 @@ class AuditLogger {
       level,
       action,
       details,
-      userId: userId || 'unknown'
+      userId: userId || 'unknown',
     };
 
     // 添加到内存日志数组
     this.logs.push(logEntry);
 
     // 同时输出到控制台（开发环境）
-    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development') {
+    if (
+      typeof process !== 'undefined' &&
+      process.env &&
+      process.env.NODE_ENV === 'development'
+    ) {
       console.log(`[${level.toUpperCase()}] ${action}: ${details}`);
     }
 
@@ -53,12 +57,12 @@ class AuditLogger {
 
   // 根据用户ID获取日志
   getUserLogs(userId: string): AuditLog[] {
-    return this.logs.filter(log => log.userId === userId);
+    return this.logs.filter((log) => log.userId === userId);
   }
 
   // 根据日期范围获取日志
   getLogsByDateRange(startDate: Date, endDate: Date): AuditLog[] {
-    return this.logs.filter(log => {
+    return this.logs.filter((log) => {
       const logDate = new Date(log.timestamp);
       return logDate >= startDate && logDate <= endDate;
     });

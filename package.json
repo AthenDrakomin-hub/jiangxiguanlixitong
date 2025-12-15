@@ -10,7 +10,13 @@
     "check-api": "node check-api.js",
     "test-github-sync": "node test-github-sync.js",
     "migrate-data": "node scripts/migrate-data-to-blob.js",
-    "add-sample-data": "node scripts/add-sample-data.js"
+    "add-sample-data": "node scripts/add-sample-data.js",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
@@ -31,14 +37,35 @@
     "@types/node-fetch": "^2.6.11",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.50.0",
+    "@typescript-eslint/parser": "^8.50.0",
     "@vercel/node": "^2.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/ui": "^1.6.0",
     "autoprefixer": "^10.4.19",
     "dotenv": "^17.2.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-tailwindcss": "^3.15.0",
+    "husky": "^8.0.0",
+    "jsdom": "^27.0.1",
+    "lint-staged": "^15.2.2",
     "postcss": "^8.4.38",
+    "prettier": "^3.2.5",
     "tailwindcss": "^3.4.18",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "vite": "^7.2.7"
+    "vite": "^7.2.7",
+    "vite-plugin-checker": "^0.6.4",
+    "vitest": "^1.6.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }

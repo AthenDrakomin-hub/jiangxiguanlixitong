@@ -7,10 +7,10 @@ interface ErrorDisplayProps {
   type?: 'error' | 'warning' | 'info';
 }
 
-const ErrorDisplay: React.FC<ErrorDisplayProps> = ({ 
-  message, 
+const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
+  message,
   onClose,
-  type = 'error'
+  type = 'error',
 }) => {
   const getTypeStyles = () => {
     switch (type) {
@@ -35,15 +35,17 @@ const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   };
 
   return (
-    <div className={`border rounded-lg p-4 flex items-start gap-3 ${getTypeStyles()}`}>
+    <div
+      className={`flex items-start gap-3 rounded-lg border p-4 ${getTypeStyles()}`}
+    >
       {getIcon()}
       <div className="flex-1">
         <p className="text-sm font-medium">{message}</p>
       </div>
       {onClose && (
-        <button 
+        <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 transition-colors"
+          className="text-slate-400 transition-colors hover:text-slate-600"
         >
           <X size={16} />
         </button>

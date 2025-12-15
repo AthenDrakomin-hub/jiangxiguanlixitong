@@ -14,6 +14,7 @@
 江西酒店管理系统是一款专为酒店餐饮服务设计的全功能管理系统，支持客房送餐和餐厅点餐两种场景。系统采用现代化的前端技术栈，具备响应式设计，可在手机、平板、电脑等多种设备上使用。
 
 ### 核心功能
+
 - **客房送餐服务**：通过房间专属二维码实现点餐溯源
 - **菜单管理**：菜品信息维护、分类管理、库存跟踪
 - **订单处理**：实时订单管理、状态跟踪、厨房显示
@@ -23,6 +24,7 @@
 ## 🛠 技术架构
 
 ### 前端技术栈
+
 - React 18 (Hooks)
 - TypeScript (严格类型检查)
 - Vite 5 (构建工具)
@@ -33,6 +35,7 @@
 - PWA (渐进式Web应用)
 
 ### 后端技术栈
+
 - Vercel Serverless Functions
 - RESTful API
 - Vercel Blob Storage (@vercel/blob)
@@ -62,11 +65,13 @@ jiangxiguanlixitong/
 ## 🚀 部署指南
 
 ### 环境准备
+
 1. 注册 [Vercel](https://vercel.com) 账号
 2. 在 Vercel 项目设置中创建 Blob Storage 存储桶
 3. 获取 `BLOB_READ_WRITE_TOKEN` 并配置到环境变量
 
 ### 部署步骤
+
 1. Fork 本项目到您的 GitHub 账户
 2. 在 Vercel 中导入该项目
 3. 配置环境变量：
@@ -76,6 +81,7 @@ jiangxiguanlixitong/
 4. 点击 Deploy 进行部署
 
 ### 本地开发
+
 ```bash
 # 安装依赖
 npm install
@@ -87,6 +93,7 @@ npm run dev
 ```
 
 ### 初始化数据
+
 ```bash
 # 添加示例数据到存储
 npm run add-sample-data
@@ -95,14 +102,19 @@ npm run add-sample-data
 ## 📱 使用说明
 
 ### 管理后台
+
 访问主域名即可进入管理后台，可进行菜单管理、订单处理、系统设置等操作。
 
 ### 客户点餐
+
 客房客人可通过以下链接进行点餐：
+
 ```
 https://your-domain.com/?location=8201
 ```
+
 其中 `8201` 为房间号，有效房间号范围：
+
 - 二楼：8201-8232
 - 三楼：8301-8332
 

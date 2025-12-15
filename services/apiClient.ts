@@ -1,5 +1,14 @@
 import { getCache, setCache } from '../utils/cache';
-import { Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, PaymentMethod } from '../types';
+import {
+  Dish,
+  Order,
+  Expense,
+  Ingredient,
+  KTVRoom,
+  SignBillAccount,
+  HotelRoom,
+  PaymentMethod,
+} from '../types';
 
 // Define the return type for fetchAll
 interface FetchAllResponse {
@@ -27,14 +36,15 @@ export const apiClient = {
       }
 
       const response = await fetch(`/api/${endpoint}`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
-      
+
       // Cache the data if caching is enabled
       if (useCache) {
         setCache(endpoint, data);
       }
-      
+
       return data;
     } catch (error) {
       console.error(`Failed to fetch from ${endpoint}:`, error);
@@ -43,7 +53,8 @@ export const apiClient = {
   },
 
   // Generic POST request
-  post: async (endpoint: string, data: any) => {
+  // 产品备注: 为data参数指定明确的类型，避免使用any
+  post: async (endpoint: string, data: Record<string, any>) => {
     try {
       const response = await fetch(`/api/${endpoint}`, {
         method: 'POST',
@@ -52,7 +63,8 @@ export const apiClient = {
         },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
       console.error(`Failed to post to ${endpoint}:`, error);
@@ -61,7 +73,8 @@ export const apiClient = {
   },
 
   // Generic PUT request
-  put: async (endpoint: string, id: string, data: any) => {
+  // 产品备注: 为data参数指定明确的类型，避免使用any
+  put: async (endpoint: string, id: string, data: Record<string, any>) => {
     try {
       const response = await fetch(`/api/${endpoint}?id=${id}`, {
         method: 'PUT',
@@ -70,7 +83,8 @@ export const apiClient = {
         },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
       console.error(`Failed to update ${endpoint} with id ${id}:`, error);
@@ -84,7 +98,8 @@ export const apiClient = {
       const response = await fetch(`/api/${endpoint}?id=${id}`, {
         method: 'DELETE',
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       return await response.json();
     } catch (error) {
       console.error(`Failed to delete ${endpoint} with id ${id}:`, error);
@@ -104,7 +119,7 @@ export const apiClient = {
         ktvRoomsRes,
         signBillAccountsRes,
         hotelRoomsRes,
-        paymentMethodsRes
+        paymentMethodsRes,
       ] = await Promise.allSettled([
         apiClient.get('dishes', useCache),
         apiClient.get('orders', useCache),
@@ -113,34 +128,46 @@ export const apiClient = {
         apiClient.get('ktv_rooms', useCache),
         apiClient.get('sign_bill_accounts', useCache),
         apiClient.get('hotel_rooms', useCache),
-        apiClient.get('payment_methods', useCache)
+        apiClient.get('payment_methods', useCache),
       ]);
 
       return {
         dishes: dishesRes.status === 'fulfilled' ? dishesRes.value.data : [],
         orders: ordersRes.status === 'fulfilled' ? ordersRes.value.data : [],
-        expenses: expensesRes.status === 'fulfilled' ? expensesRes.value.data : [],
-        inventory: inventoryRes.status === 'fulfilled' ? inventoryRes.value.data : [],
-        ktvRooms: ktvRoomsRes.status === 'fulfilled' ? ktvRoomsRes.value.data : [],
-        signBillAccounts: signBillAccountsRes.status === 'fulfilled' ? signBillAccountsRes.value.data : [],
-        hotelRooms: hotelRoomsRes.status === 'fulfilled' ? hotelRoomsRes.value.data : [],
-        paymentMethods: paymentMethodsRes.status === 'fulfilled' ? paymentMethodsRes.value.data : []
+        expenses:
+          expensesRes.status === 'fulfilled' ? expensesRes.value.data : [],
+        inventory:
+          inventoryRes.status === 'fulfilled' ? inventoryRes.value.data : [],
+        ktvRooms:
+          ktvRoomsRes.status === 'fulfilled' ? ktvRoomsRes.value.data : [],
+        signBillAccounts:
+          signBillAccountsRes.status === 'fulfilled'
+            ? signBillAccountsRes.value.data
+            : [],
+        hotelRooms:
+          hotelRoomsRes.status === 'fulfilled' ? hotelRoomsRes.value.data : [],
+        paymentMethods:
+          paymentMethodsRes.status === 'fulfilled'
+            ? paymentMethodsRes.value.data
+            : [],
       } as FetchAllResponse;
     } catch (error) {
-      console.error("Critical failure in fetchAll:", error);
+      console.error('Critical failure in fetchAll:', error);
       throw error;
     }
   },
 
   // Create new record
-  create: async (table: string, data: any) => {
+  // 产品备注: 为data参数指定明确的类型，避免使用any
+  create: async (table: string, data: Record<string, any>) => {
     // Clear cache for this table when creating new record
     clearCacheForTable(table);
     return await apiClient.post(table, data);
   },
 
   // Update existing record
-  update: async (table: string, id: string, data: any) => {
+  // 产品备注: 为data参数指定明确的类型，避免使用any
+  update: async (table: string, id: string, data: Record<string, any>) => {
     // Clear cache for this table when updating record
     clearCacheForTable(table);
     return await apiClient.put(table, id, data);
@@ -151,7 +178,7 @@ export const apiClient = {
     // Clear cache for this table when deleting record
     clearCacheForTable(table);
     return await apiClient.delete(table, id);
-  }
+  },
 };
 
 // Helper function to clear cache for a specific table

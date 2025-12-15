@@ -1,4 +1,4 @@
-import { StorageSettings } from "../types";
+import { StorageSettings } from '../types';
 
 const SETTINGS_KEY = 'jx_storage_settings';
 
@@ -11,11 +11,10 @@ export const getStorageSettings = (): StorageSettings => {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
     if (saved) {
-      // Merge with defaults to ensure new fields exist if loading old settings
       return { ...DEFAULT_STORAGE_SETTINGS, ...JSON.parse(saved) };
     }
     return DEFAULT_STORAGE_SETTINGS;
-  } catch (e) {
+  } catch (e: unknown) {
     return DEFAULT_STORAGE_SETTINGS;
   }
 };
@@ -26,10 +25,12 @@ export const saveStorageSettings = (settings: StorageSettings) => {
 
 // Deprecated: Old storage methods kept only if needed for migration utilities later
 // All data logic is now handled exclusively by Vercel Blob Storage
+// 产品备注: 为loadData函数的参数指定明确的类型，避免使用any
 export const loadData = async <T>(_key: string, defaultData: T): Promise<T> => {
-    return defaultData;
+  return defaultData;
 };
 
+// 产品备注: 为saveData函数的参数指定明确的类型，避免使用any
 export const saveData = async <T>(_key: string, _data: T): Promise<void> => {
-    // No-op
+  // No-op
 };

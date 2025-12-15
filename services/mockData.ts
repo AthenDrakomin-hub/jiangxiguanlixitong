@@ -1,5 +1,12 @@
-
-import { Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom } from '../types';
+import {
+  Dish,
+  Order,
+  Expense,
+  Ingredient,
+  KTVRoom,
+  SignBillAccount,
+  HotelRoom,
+} from '../types';
 
 // 1. Menu: Start Empty
 export const INITIAL_DISHES: Dish[] = [];

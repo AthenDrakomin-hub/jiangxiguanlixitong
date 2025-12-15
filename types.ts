@@ -1,18 +1,27 @@
 // Removed hardcoded enum to allow dynamic categories
-export type Category = string; 
+export type Category = string;
 
 export enum OrderStatus {
   PENDING = '待处理', // 刚下单，待接单/打印
   COOKING = '烹饪中', // 厨房制作中
-  SERVED = '已上菜',  // 服务员已送达
-  PAID = '已支付',    // 结账完成 (Legacy/Digital)
+  SERVED = '已上菜', // 服务员已送达
+  PAID = '已支付', // 结账完成 (Legacy/Digital)
   COMPLETED = '已完成', // 订单结束 (Takeout done)
-  CANCELLED = '已取消'
+  CANCELLED = '已取消',
 }
 
 export type OrderSource = 'LOBBY' | 'ROOM_SERVICE' | 'KTV' | 'TAKEOUT';
 
-export type PaymentMethod = 'CASH' | 'WECHAT' | 'ALIPAY' | 'USDT' | 'GCASH' | 'MAYA' | 'UNIONPAY' | 'CREDIT_CARD' | 'SIGN_BILL';
+export type PaymentMethod =
+  | 'CASH'
+  | 'WECHAT'
+  | 'ALIPAY'
+  | 'USDT'
+  | 'GCASH'
+  | 'MAYA'
+  | 'UNIONPAY'
+  | 'CREDIT_CARD'
+  | 'SIGN_BILL';
 
 // Interface Optimization: Recipe Structure
 export interface DishIngredient {
@@ -29,7 +38,7 @@ export interface Dish {
   imageUrl: string;
   available: boolean;
   spiciness: number; // 0-3
-  ingredients?: DishIngredient[]; 
+  ingredients?: DishIngredient[];
 }
 
 export interface OrderItem {
@@ -41,14 +50,14 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
-  tableNumber: string; 
-  source: OrderSource; 
+  tableNumber: string;
+  source: OrderSource;
   items: OrderItem[];
   status: OrderStatus;
   totalAmount: number;
   createdAt: string; // ISO string
   notes?: string;
-  paymentMethod?: PaymentMethod; 
+  paymentMethod?: PaymentMethod;
 }
 
 // Inventory Types
@@ -68,7 +77,7 @@ export enum ExpenseCategory {
   RENT = '店铺租金',
   UTILITIES = '水电煤气',
   MAINTENANCE = '维修保养',
-  OTHER = '其他支出'
+  OTHER = '其他支出',
 }
 
 export interface Expense {
@@ -103,15 +112,15 @@ export interface KTVRoom {
 // 注意：此系统专为客房送餐服务设计，房间状态仅用于标识房间是否曾经有过订单
 // Vacant: 房间当前没有未完成的订单
 // Occupied: 房间有未完成的订单
-export type HotelRoomStatus = 'Vacant' | 'Occupied'; 
+export type HotelRoomStatus = 'Vacant' | 'Occupied';
 
 export interface HotelRoom {
   id: string;
   number: string; // e.g. "8201"
-  floor: number;  // 2 or 3
+  floor: number; // 2 or 3
   status: HotelRoomStatus;
-  guestName?: string; 
-  orders: OrderItem[]; 
+  guestName?: string;
+  orders: OrderItem[];
   lastOrderTime?: string;
 }
 
@@ -131,12 +140,12 @@ export interface SignBillAccount {
 
 // Transaction Record for Sign Bill history
 export interface BillTransaction {
-    id: string;
-    accountId: string;
-    amount: number;
-    type: 'CHARGE' | 'SETTLEMENT'; // 记账 or 还款
-    paymentMethod?: PaymentMethod; // Only for settlement
-    date: string;
+  id: string;
+  accountId: string;
+  amount: number;
+  type: 'CHARGE' | 'SETTLEMENT'; // 记账 or 还款
+  paymentMethod?: PaymentMethod; // Only for settlement
+  date: string;
 }
 
 export interface PaymentConfig {
@@ -148,42 +157,57 @@ export interface PaymentConfig {
 }
 
 export interface StoreInfo {
-    name: string;
-    address: string;
-    phone: string;
-    openingHours: string;
-    kitchenPrinterUrl?: string;
-    wifiSsid?: string;
-    wifiPassword?: string;
-    telegram?: string;
-    // H5页面配置
-    h5PageTitle?: string;
-    h5PageDescription?: string;
-    h5PageKeywords?: string;
-    h5CustomCSS?: string;
+  name: string;
+  address: string;
+  phone: string;
+  openingHours: string;
+  kitchenPrinterUrl?: string;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  telegram?: string;
+  // H5页面配置
+  h5PageTitle?: string;
+  h5PageDescription?: string;
+  h5PageKeywords?: string;
+  h5CustomCSS?: string;
 }
 
 export interface SystemSettings {
-    storeInfo?: StoreInfo;
-    notifications?: {
-        sound: boolean;
-        desktop: boolean;
-    };
-    payment?: PaymentConfig;
-    exchangeRate?: number; // RMB to PHP
-    serviceChargeRate?: number; // e.g., 0.10 for 10%
-    categories?: string[]; // Dynamic categories
-    // H5页面配置
-    h5PageSettings?: {
-        enableCustomStyling?: boolean;
-        customHeaderColor?: string;
-        customButtonColor?: string;
-        showStoreInfo?: boolean;
-        showWiFiInfo?: boolean;
-    };
+  storeInfo?: StoreInfo;
+  notifications?: {
+    sound: boolean;
+    desktop: boolean;
+  };
+  payment?: PaymentConfig;
+  exchangeRate?: number; // RMB to PHP
+  serviceChargeRate?: number; // e.g., 0.10 for 10%
+  categories?: string[]; // Dynamic categories
+  // H5页面配置
+  h5PageSettings?: {
+    enableCustomStyling?: boolean;
+    customHeaderColor?: string;
+    customButtonColor?: string;
+    showStoreInfo?: boolean;
+    showWiFiInfo?: boolean;
+  };
 }
 
-export type Page = 'dashboard' | 'menu' | 'orders' | 'finance' | 'inventory' | 'settings' | 'ktv' | 'signbill' | 'hotel' | 'qrcode' | 'kitchen' | 'customer' | 'payment' | 'permissions' | 'autodetect';
+export type Page =
+  | 'dashboard'
+  | 'menu'
+  | 'orders'
+  | 'finance'
+  | 'inventory'
+  | 'settings'
+  | 'ktv'
+  | 'signbill'
+  | 'hotel'
+  | 'qrcode'
+  | 'kitchen'
+  | 'customer'
+  | 'payment'
+  | 'permissions'
+  | 'autodetect';
 
 // Standardized API Response Wrapper
 export interface ApiResponse<T> {
@@ -205,10 +229,10 @@ export interface S3Config {
 }
 
 export interface GitHubConfig {
-  owner: string;      // GitHub Username or Org name
-  repo: string;       // Repository name
-  branch: string;     // e.g. 'main'
-  token: string;      // Personal Access Token
+  owner: string; // GitHub Username or Org name
+  repo: string; // Repository name
+  branch: string; // e.g. 'main'
+  token: string; // Personal Access Token
   pathPrefix?: string; // Optional folder path, defaults to 'data/'
 }
 

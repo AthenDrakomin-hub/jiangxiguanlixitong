@@ -21,11 +21,16 @@ const tidbConfig = {
   user: process.env.TIDB_USER,
   password: process.env.TIDB_PASSWORD,
   database: process.env.TIDB_DATABASE || 'fortune500',
-  ssl: process.env.TIDB_SSL === 'true' ? { rejectUnauthorized: true } : undefined
+  ssl:
+    process.env.TIDB_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
 };
 
 // 验证必要的环境变量
-if (!process.env.TIDB_HOST || !process.env.TIDB_USER || !process.env.TIDB_PASSWORD) {
+if (
+  !process.env.TIDB_HOST ||
+  !process.env.TIDB_USER ||
+  !process.env.TIDB_PASSWORD
+) {
   console.error('❌ 缺少必要的TiDB环境变量！');
   console.error('请确保在.env.local文件中设置以下变量：');
   console.error('- TIDB_HOST');
@@ -49,7 +54,7 @@ const TABLES_TO_MIGRATE = [
   'ktv_rooms',
   'sign_bill_accounts',
   'hotel_rooms',
-  'payment_methods'
+  'payment_methods',
 ];
 
 // 生成Blob存储键名
@@ -85,18 +90,20 @@ async function getDataFromTable(connection, tableName) {
 
 // 将数据存储到Vercel Blob Storage
 async function storeDataInBlob(tableName, data) {
-  console.log(`💾 将 ${data.length} 条记录存储到Blob Storage (${tableName})...`);
+  console.log(
+    `💾 将 ${data.length} 条记录存储到Blob Storage (${tableName})...`
+  );
   let successCount = 0;
-  
+
   for (const item of data) {
     try {
       const blobKey = generateBlobKey(tableName, item.id);
       const blobResult = await put(blobKey, JSON.stringify(item), {
         access: 'public',
-        contentType: 'application/json'
+        contentType: 'application/json',
       });
       successCount++;
-      
+
       // 显示进度（每10条记录显示一次）
       if (successCount % 10 === 0 || successCount === data.length) {
         console.log(`  进度: ${successCount}/${data.length} 条记录已存储`);
@@ -105,37 +112,41 @@ async function storeDataInBlob(tableName, data) {
       console.error(`  ❌ 存储记录失败 (ID: ${item.id}):`, error.message);
     }
   }
-  
-  console.log(`✅ 成功将 ${successCount}/${data.length} 条记录存储到Blob Storage (${tableName})`);
+
+  console.log(
+    `✅ 成功将 ${successCount}/${data.length} 条记录存储到Blob Storage (${tableName})`
+  );
   return successCount;
 }
 
 // 主迁移函数
 async function migrateData() {
   let connection;
-  
+
   try {
     // 1. 连接到TiDB
     connection = await connectToTiDB();
-    
+
     // 2. 遍历每个表进行迁移
     for (const tableName of TABLES_TO_MIGRATE) {
       console.log(`\n🔄 开始迁移表: ${tableName}`);
-      
+
       // 3. 从TiDB获取数据
       const data = await getDataFromTable(connection, tableName);
-      
+
       if (data.length === 0) {
         console.log(`⚠️  表 ${tableName} 中没有数据，跳过迁移`);
         continue;
       }
-      
+
       // 4. 存储到Vercel Blob Storage
       const successCount = await storeDataInBlob(tableName, data);
-      
-      console.log(`📋 表 ${tableName} 迁移完成: ${successCount}/${data.length} 条记录成功迁移\n`);
+
+      console.log(
+        `📋 表 ${tableName} 迁移完成: ${successCount}/${data.length} 条记录成功迁移\n`
+      );
     }
-    
+
     console.log('🎉 所有数据迁移完成！');
     return true;
   } catch (error) {
@@ -154,9 +165,9 @@ async function migrateData() {
 async function main() {
   console.log('🚀 启动数据迁移工具');
   console.log('=====================================');
-  
+
   const success = await migrateData();
-  
+
   if (success) {
     console.log('\n✅ 数据迁移成功完成！');
     console.log('\n💡 下一步操作:');
@@ -170,7 +181,7 @@ async function main() {
 }
 
 // 执行主函数
-main().catch(error => {
+main().catch((error) => {
   console.error('未处理的错误:', error);
   process.exit(1);
 });

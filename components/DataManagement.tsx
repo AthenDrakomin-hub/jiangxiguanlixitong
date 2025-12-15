@@ -28,7 +28,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
     { id: 'ktv_rooms', name: 'KTV房间' },
     { id: 'sign_bill_accounts', name: '挂账账户' },
     { id: 'hotel_rooms', name: '酒店房间' },
-    { id: 'payment_methods', name: '支付方式' }
+    { id: 'payment_methods', name: '支付方式' },
   ];
 
   // 字段定义
@@ -39,32 +39,74 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
       { key: 'price', label: '价格', type: 'number' },
       { key: 'category', label: '分类', type: 'text' },
       { key: 'available', label: '是否可用', type: 'checkbox' },
-      { key: 'spiciness', label: '辣度(0-3)', type: 'number' }
+      { key: 'spiciness', label: '辣度(0-3)', type: 'number' },
     ],
     orders: [
       { key: 'tableNumber', label: '桌号', type: 'text' },
-      { key: 'source', label: '来源', type: 'select', options: ['LOBBY', 'ROOM_SERVICE', 'KTV', 'TAKEOUT'] },
-      { key: 'status', label: '状态', type: 'select', options: ['待处理', '烹饪中', '已上菜', '已支付', '已完成', '已取消'] },
+      {
+        key: 'source',
+        label: '来源',
+        type: 'select',
+        options: ['LOBBY', 'ROOM_SERVICE', 'KTV', 'TAKEOUT'],
+      },
+      {
+        key: 'status',
+        label: '状态',
+        type: 'select',
+        options: ['待处理', '烹饪中', '已上菜', '已支付', '已完成', '已取消'],
+      },
       { key: 'totalAmount', label: '总金额', type: 'number' },
       { key: 'notes', label: '备注', type: 'text' },
-      { key: 'paymentMethod', label: '支付方式', type: 'select', options: ['CASH', 'WECHAT', 'ALIPAY', 'USDT', 'GCASH', 'MAYA', 'UNIONPAY', 'CREDIT_CARD', 'SIGN_BILL'] }
+      {
+        key: 'paymentMethod',
+        label: '支付方式',
+        type: 'select',
+        options: [
+          'CASH',
+          'WECHAT',
+          'ALIPAY',
+          'USDT',
+          'GCASH',
+          'MAYA',
+          'UNIONPAY',
+          'CREDIT_CARD',
+          'SIGN_BILL',
+        ],
+      },
     ],
     expenses: [
       { key: 'amount', label: '金额', type: 'number' },
-      { key: 'category', label: '分类', type: 'select', options: ['食材采购', '员工工资', '店铺租金', '水电煤气', '维修保养', '其他支出'] },
+      {
+        key: 'category',
+        label: '分类',
+        type: 'select',
+        options: [
+          '食材采购',
+          '员工工资',
+          '店铺租金',
+          '水电煤气',
+          '维修保养',
+          '其他支出',
+        ],
+      },
       { key: 'description', label: '描述', type: 'text' },
-      { key: 'date', label: '日期', type: 'date' }
+      { key: 'date', label: '日期', type: 'date' },
     ],
     inventory: [
       { key: 'name', label: '物品名称', type: 'text' },
       { key: 'quantity', label: '数量', type: 'number' },
       { key: 'unit', label: '单位', type: 'text' },
-      { key: 'minThreshold', label: '最低阈值', type: 'number' }
+      { key: 'minThreshold', label: '最低阈值', type: 'number' },
     ],
     ktv_rooms: [
       { key: 'name', label: '房间名称', type: 'text' },
-      { key: 'status', label: '状态', type: 'select', options: ['Available', 'InUse', 'Cleaning', 'Maintenance'] },
-      { key: 'hourlyRate', label: '小时费率', type: 'number' }
+      {
+        key: 'status',
+        label: '状态',
+        type: 'select',
+        options: ['Available', 'InUse', 'Cleaning', 'Maintenance'],
+      },
+      { key: 'hourlyRate', label: '小时费率', type: 'number' },
     ],
     sign_bill_accounts: [
       { key: 'name', label: '客户名称', type: 'text' },
@@ -74,24 +116,49 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
       { key: 'phoneNumber', label: '电话号码', type: 'text' },
       { key: 'creditLimit', label: '信用额度', type: 'number' },
       { key: 'currentDebt', label: '当前欠款', type: 'number' },
-      { key: 'status', label: '状态', type: 'select', options: ['Active', 'Inactive'] }
+      {
+        key: 'status',
+        label: '状态',
+        type: 'select',
+        options: ['Active', 'Inactive'],
+      },
     ],
     hotel_rooms: [
       { key: 'number', label: '房间号', type: 'text' },
       { key: 'floor', label: '楼层', type: 'number' },
-      { key: 'status', label: '状态', type: 'select', options: ['Vacant', 'Occupied'] },
+      {
+        key: 'status',
+        label: '状态',
+        type: 'select',
+        options: ['Vacant', 'Occupied'],
+      },
       { key: 'guestName', label: '客人姓名', type: 'text' },
-      { key: 'dailyRate', label: '日费率', type: 'number' }
+      { key: 'dailyRate', label: '日费率', type: 'number' },
     ],
     payment_methods: [
       { key: 'name', label: '名称', type: 'text' },
       { key: 'englishName', label: '英文名称', type: 'text' },
       { key: 'isEnabled', label: '是否启用', type: 'checkbox' },
-      { key: 'paymentType', label: '支付类型', type: 'select', options: ['CASH', 'WECHAT', 'ALIPAY', 'USDT', 'GCASH', 'MAYA', 'UNIONPAY', 'CREDIT_CARD', 'SIGN_BILL'] },
+      {
+        key: 'paymentType',
+        label: '支付类型',
+        type: 'select',
+        options: [
+          'CASH',
+          'WECHAT',
+          'ALIPAY',
+          'USDT',
+          'GCASH',
+          'MAYA',
+          'UNIONPAY',
+          'CREDIT_CARD',
+          'SIGN_BILL',
+        ],
+      },
       { key: 'currency', label: '货币', type: 'text' },
       { key: 'exchangeRate', label: '汇率', type: 'number' },
-      { key: 'sortOrder', label: '排序', type: 'number' }
-    ]
+      { key: 'sortOrder', label: '排序', type: 'number' },
+    ],
   };
 
   const handleAddNew = () => {
@@ -102,7 +169,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
   const handleFormChange = (key: string, value: any) => {
     setFormData({
       ...formData,
-      [key]: value
+      [key]: value,
     });
   };
 
@@ -110,21 +177,23 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
     try {
       // 生成唯一ID
       const dataWithId = {
-        id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+        id:
+          Math.random().toString(36).substring(2, 15) +
+          Math.random().toString(36).substring(2, 15),
         ...formData,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       await apiClient.create(activeTab, dataWithId);
-      
+
       // 重置表单
       setFormData({});
       setShowForm(false);
-      
+
       // 通知父组件数据已更新
       if (onDataUpdate) onDataUpdate();
-      
+
       alert('数据添加成功！');
     } catch (error) {
       console.error('添加数据失败:', error);
@@ -144,22 +213,24 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
       for (const item of dataArray) {
         try {
           const dataWithId = {
-            id: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+            id:
+              Math.random().toString(36).substring(2, 15) +
+              Math.random().toString(36).substring(2, 15),
             ...item,
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           };
-          
+
           await apiClient.create(activeTab, dataWithId);
           successCount++;
         } catch (err) {
           console.error('单条数据导入失败:', err);
         }
       }
-      
+
       setBulkData('');
       alert(`成功导入 ${successCount} 条数据`);
-      
+
       // 通知父组件数据已更新
       if (onDataUpdate) onDataUpdate();
     } catch (error) {
@@ -169,18 +240,18 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+    <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
         <Upload className="text-slate-400" size={20} /> 数据管理
       </h3>
-      
+
       {/* 标签页 */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {tables.map(table => (
+      <div className="mb-6 flex flex-wrap gap-2">
+        {tables.map((table) => (
           <button
             key={table.id}
             onClick={() => setActiveTab(table.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === table.id
                 ? 'bg-slate-900 text-white'
                 : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -190,175 +261,188 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
           </button>
         ))}
       </div>
-      
+
       {/* 操作按钮 */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="mb-6 flex flex-wrap gap-3">
         <button
           onClick={handleAddNew}
-          className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800"
+          className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
         >
           <Plus size={16} /> 添加新记录
         </button>
-        
+
         <button
           onClick={() => {
             // 生成当前表格类型的模板数据
             const fields = fieldDefinitions[activeTab] || [];
-            let templateItems: any[] = [];
-            
+            let templateItems: Record<string, any>[] = [];
+
             // 根据不同表格类型生成不同的示例数据
             switch (activeTab) {
               case 'dishes':
                 templateItems = [
                   {
-                    name: "宫保鸡丁",
-                    description: "经典川菜，微辣口感",
-                    price: 38.00,
-                    category: "主食",
+                    name: '宫保鸡丁',
+                    description: '经典川菜，微辣口感',
+                    price: 38.0,
+                    category: '主食',
                     available: true,
-                    spiciness: 2
+                    spiciness: 2,
                   },
                   {
-                    name: "麻婆豆腐",
-                    description: "嫩滑豆腐配麻辣酱汁",
-                    price: 28.00,
-                    category: "主食",
+                    name: '麻婆豆腐',
+                    description: '嫩滑豆腐配麻辣酱汁',
+                    price: 28.0,
+                    category: '主食',
                     available: true,
-                    spiciness: 3
-                  }
+                    spiciness: 3,
+                  },
                 ];
                 break;
-                
+
               case 'orders':
                 templateItems = [
                   {
-                    tableNumber: "A01",
-                    source: "LOBBY",
-                    status: "Pending",
-                    totalAmount: 128.50,
-                    notes: "不要香菜，少盐",
-                    paymentMethod: "CASH"
-                  }
+                    tableNumber: 'A01',
+                    source: 'LOBBY',
+                    status: 'Pending',
+                    totalAmount: 128.5,
+                    notes: '不要香菜，少盐',
+                    paymentMethod: 'CASH',
+                  },
                 ];
                 break;
-                
+
               case 'expenses':
                 templateItems = [
                   {
-                    amount: 1250.00,
-                    category: "食材采购",
-                    description: "采购新鲜蔬菜和肉类",
-                    date: new Date().toISOString().split('T')[0]
-                  }
+                    amount: 1250.0,
+                    category: '食材采购',
+                    description: '采购新鲜蔬菜和肉类',
+                    date: new Date().toISOString().split('T')[0],
+                  },
                 ];
                 break;
-                
+
               case 'inventory':
                 templateItems = [
                   {
-                    name: "鸡胸肉",
+                    name: '鸡胸肉',
                     quantity: 10,
-                    unit: "公斤",
-                    minThreshold: 5
-                  }
+                    unit: '公斤',
+                    minThreshold: 5,
+                  },
                 ];
                 break;
-                
+
               case 'ktv_rooms':
                 templateItems = [
                   {
-                    name: "VIP01",
-                    status: "Available",
-                    hourlyRate: 88.00
-                  }
+                    name: 'VIP01',
+                    status: 'Available',
+                    hourlyRate: 88.0,
+                  },
                 ];
                 break;
-                
+
               case 'sign_bill_accounts':
                 templateItems = [
                   {
-                    name: "ABC贸易公司",
-                    cooperationMethod: "协议单位",
-                    settlementMethod: "月结",
-                    approver: "李经理",
-                    phoneNumber: "+639123456789",
-                    creditLimit: 10000.00,
-                    currentDebt: 2500.00,
-                    status: "Active"
-                  }
+                    name: 'ABC贸易公司',
+                    cooperationMethod: '协议单位',
+                    settlementMethod: '月结',
+                    approver: '李经理',
+                    phoneNumber: '+639123456789',
+                    creditLimit: 10000.0,
+                    currentDebt: 2500.0,
+                    status: 'Active',
+                  },
                 ];
                 break;
-                
+
               case 'hotel_rooms':
                 templateItems = [
                   {
-                    number: "8201",
+                    number: '8201',
                     floor: 2,
-                    status: "Vacant",
-                    guestName: "",
-                    dailyRate: 288.00
+                    status: 'Vacant',
+                    guestName: '',
+                    dailyRate: 288.0,
                   },
                   {
-                    number: "8202",
+                    number: '8202',
                     floor: 2,
-                    status: "Vacant",
-                    guestName: "",
-                    dailyRate: 288.00
+                    status: 'Vacant',
+                    guestName: '',
+                    dailyRate: 288.0,
                   },
                   {
-                    number: "8301",
+                    number: '8301',
                     floor: 3,
-                    status: "Vacant",
-                    guestName: "",
-                    dailyRate: 288.00
+                    status: 'Vacant',
+                    guestName: '',
+                    dailyRate: 288.0,
                   },
                   {
-                    number: "8302",
+                    number: '8302',
                     floor: 3,
-                    status: "Vacant",
-                    guestName: "",
-                    dailyRate: 288.00
-                  }
+                    status: 'Vacant',
+                    guestName: '',
+                    dailyRate: 288.0,
+                  },
                 ];
                 break;
-                
+
               case 'payment_methods':
                 templateItems = [
                   {
-                    name: "现金支付",
-                    englishName: "Cash",
+                    name: '现金支付',
+                    englishName: 'Cash',
                     isEnabled: true,
-                    paymentType: "CASH",
-                    currency: "PHP",
-                    exchangeRate: 1.0000,
-                    sortOrder: 1
-                  }
+                    paymentType: 'CASH',
+                    currency: 'PHP',
+                    exchangeRate: 1.0,
+                    sortOrder: 1,
+                  },
                 ];
                 break;
-                
+
               default:
                 // 默认情况下，为每个字段生成示例值
-                const templateItem: any = {};
-                fields.forEach(field => {
+                const templateItem: Record<string, any> = {};
+                fields.forEach((field) => {
                   switch (field.type) {
                     case 'number':
-                      templateItem[field.key] = field.key.includes('price') || field.key.includes('Amount') || field.key.includes('Rate') ? 25.00 : 
-                                              field.key.includes('quantity') || field.key.includes('Quantity') ? 5 : 0;
+                      templateItem[field.key] =
+                        field.key.includes('price') ||
+                        field.key.includes('Amount') ||
+                        field.key.includes('Rate')
+                          ? 25.0
+                          : field.key.includes('quantity') ||
+                              field.key.includes('Quantity')
+                            ? 5
+                            : 0;
                       break;
                     case 'checkbox':
                       templateItem[field.key] = true;
                       break;
                     case 'select':
-                      templateItem[field.key] = field.options && field.options.length > 0 ? field.options[0] : '';
+                      templateItem[field.key] =
+                        field.options && field.options.length > 0
+                          ? field.options[0]
+                          : '';
                       break;
                     case 'date':
-                      templateItem[field.key] = new Date().toISOString().split('T')[0];
+                      templateItem[field.key] = new Date()
+                        .toISOString()
+                        .split('T')[0];
                       break;
                     default:
                       if (field.key === 'name') {
                         templateItem[field.key] = `示例${field.label}`;
                       } else if (field.key === 'description') {
-                        templateItem[field.key] = `这是${field.label}的示例描述`;
+                        templateItem[field.key] =
+                          `这是${field.label}的示例描述`;
                       } else {
                         templateItem[field.key] = `请输入${field.label}`;
                       }
@@ -366,80 +450,91 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                 });
                 templateItems = [templateItem];
             }
-            
+
             const formattedJson = JSON.stringify(templateItems, null, 2);
-            
+
             // 复制到剪贴板，兼容更多浏览器
             if (navigator.clipboard && window.isSecureContext) {
               // 使用现代clipboard API
-              navigator.clipboard.writeText(formattedJson).then(() => {
-                alert(`已复制${tables.find(t => t.id === activeTab)?.name}模板到剪贴板\n\n模板内容:\n${formattedJson}`);
-              }).catch(err => {
-                console.error('复制失败:', err);
-                fallbackCopyTextToClipboard(formattedJson);
-              });
+              navigator.clipboard
+                .writeText(formattedJson)
+                .then(() => {
+                  alert(
+                    `已复制${tables.find((t) => t.id === activeTab)?.name}模板到剪贴板\n\n模板内容:\n${formattedJson}`
+                  );
+                })
+                .catch((err) => {
+                  console.error('复制失败:', err);
+                  fallbackCopyTextToClipboard(formattedJson);
+                });
             } else {
               // 降级到document.execCommand方法
               fallbackCopyTextToClipboard(formattedJson);
             }
-            
+
             // 降级复制方法
             function fallbackCopyTextToClipboard(text: string) {
-              const textArea = document.createElement("textarea");
+              const textArea = document.createElement('textarea');
               textArea.value = text;
-              
+
               // 避免滚动到底部
-              textArea.style.top = "0";
-              textArea.style.left = "0";
-              textArea.style.position = "fixed";
-              textArea.style.opacity = "0";
-              
+              textArea.style.top = '0';
+              textArea.style.left = '0';
+              textArea.style.position = 'fixed';
+              textArea.style.opacity = '0';
+
               document.body.appendChild(textArea);
               textArea.focus();
               textArea.select();
-              
+
               try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                  alert(`已复制${tables.find(t => t.id === activeTab)?.name}模板到剪贴板\n\n模板内容:\n${text}`);
+                  alert(
+                    `已复制${tables.find((t) => t.id === activeTab)?.name}模板到剪贴板\n\n模板内容:\n${text}`
+                  );
                 } else {
                   alert(`复制失败，请手动复制以下内容:\n\n${text}`);
                 }
               } catch (err) {
                 alert(`复制失败，请手动复制以下内容:\n\n${text}`);
               }
-              
+
               document.body.removeChild(textArea);
             }
           }}
-          className="flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200"
+          className="flex items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-slate-700 hover:bg-slate-200"
         >
           <Download size={16} /> 获取模板
         </button>
       </div>
-      
+
       {/* 添加表单 */}
       {showForm && (
-        <div className="mb-6 p-4 border border-slate-200 rounded-lg">
-          <h4 className="font-bold mb-4">添加新记录</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {fieldDefinitions[activeTab]?.map(field => (
+        <div className="mb-6 rounded-lg border border-slate-200 p-4">
+          <h4 className="mb-4 font-bold">添加新记录</h4>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {fieldDefinitions[activeTab]?.map((field) => (
               <div key={field.key}>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   {field.label}
                 </label>
                 {field.type === 'checkbox' ? (
                   <input
                     type="checkbox"
                     checked={!!formData[field.key]}
-                    onChange={e => handleFormChange(field.key, e.target.checked)}
+                    onChange={(e) =>
+                      handleFormChange(field.key, e.target.checked)
+                    }
                     className="rounded border-slate-300"
                   />
                 ) : field.type === 'select' && field.options ? (
                   <select
                     value={formData[field.key] || ''}
-                    onChange={e => handleFormChange(field.key, e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                    onChange={(e) =>
+                      handleFormChange(field.key, e.target.value)
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2"
                   >
                     <option value="">请选择</option>
                     {field.options.map((option: string) => (
@@ -452,43 +547,45 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                   <input
                     type={field.type}
                     value={formData[field.key] || ''}
-                    onChange={e => handleFormChange(field.key, e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                    onChange={(e) =>
+                      handleFormChange(field.key, e.target.value)
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2"
                     placeholder={field.label}
                   />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex gap-3 mt-4">
+          <div className="mt-4 flex gap-3">
             <button
               onClick={handleSubmit}
-              className="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800"
+              className="rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
             >
               保存
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-200"
+              className="rounded-lg bg-slate-100 px-4 py-2 text-slate-700 hover:bg-slate-200"
             >
               取消
             </button>
           </div>
         </div>
       )}
-      
+
       {/* 批量导入 */}
-      <div className="mb-6 p-4 border border-slate-200 rounded-lg">
-        <h4 className="font-bold mb-4">批量导入</h4>
+      <div className="mb-6 rounded-lg border border-slate-200 p-4">
+        <h4 className="mb-4 font-bold">批量导入</h4>
         <textarea
           value={bulkData}
-          onChange={e => setBulkData(e.target.value)}
+          onChange={(e) => setBulkData(e.target.value)}
           placeholder="粘贴JSON格式的批量数据..."
-          className="w-full h-32 px-3 py-2 border border-slate-200 rounded-lg mb-3"
+          className="mb-3 h-32 w-full rounded-lg border border-slate-200 px-3 py-2"
         />
         <button
           onClick={handleBulkImport}
-          className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800"
+          className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
         >
           <Upload size={16} /> 批量导入
         </button>

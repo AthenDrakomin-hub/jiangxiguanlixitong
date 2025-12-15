@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getCache, setCache, clearCache } from '../utils/cache';
 import { apiClient } from '../services/apiClient';
-import { Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom } from '../types';
+import {
+  Dish,
+  Order,
+  Expense,
+  Ingredient,
+  KTVRoom,
+  SignBillAccount,
+  HotelRoom,
+} from '../types';
 
 /**
  * App data structure
@@ -29,55 +37,58 @@ export const useAppData = (cacheDuration: number = 5 * 60 * 1000) => {
     inventory: [],
     ktvRooms: [],
     signBillAccounts: [],
-    hotelRooms: []
+    hotelRooms: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchAllData = useCallback(async (useCache: boolean = true) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Try to get from cache first if caching is enabled
-      if (useCache) {
-        const cachedData = getCache<AppData>('app_data');
-        if (cachedData) {
-          console.log('[Cache Hit] Returning cached app data');
-          setData(cachedData);
-          setLoading(false);
-          return cachedData;
-        }
-      }
+  const fetchAllData = useCallback(
+    async (useCache: boolean = true) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      // Fetch fresh data from API
-      const response = await apiClient.fetchAll();
-      
-      const appData: AppData = {
-        dishes: response.dishes || [],
-        orders: response.orders || [],
-        expenses: response.expenses || [],
-        inventory: response.inventory || [],
-        ktvRooms: response.ktvRooms || [],
-        signBillAccounts: response.signBillAccounts || [],
-        hotelRooms: response.hotelRooms || []
-      };
-      
-      // Cache the data if caching is enabled
-      if (useCache) {
-        setCache('app_data', appData, cacheDuration);
+        // Try to get from cache first if caching is enabled
+        if (useCache) {
+          const cachedData = getCache<AppData>('app_data');
+          if (cachedData) {
+            console.log('[Cache Hit] Returning cached app data');
+            setData(cachedData);
+            setLoading(false);
+            return cachedData;
+          }
+        }
+
+        // Fetch fresh data from API
+        const response = await apiClient.fetchAll();
+
+        const appData: AppData = {
+          dishes: response.dishes || [],
+          orders: response.orders || [],
+          expenses: response.expenses || [],
+          inventory: response.inventory || [],
+          ktvRooms: response.ktvRooms || [],
+          signBillAccounts: response.signBillAccounts || [],
+          hotelRooms: response.hotelRooms || [],
+        };
+
+        // Cache the data if caching is enabled
+        if (useCache) {
+          setCache('app_data', appData, cacheDuration);
+        }
+
+        setData(appData);
+        return appData;
+      } catch (err) {
+        console.error('Failed to fetch app data:', err);
+        setError(err instanceof Error ? err : new Error('Unknown error'));
+        return null;
+      } finally {
+        setLoading(false);
       }
-      
-      setData(appData);
-      return appData;
-    } catch (err) {
-      console.error('Failed to fetch app data:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [cacheDuration]);
+    },
+    [cacheDuration]
+  );
 
   // Initial fetch on component mount
   useEffect(() => {

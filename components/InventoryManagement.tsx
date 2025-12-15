@@ -1,6 +1,13 @@
-
 import React, { useState } from 'react';
-import { Plus, Search, Edit2, Trash2, AlertTriangle, PackageCheck, PackageX } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Edit2,
+  Trash2,
+  AlertTriangle,
+  PackageCheck,
+  PackageX,
+} from 'lucide-react';
 import { Ingredient } from '../types';
 
 interface InventoryManagementProps {
@@ -8,7 +15,10 @@ interface InventoryManagementProps {
   setInventory: React.Dispatch<React.SetStateAction<Ingredient[]>>;
 }
 
-const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, setInventory }) => {
+const InventoryManagement: React.FC<InventoryManagementProps> = ({
+  inventory,
+  setInventory,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Ingredient | null>(null);
@@ -17,10 +27,12 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
     name: '',
     quantity: 0,
     unit: 'kg',
-    threshold: 5
+    threshold: 5,
   });
 
-  const lowStockItems = inventory.filter(item => item.quantity <= item.threshold);
+  const lowStockItems = inventory.filter(
+    (item) => item.quantity <= item.threshold
+  );
 
   const handleOpenModal = (item?: Ingredient) => {
     if (item) {
@@ -32,7 +44,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
         name: '',
         quantity: 0,
         unit: 'kg',
-        threshold: 5
+        threshold: 5,
       });
     }
     setIsModalOpen(true);
@@ -40,55 +52,65 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
 
   const handleDelete = (id: string) => {
     if (confirm('Delete this item? 确定要删除该食材记录吗？')) {
-      setInventory(prev => prev.filter(item => item.id !== id));
+      setInventory((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     const now = new Date().toISOString();
-    
+
     if (editingItem) {
-      setInventory(prev => prev.map(item => 
-        item.id === editingItem.id 
-          ? { ...item, ...formData, updatedAt: now } as Ingredient 
-          : item
-      ));
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.id === editingItem.id
+            ? ({ ...item, ...formData, updatedAt: now } as Ingredient)
+            : item
+        )
+      );
     } else {
       const newItem: Ingredient = {
-        ...formData as Ingredient,
+        ...(formData as Ingredient),
         id: `ING-${Date.now()}`,
-        updatedAt: now
+        updatedAt: now,
       };
-      setInventory(prev => [newItem, ...prev]);
+      setInventory((prev) => [newItem, ...prev]);
     }
     setIsModalOpen(false);
   };
 
   const handleQuickUpdate = (id: string, delta: number) => {
-    setInventory(prev => prev.map(item => {
-      if (item.id === id) {
-        const newQuantity = Math.max(0, item.quantity + delta);
-        return { ...item, quantity: newQuantity, updatedAt: new Date().toISOString() };
-      }
-      return item;
-    }));
+    setInventory((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const newQuantity = Math.max(0, item.quantity + delta);
+          return {
+            ...item,
+            quantity: newQuantity,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return item;
+      })
+    );
   };
 
-  const filteredInventory = inventory.filter(item => 
+  const filteredInventory = inventory.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="animate-fade-in space-y-6">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Inventory 库存管理</h2>
-          <p className="text-slate-500 text-sm">Pamamahala ng Imbentaryo</p>
+          <h2 className="text-2xl font-bold text-slate-800">
+            Inventory 库存管理
+          </h2>
+          <p className="text-sm text-slate-500">Pamamahala ng Imbentaryo</p>
         </div>
-        <button 
+        <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20"
+          className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white shadow-lg shadow-slate-900/20 transition-colors hover:bg-slate-800"
         >
           <Plus size={20} />
           <span>Add Item / Magdagdag</span>
@@ -96,54 +118,69 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
       </div>
 
       {/* Stats Header */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Items / Kabuuan</p>
-            <h3 className="text-2xl font-bold text-slate-800 mt-1">{inventory.length}</h3>
+            <p className="text-sm font-medium text-slate-500">
+              Total Items / Kabuuan
+            </p>
+            <h3 className="mt-1 text-2xl font-bold text-slate-800">
+              {inventory.length}
+            </h3>
           </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+          <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
             <PackageCheck size={24} />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
           <div>
-            <p className="text-sm font-medium text-slate-500">Low Stock / Mababa ang stock</p>
-            <h3 className={`text-2xl font-bold mt-1 ${lowStockItems.length > 0 ? 'text-red-600' : 'text-slate-800'}`}>
+            <p className="text-sm font-medium text-slate-500">
+              Low Stock / Mababa ang stock
+            </p>
+            <h3
+              className={`mt-1 text-2xl font-bold ${lowStockItems.length > 0 ? 'text-red-600' : 'text-slate-800'}`}
+            >
               {lowStockItems.length}
             </h3>
           </div>
-          <div className={`p-3 rounded-lg ${lowStockItems.length > 0 ? 'bg-red-50 text-red-600 animate-pulse' : 'bg-green-50 text-green-600'}`}>
+          <div
+            className={`rounded-lg p-3 ${lowStockItems.length > 0 ? 'animate-pulse bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}
+          >
             <AlertTriangle size={24} />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
-           <div>
-            <p className="text-sm font-medium text-slate-500">Status / Kalagayan</p>
-            <h3 className="text-xl font-bold text-slate-800 mt-1">
+        <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+          <div>
+            <p className="text-sm font-medium text-slate-500">
+              Status / Kalagayan
+            </p>
+            <h3 className="mt-1 text-xl font-bold text-slate-800">
               {lowStockItems.length > 0 ? 'Need Restock 需补货' : 'Good 充足'}
             </h3>
           </div>
-          <div className="p-3 bg-slate-100 text-slate-600 rounded-lg">
+          <div className="rounded-lg bg-slate-100 p-3 text-slate-600">
             <PackageX size={24} />
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
         {/* Toolbar */}
-        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div className="flex flex-col items-center justify-between gap-4 border-b border-slate-100 p-6 sm:flex-row">
           <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Search / 搜索 / Hanapin..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+              className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-slate-900"
             />
           </div>
         </div>
@@ -151,31 +188,49 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-slate-50 text-slate-500 text-sm">
+            <thead className="bg-slate-50 text-sm text-slate-500">
               <tr>
                 <th className="px-6 py-4 font-medium">Name / Pangalan</th>
                 <th className="px-6 py-4 font-medium">Stock / Imbentaryo</th>
                 <th className="px-6 py-4 font-medium">Threshold / Limit</th>
                 <th className="px-6 py-4 font-medium">Status / Kalagayan</th>
                 <th className="px-6 py-4 font-medium">Updated</th>
-                <th className="px-6 py-4 font-medium text-right">Action</th>
+                <th className="px-6 py-4 text-right font-medium">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredInventory.map((item) => {
                 const isLow = item.quantity <= item.threshold;
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-800">{item.name}</td>
+                  <tr
+                    key={item.id}
+                    className="transition-colors hover:bg-slate-50"
+                  >
+                    <td className="px-6 py-4 font-medium text-slate-800">
+                      {item.name}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                         <span className="font-bold text-slate-700 min-w-[3rem]">
-                           {item.quantity} <span className="text-xs text-slate-400 font-normal">{item.unit}</span>
-                         </span>
-                         <div className="flex items-center gap-1">
-                           <button onClick={() => handleQuickUpdate(item.id, -1)} className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-600">-</button>
-                           <button onClick={() => handleQuickUpdate(item.id, 1)} className="w-6 h-6 flex items-center justify-center rounded bg-slate-100 hover:bg-slate-200 text-slate-600">+</button>
-                         </div>
+                        <span className="min-w-[3rem] font-bold text-slate-700">
+                          {item.quantity}{' '}
+                          <span className="text-xs font-normal text-slate-400">
+                            {item.unit}
+                          </span>
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleQuickUpdate(item.id, -1)}
+                            className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          >
+                            -
+                          </button>
+                          <button
+                            onClick={() => handleQuickUpdate(item.id, 1)}
+                            className="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-500">
@@ -183,11 +238,11 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
                     </td>
                     <td className="px-6 py-4">
                       {isLow ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700">
                           <AlertTriangle size={12} /> Low / Mababa
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
                           OK 充足
                         </span>
                       )}
@@ -197,15 +252,15 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
+                        <button
                           onClick={() => handleOpenModal(item)}
-                          className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600"
+                          className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(item.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600"
+                          className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -217,9 +272,9 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
             </tbody>
           </table>
           {filteredInventory.length === 0 && (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center gap-3">
-               <PackageX size={48} className="text-slate-200" />
-               <p>No Items Found / Walang nakita</p>
+            <div className="flex flex-col items-center gap-3 p-12 text-center text-slate-400">
+              <PackageX size={48} className="text-slate-200" />
+              <p>No Items Found / Walang nakita</p>
             </div>
           )}
         </div>
@@ -227,82 +282,109 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({ inventory, se
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6">
+            <div className="mb-6 flex items-center justify-between">
               <h3 className="text-xl font-bold text-slate-800">
                 {editingItem ? 'Edit Item / I-edit' : 'Add Item / Magdagdag'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 &times;
               </button>
             </div>
-            
+
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Name / Pangalan</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Name / Pangalan
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
-                  onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   placeholder="e.g. Beef / 牛肉"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Quantity / Dami</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Quantity / Dami
+                  </label>
                   <input
                     type="number"
                     required
                     min="0"
                     step="0.1"
                     value={formData.quantity}
-                    onChange={e => setFormData(prev => ({ ...prev, quantity: Number(e.target.value) }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        quantity: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Unit / Yunit</label>
+                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                    Unit / Yunit
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.unit}
-                    onChange={e => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, unit: e.target.value }))
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
                     placeholder="kg/pack"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Alert Threshold / Limitasyon</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Alert Threshold / Limitasyon
+                </label>
                 <div className="relative">
                   <input
                     type="number"
                     required
                     min="0"
                     value={formData.threshold}
-                    onChange={e => setFormData(prev => ({ ...prev, threshold: Number(e.target.value) }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        threshold: Number(e.target.value),
+                      }))
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">Alert level</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+                    Alert level
+                  </span>
                 </div>
               </div>
 
-              <div className="pt-4 flex gap-3">
+              <div className="flex gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="flex-1 rounded-lg py-2 text-slate-600 transition-colors hover:bg-slate-100"
                 >
                   Cancel / Kanselahin
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium shadow-lg shadow-slate-900/10"
+                  className="flex-1 rounded-lg bg-slate-900 py-2 font-medium text-white shadow-lg shadow-slate-900/10 transition-colors hover:bg-slate-800"
                 >
                   Save / I-save
                 </button>

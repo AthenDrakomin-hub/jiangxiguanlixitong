@@ -10,14 +10,14 @@ interface ImageLazyLoadProps {
   height?: number;
 }
 
-const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({ 
-  src, 
-  alt, 
+const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
+  src,
+  alt,
   className = '',
   placeholderColor = '#f1f5f9', // 默认浅灰色占位符
   blurDataURL,
   width,
-  height
+  height,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -48,7 +48,7 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
       {
         // 配置选项
         rootMargin: '50px', // 提前50px开始加载
-        threshold: 0.01 // 只要有一像素进入视口就触发
+        threshold: 0.01, // 只要有一像素进入视口就触发
       }
     );
 
@@ -77,14 +77,14 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
   };
 
   return (
-    <div 
-      ref={imgRef} 
+    <div
+      ref={imgRef}
       className={`relative overflow-hidden ${className}`}
       style={{
         backgroundColor: isLoaded ? 'transparent' : placeholderColor,
         transition: 'background-color 0.3s ease',
         width: width ? `${width}px` : '100%',
-        height: height ? `${height}px` : '100%'
+        height: height ? `${height}px` : '100%',
       }}
     >
       {/* Blur placeholder */}
@@ -92,26 +92,28 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
         <img
           src={blurDataURL}
           alt=""
-          className="w-full h-full object-cover blur-sm scale-105"
+          className="h-full w-full scale-105 object-cover blur-sm"
         />
       )}
-      
+
       {isInView && (
         <img
           src={src}
           alt={alt}
-          className={`w-full h-full object-cover transition-all duration-300 ${
-            isLoaded ? 'opacity-100 blur-0 scale-100' : 'opacity-0 blur-sm scale-105'
+          className={`h-full w-full object-cover transition-all duration-300 ${
+            isLoaded
+              ? 'scale-100 opacity-100 blur-0'
+              : 'scale-105 opacity-0 blur-sm'
           }`}
           onLoad={handleImageLoad}
           onError={handleImageError}
           loading="lazy" // 原生懒加载作为后备
         />
       )}
-      
+
       {/* 渐变加载效果 */}
       {!isLoaded && !blurDataURL && (
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       )}
     </div>
   );

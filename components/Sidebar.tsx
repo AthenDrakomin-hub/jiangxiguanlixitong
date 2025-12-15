@@ -1,5 +1,20 @@
 import React from 'react';
-import { LayoutDashboard, Utensils, ClipboardList, DollarSign, Package, Settings, Mic2, FileSignature, BedDouble, QrCode, ChefHat, X, CreditCard, Bug, Shield } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Utensils,
+  ClipboardList,
+  DollarSign,
+  Package,
+  Settings,
+  Mic2,
+  FileSignature,
+  BedDouble,
+  QrCode,
+  ChefHat,
+  X,
+  CreditCard,
+  Shield,
+} from 'lucide-react';
 import { Page } from '../types';
 import { t } from '../utils/i18n';
 
@@ -10,11 +25,21 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onClose }) => {
+// 定义图标组件的类型
+interface IconType {
+  size?: number;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  currentPage,
+  onNavigate,
+  isOpen,
+  onClose,
+}) => {
   interface MenuItem {
     id: Page;
     label: string;
-    icon: React.ComponentType<any>;
+    icon: React.ComponentType<IconType>;
   }
 
   const MenuButton: React.FC<MenuItem> = ({ id, label, icon: Icon }) => {
@@ -22,14 +47,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
     return (
       <button
         onClick={() => onNavigate(id)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 mb-1 ${
-          isActive 
-            ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' 
+        className={`mb-1 flex w-full items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200 ${
+          isActive
+            ? 'bg-red-600 text-white shadow-lg shadow-red-900/20'
             : 'text-slate-400 hover:bg-slate-800 hover:text-white'
         }`}
       >
         <Icon size={18} />
-        <span className="font-medium text-sm tracking-wide">{label}</span>
+        <span className="text-sm font-medium tracking-wide">{label}</span>
       </button>
     );
   };
@@ -54,73 +79,54 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, onNavigate, isOpen, onCl
     { id: 'settings', label: t('settings'), icon: Settings },
   ];
 
-  // 添加测试工具菜单项（仅在开发环境中显示）
-  const testItems: MenuItem[] = [
-    { id: 'autodetect' as Page, label: '自动检测测试', icon: Bug },
-  ];
-
-  const isDevelopment = () => {
-    if (typeof window !== 'undefined') {
-      return window.location.hostname === 'localhost' || 
-             window.location.hostname === '127.0.0.1' ||
-             window.location.port !== '';
-    }
-    return false;
-  };
-
   return (
-    <div className={`
-      h-screen w-64 bg-slate-900 text-white flex flex-col fixed left-0 top-0 shadow-xl z-50 transition-transform duration-300 ease-in-out
+    <div
+      className={`
+      fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-slate-900 text-white shadow-xl transition-transform duration-300 ease-in-out
       ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-    `}>
-      <div className="p-6 flex items-center justify-between border-b border-slate-700">
+    `}
+    >
+      <div className="flex items-center justify-between border-b border-slate-700 p-6">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-red-600 rounded-lg">
-             <Utensils size={24} className="text-white" />
+          <div className="rounded-lg bg-red-600 p-2">
+            <Utensils size={24} className="text-white" />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-wider">后端管理</h1>
             <p className="text-xs text-slate-400">Backend System</p>
           </div>
         </div>
-        <button 
+        <button
           onClick={onClose}
-          className="md:hidden p-1 text-slate-400 hover:text-white"
+          className="p-1 text-slate-400 hover:text-white md:hidden"
         >
           <X size={24} />
         </button>
       </div>
 
-      <nav className="flex-1 p-4 overflow-y-auto">
-        
+      <nav className="flex-1 overflow-y-auto p-4">
         {/* Group 1: Front Desk Operations */}
         <div className="mb-6">
-          <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-3">前台营业 Front Desk</div>
-          {frontDeskItems.map(item => (
+          <div className="mb-3 px-4 text-xs font-bold uppercase text-slate-500">
+            前台营业 Front Desk
+          </div>
+          {frontDeskItems.map((item) => (
             <MenuButton key={item.id} {...item} />
           ))}
         </div>
 
         {/* Group 2: Back Office Management */}
         <div>
-          <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-3 pt-4 border-t border-slate-800">后台管理 Admin</div>
-          {backOfficeItems.map(item => (
+          <div className="mb-3 border-t border-slate-800 px-4 pt-4 text-xs font-bold uppercase text-slate-500">
+            后台管理 Admin
+          </div>
+          {backOfficeItems.map((item) => (
             <MenuButton key={item.id} {...item} />
           ))}
         </div>
-
-        {/* Test Tools Section - Only shown in development */}
-        {isDevelopment() && (
-          <div>
-            <div className="text-xs font-bold text-slate-500 uppercase px-4 mb-3 pt-4 border-t border-slate-800">测试工具</div>
-            {testItems.map(item => (
-              <MenuButton key={item.id} {...item} />
-            ))}
-          </div>
-        )}
       </nav>
 
-      <div className="p-4 border-t border-slate-800 text-xs text-slate-500">
+      <div className="border-t border-slate-800 p-4 text-xs text-slate-500">
         <p>江西酒店管理系统 v1.0</p>
         <p className="mt-1">© 2025 Jiangxi Hotel</p>
       </div>
