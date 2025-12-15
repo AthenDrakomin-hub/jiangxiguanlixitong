@@ -99,7 +99,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         const roomFee = hours * room.hourlyRate;
         const ordersFee = room.currentSession.orders
           ? room.currentSession.orders.reduce(
-              (sum: number, item: OrderItem) => sum + item.price * item.quantity,
+              (sum: number, item: OrderItem) =>
+                sum + item.price * item.quantity,
               0
             )
           : 0;

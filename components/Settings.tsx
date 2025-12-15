@@ -817,7 +817,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
               {confirmModal.level === 'high' && (
                 <div className="mb-6">
                   <label className="mb-2 block text-xs font-bold uppercase text-slate-500">
-                    Type "RESET" to confirm
+                    Type &quot;RESET&quot; to confirm
                   </label>
                   <input
                     type="text"

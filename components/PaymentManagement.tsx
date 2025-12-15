@@ -274,7 +274,8 @@ const PaymentManagement: React.FC = () => {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      paymentType: e.target.value as PaymentMethod['paymentType'],
+                      paymentType: e.target
+                        .value as PaymentMethod['paymentType'],
                     })
                   }
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
@@ -502,7 +503,7 @@ const PaymentManagement: React.FC = () => {
               暂无支付方式
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              点击"添加支付方式"按钮创建新的支付方式。
+              点击&quot;添加支付方式&quot;按钮创建新的支付方式。
             </p>
           </div>
         )}

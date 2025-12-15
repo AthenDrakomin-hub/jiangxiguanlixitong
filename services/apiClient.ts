@@ -10,7 +10,14 @@ import {
   PaymentMethod,
 } from '../types';
 
-// Define the return type for fetchAll
+// 定义通用的API响应接口
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
+
+// 定义fetchAll返回的数据结构
 interface FetchAllResponse {
   dishes: Dish[];
   orders: Order[];
@@ -21,6 +28,11 @@ interface FetchAllResponse {
   hotelRooms: HotelRoom[];
   paymentMethods: PaymentMethod[];
 }
+
+// 定义更具体的类型
+type ApiData = Record<string, string | number | boolean | object | Array<any>>;
+
+// Define the return type for fetchAll
 
 export const apiClient = {
   // Generic GET request
@@ -54,7 +66,10 @@ export const apiClient = {
 
   // Generic POST request
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  post: async (endpoint: string, data: Record<string, any>) => {
+  post: async <T = any>(
+    endpoint: string,
+    data: ApiData
+  ): Promise<ApiResponse<T>> => {
     try {
       const response = await fetch(`/api/${endpoint}`, {
         method: 'POST',
@@ -74,7 +89,11 @@ export const apiClient = {
 
   // Generic PUT request
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  put: async (endpoint: string, id: string, data: Record<string, any>) => {
+  put: async <T = any>(
+    endpoint: string,
+    id: string,
+    data: ApiData
+  ): Promise<ApiResponse<T>> => {
     try {
       const response = await fetch(`/api/${endpoint}?id=${id}`, {
         method: 'PUT',
@@ -159,18 +178,25 @@ export const apiClient = {
 
   // Create new record
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  create: async (table: string, data: Record<string, any>) => {
+  create: async <T = any>(
+    table: string,
+    data: ApiData
+  ): Promise<ApiResponse<T>> => {
     // Clear cache for this table when creating new record
     clearCacheForTable(table);
-    return await apiClient.post(table, data);
+    return await apiClient.post<T>(table, data);
   },
 
   // Update existing record
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  update: async (table: string, id: string, data: Record<string, any>) => {
+  update: async <T = any>(
+    table: string,
+    id: string,
+    data: ApiData
+  ): Promise<ApiResponse<T>> => {
     // Clear cache for this table when updating record
     clearCacheForTable(table);
-    return await apiClient.put(table, id, data);
+    return await apiClient.put<T>(table, id, data);
   },
 
   // Delete record

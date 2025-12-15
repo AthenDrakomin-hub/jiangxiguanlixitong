@@ -13,10 +13,14 @@ interface FieldDefinition {
   options?: string[];
 }
 
+interface FormData {
+  [key: string]: string | number | boolean | undefined;
+}
+
 const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
   const [activeTab, setActiveTab] = useState('dishes');
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<FormData>({});
   const [bulkData, setBulkData] = useState('');
 
   // 表格定义
@@ -409,7 +413,8 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
 
               default:
                 // 默认情况下，为每个字段生成示例值
-                const templateItem: Record<string, any> = {};
+                const templateItem: Record<string, string | number | boolean> =
+                  {};
                 fields.forEach((field) => {
                   switch (field.type) {
                     case 'number':
@@ -496,7 +501,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                 } else {
                   alert(`复制失败，请手动复制以下内容:\n\n${text}`);
                 }
-              } catch (err) {
+              } catch (error) {
                 alert(`复制失败，请手动复制以下内容:\n\n${text}`);
               }
 
@@ -522,36 +527,20 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                 {field.type === 'checkbox' ? (
                   <input
                     type="checkbox"
-                    checked={!!formData[field.key]}
+                    checked={formData[field.key] === true}
                     onChange={(e) =>
                       handleFormChange(field.key, e.target.checked)
                     }
-                    className="rounded border-slate-300"
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                   />
-                ) : field.type === 'select' && field.options ? (
-                  <select
-                    value={formData[field.key] || ''}
-                    onChange={(e) =>
-                      handleFormChange(field.key, e.target.value)
-                    }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2"
-                  >
-                    <option value="">请选择</option>
-                    {field.options.map((option: string) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
                 ) : (
                   <input
                     type={field.type}
-                    value={formData[field.key] || ''}
+                    value={formData[field.key]?.toString() || ''}
                     onChange={(e) =>
                       handleFormChange(field.key, e.target.value)
                     }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2"
-                    placeholder={field.label}
+                    className="block w-full rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 )}
               </div>
