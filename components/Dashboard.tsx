@@ -30,6 +30,12 @@ interface DashboardProps {
   hotelRooms?: HotelRoom[];
 }
 
+interface OrderItem {
+  price: number;
+  quantity: number;
+  // 可以根据需要添加其他属性
+}
+
 const StatCard = ({
   title,
   value,
@@ -93,7 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         const roomFee = hours * room.hourlyRate;
         const ordersFee = room.currentSession.orders
           ? room.currentSession.orders.reduce(
-              (sum: number, item: any) => sum + item.price * item.quantity,
+              (sum: number, item: OrderItem) => sum + item.price * item.quantity,
               0
             )
           : 0;
@@ -108,7 +114,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     return hotelRooms.reduce((acc: number, room: HotelRoom) => {
       const roomOrderTotal = room.orders
         ? room.orders.reduce(
-            (sum: number, item: any) => sum + item.price * item.quantity,
+            (sum: number, item: OrderItem) => sum + item.price * item.quantity,
             0
           )
         : 0;

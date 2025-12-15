@@ -252,7 +252,10 @@ const Settings: React.FC<SettingsProps> = (props) => {
     } catch (error) {
       console.error('Connection test failed:', error);
       // 即使出错也不应该导致白屏，这里添加错误处理
-      alert('自动连接测试失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      alert(
+        '自动连接测试失败: ' +
+          (error instanceof Error ? error.message : '未知错误')
+      );
     }
   };
 

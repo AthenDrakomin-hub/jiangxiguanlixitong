@@ -22,7 +22,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       // 检查是否已达到最大登录尝试次数
       if (loginAttempts >= 3) {
@@ -32,8 +32,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
       // 获取环境变量或默认凭证
       // 产品备注: 使用类型安全的方式访问环境变量
-      const validUser = import.meta.env.VITE_ADMIN_USER || APP_CONFIG.DEFAULT_ADMIN.username;
-      const validPass = import.meta.env.VITE_ADMIN_PASS || APP_CONFIG.DEFAULT_ADMIN.password;
+      const validUser =
+        import.meta.env.VITE_ADMIN_USER || APP_CONFIG.DEFAULT_ADMIN.username;
+      const validPass =
+        import.meta.env.VITE_ADMIN_PASS || APP_CONFIG.DEFAULT_ADMIN.password;
 
       if (username === validUser) {
         // 检查密码
@@ -60,7 +62,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     } catch (error) {
       console.error('Login error:', error);
       // 添加错误处理，防止白屏
-      setError('登录过程中发生错误: ' + (error instanceof Error ? error.message : '未知错误'));
+      setError(
+        '登录过程中发生错误: ' +
+          (error instanceof Error ? error.message : '未知错误')
+      );
     }
   };
 
