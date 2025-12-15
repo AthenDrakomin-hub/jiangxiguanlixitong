@@ -30,7 +30,10 @@ interface FetchAllResponse {
 }
 
 // 定义更具体的类型
-type ApiData = Record<string, string | number | boolean | object | Array<any>>;
+type ApiData = Record<
+  string,
+  string | number | boolean | object | Array<unknown>
+>;
 
 // Define the return type for fetchAll
 
@@ -66,7 +69,7 @@ export const apiClient = {
 
   // Generic POST request
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  post: async <T = any>(
+  post: async <T = unknown>(
     endpoint: string,
     data: ApiData
   ): Promise<ApiResponse<T>> => {
@@ -89,7 +92,7 @@ export const apiClient = {
 
   // Generic PUT request
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  put: async <T = any>(
+  put: async <T = unknown>(
     endpoint: string,
     id: string,
     data: ApiData
@@ -178,7 +181,7 @@ export const apiClient = {
 
   // Create new record
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  create: async <T = any>(
+  create: async <T = unknown>(
     table: string,
     data: ApiData
   ): Promise<ApiResponse<T>> => {
@@ -189,7 +192,7 @@ export const apiClient = {
 
   // Update existing record
   // 产品备注: 为data参数指定明确的类型，避免使用any
-  update: async <T = any>(
+  update: async <T = unknown>(
     table: string,
     id: string,
     data: ApiData

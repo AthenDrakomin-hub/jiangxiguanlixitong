@@ -803,7 +803,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
                           <div className="flex flex-col items-center gap-2 text-slate-400">
                             <Loader2 className="animate-spin" size={24} />
                             <span className="text-xs">
-                              Uploading to 'dish-images'...
+                              Uploading to &#39;dish-images&#39;...
                             </span>
                           </div>
                         ) : formData.imageUrl ? (

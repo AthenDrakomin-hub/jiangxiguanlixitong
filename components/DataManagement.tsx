@@ -170,7 +170,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
     setShowForm(true);
   };
 
-  const handleFormChange = (key: string, value: any) => {
+  const handleFormChange = (key: string, value: string | number | boolean) => {
     setFormData({
       ...formData,
       [key]: value,
@@ -279,7 +279,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
           onClick={() => {
             // 生成当前表格类型的模板数据
             const fields = fieldDefinitions[activeTab] || [];
-            let templateItems: Record<string, any>[] = [];
+            let templateItems: Record<string, string | number | boolean>[] = [];
 
             // 根据不同表格类型生成不同的示例数据
             switch (activeTab) {
@@ -411,7 +411,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                 ];
                 break;
 
-              default:
+              default: {
                 // 默认情况下，为每个字段生成示例值
                 const templateItem: Record<string, string | number | boolean> =
                   {};
@@ -454,6 +454,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                   }
                 });
                 templateItems = [templateItem];
+              }
             }
 
             const formattedJson = JSON.stringify(templateItems, null, 2);
@@ -501,8 +502,9 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
                 } else {
                   alert(`复制失败，请手动复制以下内容:\n\n${text}`);
                 }
-              } catch (error) {
+              } catch (err) {
                 alert(`复制失败，请手动复制以下内容:\n\n${text}`);
+                console.error('复制失败:', err);
               }
 
               document.body.removeChild(textArea);

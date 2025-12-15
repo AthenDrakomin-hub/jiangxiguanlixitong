@@ -36,14 +36,23 @@ interface OrderItem {
   // 可以根据需要添加其他属性
 }
 
-const StatCard = ({
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  color: string;
+  subValue?: string;
+  footer?: React.ReactNode;
+}
+
+const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   icon: Icon,
   color,
   subValue,
   footer,
-}: any) => (
+}) => (
   <div className="card-hover flex flex-col justify-between rounded-xl border border-slate-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
     <div>
       <div className="mb-2 flex items-start justify-between">
