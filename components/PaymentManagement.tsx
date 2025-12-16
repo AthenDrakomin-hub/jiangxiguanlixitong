@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
 
+// 定义支付方式接口，包含所有必要字段
 interface PaymentMethod {
   id: string;
   name: string;
