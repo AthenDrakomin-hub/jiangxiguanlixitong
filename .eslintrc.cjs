@@ -1,4 +1,9 @@
 module.exports = {
+  env: {
+    commonjs: true,
+    es2021: true,
+    node: true,
+  },
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'react-hooks', 'prettier', 'tailwindcss'],
   extends: [
