@@ -437,6 +437,40 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 placeholder="e.g. 192.168.1.200 or /dev/usb/lp0"
               />
             </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                横幅图片URL
+              </label>
+              <input
+                type="text"
+                value={storeInfo.bannerImageUrl || ''}
+                onChange={(e) =>
+                  setStoreInfo({
+                    ...storeInfo,
+                    bannerImageUrl: e.target.value,
+                  })
+                }
+                className="w-full rounded-lg border border-slate-200 px-4 py-2"
+                placeholder="https://example.com/banner.jpg"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                地图链接URL
+              </label>
+              <input
+                type="text"
+                value={storeInfo.mapUrl || ''}
+                onChange={(e) =>
+                  setStoreInfo({
+                    ...storeInfo,
+                    mapUrl: e.target.value,
+                  })
+                }
+                className="w-full rounded-lg border border-slate-200 px-4 py-2"
+                placeholder="https://maps.google.com/?q=address"
+              />
+            </div>
           </div>
         </div>
 

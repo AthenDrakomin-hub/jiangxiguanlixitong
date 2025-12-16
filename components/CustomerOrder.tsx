@@ -605,7 +605,10 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
         >
           <div className="absolute inset-0 overflow-hidden opacity-60">
             <ImageLazyLoad
-              src="https://picsum.photos/800/400?random=restaurant"
+              src={
+                storeInfo?.bannerImageUrl ||
+                'https://picsum.photos/800/400?random=restaurant'
+              }
               alt="Restaurant Banner"
               className="h-full w-full object-cover"
             />
@@ -621,6 +624,16 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                 <div className="flex items-start gap-2">
                   <MapPin size={14} className="mt-0.5 shrink-0 text-red-400" />
                   <span>{storeInfo?.address}</span>
+                  {storeInfo?.mapUrl && (
+                    <a
+                      href={storeInfo.mapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 text-blue-500 hover:text-blue-700"
+                    >
+                      [地图]
+                    </a>
+                  )}
                 </div>
                 {h5PageSettings?.showWiFiInfo && storeInfo?.wifiSsid && (
                   <div className="flex items-center gap-4">
@@ -631,19 +644,42 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                     {storeInfo.wifiPassword && (
                       <span>Pass: {storeInfo.wifiPassword}</span>
                     )}
+                    <button
+                      onClick={() => {
+                        const wifiInfo = `WiFi: ${storeInfo.wifiSsid}${storeInfo.wifiPassword ? `, Pass: ${storeInfo.wifiPassword}` : ''}`;
+                        navigator.clipboard.writeText(wifiInfo).then(() => {
+                          alert('WiFi信息已复制到剪贴板');
+                        });
+                      }}
+                      className="text-xs text-blue-500 hover:text-blue-700"
+                    >
+                      [复制]
+                    </button>
                   </div>
                 )}
                 <div className="flex items-center gap-4">
                   {storeInfo?.phone && (
                     <div className="flex items-center gap-2">
                       <Phone size={14} className="text-green-400" />
-                      <span>{storeInfo.phone}</span>
+                      <a
+                        href={`tel:${storeInfo.phone}`}
+                        className="hover:text-green-600"
+                      >
+                        {storeInfo.phone}
+                      </a>
                     </div>
                   )}
                   {storeInfo?.telegram && (
                     <div className="flex items-center gap-2">
                       <Send size={14} className="text-sky-400" />
-                      <span>{storeInfo.telegram}</span>
+                      <a
+                        href={`https://t.me/${storeInfo.telegram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-sky-600"
+                      >
+                        {storeInfo.telegram}
+                      </a>
                     </div>
                   )}
                 </div>

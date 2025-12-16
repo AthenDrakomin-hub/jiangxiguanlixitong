@@ -165,6 +165,8 @@ export interface StoreInfo {
   wifiSsid?: string;
   wifiPassword?: string;
   telegram?: string;
+  bannerImageUrl?: string; // 添加横幅图片URL
+  mapUrl?: string; // 添加地图链接URL
   // H5页面配置
   h5PageTitle?: string;
   h5PageDescription?: string;

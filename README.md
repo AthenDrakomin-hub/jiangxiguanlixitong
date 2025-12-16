@@ -27,12 +27,12 @@
 
 - React 18 (Hooks)
 - TypeScript (严格类型检查)
-- Vite 5 (构建工具)
+- Vite 7 (构建工具)
 - Tailwind CSS 3 (样式框架)
 - React Context API (状态管理)
 - Lucide React (图标库)
 - Recharts (数据可视化)
-- PWA (渐进式Web应用)
+- ESLint & Prettier (代码质量工具)
 
 ### 后端技术栈
 
@@ -43,7 +43,7 @@
 ## 📁 项目结构
 
 ```
-jiangxiguanlixitong/
+jiangxijiudian/
 ├── api/                 # 后端 API 接口
 │   ├── db.ts           # 数据库连接和操作
 │   └── index.ts        # API 路由处理
@@ -51,13 +51,24 @@ jiangxiguanlixitong/
 │   ├── App.tsx        # 主应用组件
 │   ├── CustomerOrder.tsx # 客户点餐界面
 │   ├── HotelSystem.tsx # 酒店客房管理
+│   ├── KTVSystem.tsx   # KTV娱乐系统
 │   ├── MenuManagement.tsx # 菜单管理
 │   ├── OrderManagement.tsx # 订单管理
+│   ├── PaymentManagement.tsx # 支付管理
+│   ├── InventoryManagement.tsx # 库存管理
+│   ├── FinanceSystem.tsx # 财务系统
+│   ├── PermissionManagement.tsx # 权限管理
+│   ├── SignBillSystem.tsx # 签单系统
+│   ├── KitchenDisplay.tsx # 厨房显示
+│   ├── Dashboard.tsx   # 仪表板
 │   └── Settings.tsx   # 系统设置
-├── scripts/            # 数据初始化脚本
+├── hooks/              # React 自定义 Hooks
 ├── services/           # 业务逻辑层
 ├── utils/              # 工具函数
+├── scripts/            # 数据初始化脚本
 ├── public/             # 静态资源文件
+├── config/             # 配置文件
+├── __tests__/         # 测试文件
 ├── package.json       # 项目依赖配置
 └── vite.config.ts     # 构建配置
 ```
@@ -118,6 +129,16 @@ https://your-domain.com/?location=8201
 - 二楼：8201-8232
 - 三楼：8301-8332
 
+## ✅ 代码质量与安全
+
+项目采用严格的代码质量标准和安全措施：
+
+- TypeScript 严格模式，确保类型安全
+- ESLint 代码检查，遵循 React 和 TypeScript 最佳实践
+- Prettier 代码格式化，保证代码风格一致性
+- Husky 和 lint-staged 实现 Git 提交前自动检查
+- 定期安全审计和依赖更新
+
 ## 📦 可用命令
 
 ```bash
@@ -125,11 +146,14 @@ npm run dev          # 启动开发服务器
 npm run build        # 构建生产版本
 npm run preview      # 预览生产构建
 npm run add-sample-data # 添加示例数据
+npm run lint         # 运行 ESLint 检查
+npm run lint:fix     # 运行 ESLint 并自动修复问题
+npm run format       # 运行 Prettier 格式化代码
 ```
 
 ## 🔧 系统要求
 
-- Node.js 18.x 或更高版本
+- Node.js 20.19+ 或 22.12+ (推荐使用最新LTS版本)
 - npm 8.x 或更高版本
 - 支持 ES Modules 的环境
 

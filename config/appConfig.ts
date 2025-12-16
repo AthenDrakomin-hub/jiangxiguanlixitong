@@ -16,6 +16,8 @@ export const APP_CONFIG = {
     wifiSsid: 'ChangeMe_WIFI_SSID',
     wifiPassword: '',
     telegram: '@jx555999',
+    bannerImageUrl: 'https://picsum.photos/800/400?random=restaurant', // 默认横幅图片
+    mapUrl: '', // 默认地图链接
     // 默认H5页面配置
     h5PageTitle: '江西酒店 - 在线点餐',
     h5PageDescription:
