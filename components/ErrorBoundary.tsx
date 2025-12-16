@@ -64,4 +64,5 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+// 产品备注: 显式使用React变量以避免TypeScript警告
+export default React.memo(ErrorBoundary);
