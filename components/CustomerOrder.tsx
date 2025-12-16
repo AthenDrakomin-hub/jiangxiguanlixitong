@@ -219,14 +219,17 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
 
   // H5 Page Settings
   // 产品备注: 为h5PageSettings指定明确的类型，避免使用any
-  const h5PageSettings: SystemSettings['h5PageSettings'] =
-    systemSettings?.h5PageSettings || {
-      enableCustomStyling: true,
-      customHeaderColor: '#4F46E5',
-      customButtonColor: '#DC2626',
-      showStoreInfo: true,
-      showWiFiInfo: true,
-    };
+  const h5PageSettings = useMemo<SystemSettings['h5PageSettings']>(() => {
+    return (
+      systemSettings?.h5PageSettings || {
+        enableCustomStyling: true,
+        customHeaderColor: '#4F46E5',
+        customButtonColor: '#DC2626',
+        showStoreInfo: true,
+        showWiFiInfo: true,
+      }
+    );
+  }, [systemSettings?.h5PageSettings]);
 
   // Dynamic categories from settings
   const categories = ['All', ...(systemSettings?.categories || [])];

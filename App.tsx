@@ -152,7 +152,7 @@ const App = () => {
     if (!isLoading) {
       if (prevOrdersRef.current.length === 0) prevOrdersRef.current = orders;
     }
-  }, [isLoading]);
+  }, [isLoading, orders]);
 
   // Request Notification Permission
   useEffect(() => {

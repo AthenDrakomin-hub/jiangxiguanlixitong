@@ -24,31 +24,19 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
+  // 初始化 Intersection Observer
   useEffect(() => {
-    // 检查浏览器是否支持 IntersectionObserver
-    if (!('IntersectionObserver' in window)) {
-      // 如果不支持，直接加载图片
-      setIsInView(true);
-      return;
-    }
-
-    // 创建 IntersectionObserver 实例
+    // 创建 Intersection Observer 实例
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsInView(true);
-            // 停止观察该元素
-            if (imgRef.current) {
-              observerRef.current?.unobserve(imgRef.current);
-            }
           }
         });
       },
       {
-        // 配置选项
         rootMargin: '50px', // 提前50px开始加载
-        threshold: 0.01, // 只要有一像素进入视口就触发
       }
     );
 
@@ -59,8 +47,11 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
 
     // 清理函数
     return () => {
-      if (observerRef.current && imgRef.current) {
-        observerRef.current.unobserve(imgRef.current);
+      if (observerRef.current) {
+        if (imgRef.current) {
+          observerRef.current.unobserve(imgRef.current);
+        }
+        observerRef.current.disconnect();
       }
     };
   }, []);

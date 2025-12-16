@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Users, Shield, Edit3, Trash2, Plus } from 'lucide-react';
 
 // 角色类型定义
@@ -128,12 +128,7 @@ const PermissionManagement: React.FC = () => {
     isActive: true,
   });
 
-  // 加载数据
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       // 模拟加载角色和用户数据
@@ -201,7 +196,12 @@ const PermissionManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [permissions]);
+
+  // 加载数据
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 角色表单处理
   const handleRoleFormSubmit = (e: React.FormEvent) => {
