@@ -8,13 +8,13 @@ export default defineConfig({
     react(),
     checker({
       typescript: true,
-      eslint: {
-        lintCommand: 'eslint "./**/*.{ts,tsx}"',
-      },
+      // 移除可能导致child_process警告的ESLint配置
+      // eslint: {
+      //   lintCommand: 'eslint "./**/*.{ts,tsx}"',
+      // },
     }),
     // 移除PWA插件
-  ],
-  // Allow these prefixes to be exposed to client-side code via import.meta.env
+  ], // Allow these prefixes to be exposed to client-side code via import.meta.env
   // This enables reading the default environment variables
   envPrefix: ['VITE_'],
   build: {
