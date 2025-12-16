@@ -26,6 +26,9 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
 
   // 初始化 Intersection Observer
   useEffect(() => {
+    // 保存imgRef.current的引用，避免在清理函数中直接使用可能变化的值
+    const currentImgRef = imgRef.current;
+
     // 创建 Intersection Observer 实例
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -41,15 +44,15 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
     );
 
     // 开始观察图片元素
-    if (imgRef.current) {
-      observerRef.current.observe(imgRef.current);
+    if (currentImgRef) {
+      observerRef.current.observe(currentImgRef);
     }
 
     // 清理函数
     return () => {
       if (observerRef.current) {
-        if (imgRef.current) {
-          observerRef.current.unobserve(imgRef.current);
+        if (currentImgRef) {
+          observerRef.current.unobserve(currentImgRef);
         }
         observerRef.current.disconnect();
       }
