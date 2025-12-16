@@ -10,6 +10,7 @@ import {
   Edit3,
 } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
+import { PaymentMethod as PaymentMethodType } from '../types';
 
 // 定义支付方式接口，包含所有必要字段
 interface PaymentMethod {
@@ -19,12 +20,7 @@ interface PaymentMethod {
   isEnabled: boolean;
   qrCodeUrl?: string;
   accountInfo?: string;
-  paymentType:
-    | 'CASH'
-    | 'MOBILE_WALLET'
-    | 'CRYPTO'
-    | 'BANK_TRANSFER'
-    | 'CREDIT_CARD';
+  paymentType: PaymentMethodType;
   currency: string;
   exchangeRate: number;
   sortOrder: number;
@@ -47,7 +43,7 @@ const PaymentManagement: React.FC = () => {
     isEnabled: true,
     qrCodeUrl: '',
     accountInfo: '',
-    paymentType: 'MOBILE_WALLET',
+    paymentType: 'CASH', // 使用types.ts中定义的类型
     currency: 'PHP',
     exchangeRate: 1.0,
     sortOrder: 0,
@@ -64,29 +60,83 @@ const PaymentManagement: React.FC = () => {
       // 产品备注: 为apiClient.fetchAll()的返回值指定明确的类型，避免使用any
       const response = await apiClient.fetchAll();
       if (response.paymentMethods) {
-        // 注意：这里的paymentMethods类型与组件内部定义的PaymentMethod类型不完全一致
-        // 需要进行类型转换，先将字符串数组转换为对象数组
-        const convertedMethods: PaymentMethod[] = response.paymentMethods.map(
-          (method, index) => ({
-            id: `PM-${index}`,
-            name: method,
-            englishName: method,
-            isEnabled: true,
-            qrCodeUrl: '',
-            accountInfo: '',
-            paymentType: 'MOBILE_WALLET' as const, // 明确指定类型
-            currency: 'PHP',
-            exchangeRate: 1.0,
-            sortOrder: index,
-          })
-        );
+        // 注意：这里的paymentMethods是从API返回的实际数据，需要正确处理
+        // API返回的数据结构可能与组件内部定义的PaymentMethod类型不完全一致
+        // 需要进行类型转换，确保数据结构匹配
 
-        setPaymentMethods(
-          convertedMethods.sort((a, b) => a.sortOrder - b.sortOrder)
-        );
+        // 如果response.paymentMethods是对象数组，直接使用
+        if (
+          Array.isArray(response.paymentMethods) &&
+          response.paymentMethods.length > 0
+        ) {
+          // 检查第一个元素是否具有PaymentMethod的必要属性
+          const firstItem = response.paymentMethods[0];
+          if (
+            typeof firstItem === 'object' &&
+            firstItem !== null &&
+            'id' in firstItem
+          ) {
+            // 假设API返回的数据结构与我们的PaymentMethod接口兼容
+            // 进行显式类型转换以解决类型不匹配问题
+            setPaymentMethods(
+              response.paymentMethods as unknown as PaymentMethod[]
+            );
+          } else {
+            // 如果数据结构不匹配，需要进行转换
+            const convertedMethods: PaymentMethod[] =
+              response.paymentMethods.map((method: unknown, index) => {
+                // 类型守卫检查
+                if (typeof method === 'object' && method !== null) {
+                  const m = method as Record<string, unknown>;
+                  return {
+                    id: (m.id as string) || `PM-${index}`,
+                    name: (m.name as string) || String(method),
+                    englishName:
+                      (m.englishName as string) ||
+                      (m.name as string) ||
+                      String(method),
+                    isEnabled:
+                      typeof m.isEnabled === 'boolean' ? m.isEnabled : true,
+                    qrCodeUrl: (m.qrCodeUrl as string) || '',
+                    accountInfo: (m.accountInfo as string) || '',
+                    paymentType: (m.paymentType as PaymentMethodType) || 'CASH',
+                    currency: (m.currency as string) || 'PHP',
+                    exchangeRate:
+                      typeof m.exchangeRate === 'number' ? m.exchangeRate : 1.0,
+                    sortOrder:
+                      typeof m.sortOrder === 'number' ? m.sortOrder : index,
+                    createdAt: (m.createdAt as string) || undefined,
+                    updatedAt: (m.updatedAt as string) || undefined,
+                  };
+                }
+                // 如果不是对象，创建基本对象
+                return {
+                  id: `PM-${index}`,
+                  name: String(method),
+                  englishName: String(method),
+                  isEnabled: true,
+                  qrCodeUrl: '',
+                  accountInfo: '',
+                  paymentType: 'CASH',
+                  currency: 'PHP',
+                  exchangeRate: 1.0,
+                  sortOrder: index,
+                };
+              });
+
+            setPaymentMethods(
+              convertedMethods.sort((a, b) => a.sortOrder - b.sortOrder)
+            );
+          }
+        } else {
+          // 如果没有数据或不是数组，设置为空数组
+          setPaymentMethods([]);
+        }
       }
     } catch (error) {
       console.error('Failed to load payment methods:', error);
+      // 发生错误时设置为空数组，避免白屏
+      setPaymentMethods([]);
     } finally {
       setLoading(false);
     }
@@ -120,7 +170,7 @@ const PaymentManagement: React.FC = () => {
         isEnabled: true,
         qrCodeUrl: '',
         accountInfo: '',
-        paymentType: 'MOBILE_WALLET',
+        paymentType: 'CASH',
         currency: 'PHP',
         exchangeRate: 1.0,
         sortOrder: 0,
@@ -216,7 +266,7 @@ const PaymentManagement: React.FC = () => {
               isEnabled: true,
               qrCodeUrl: '',
               accountInfo: '',
-              paymentType: 'MOBILE_WALLET',
+              paymentType: 'CASH',
               currency: 'PHP',
               exchangeRate: 1.0,
               sortOrder: paymentMethods.length,
@@ -275,17 +325,21 @@ const PaymentManagement: React.FC = () => {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      paymentType: e.target
-                        .value as PaymentMethod['paymentType'],
+                      paymentType: e.target.value as PaymentMethodType,
                     })
                   }
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  required
                 >
                   <option value="CASH">现金</option>
-                  <option value="MOBILE_WALLET">移动钱包</option>
-                  <option value="CRYPTO">加密货币</option>
-                  <option value="BANK_TRANSFER">银行转账</option>
+                  <option value="WECHAT">微信支付</option>
+                  <option value="ALIPAY">支付宝</option>
+                  <option value="USDT">USDT</option>
+                  <option value="GCASH">GCash</option>
+                  <option value="MAYA">Maya</option>
+                  <option value="UNIONPAY">银联</option>
                   <option value="CREDIT_CARD">信用卡</option>
+                  <option value="SIGN_BILL">挂账</option>
                 </select>
               </div>
 
@@ -300,6 +354,7 @@ const PaymentManagement: React.FC = () => {
                     setFormData({ ...formData, currency: e.target.value })
                   }
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  required
                 />
               </div>
 
@@ -309,15 +364,16 @@ const PaymentManagement: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  step="0.0001"
+                  step="0.01"
                   value={formData.exchangeRate}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      exchangeRate: parseFloat(e.target.value),
+                      exchangeRate: parseFloat(e.target.value) || 0,
                     })
                   }
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  required
                 />
               </div>
 
@@ -331,60 +387,58 @@ const PaymentManagement: React.FC = () => {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      sortOrder: parseInt(e.target.value),
+                      sortOrder: parseInt(e.target.value) || 0,
                     })
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  QR码URL
+                </label>
+                <input
+                  type="text"
+                  value={formData.qrCodeUrl || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, qrCodeUrl: e.target.value })
                   }
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
                 />
               </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  账户信息
+                </label>
+                <input
+                  type="text"
+                  value={formData.accountInfo || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, accountInfo: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                />
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.isEnabled}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isEnabled: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                />
+                <label className="ml-2 block text-sm text-slate-700">
+                  启用此支付方式
+                </label>
+              </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                二维码URL
-              </label>
-              <input
-                type="text"
-                value={formData.qrCodeUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, qrCodeUrl: e.target.value })
-                }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                placeholder="https://example.com/qrcode.png"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
-                账户信息
-              </label>
-              <textarea
-                value={formData.accountInfo}
-                onChange={(e) =>
-                  setFormData({ ...formData, accountInfo: e.target.value })
-                }
-                className="w-full rounded-lg border border-slate-300 px-3 py-2"
-                rows={3}
-                placeholder="账户号码、钱包地址等"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isEnabled"
-                checked={formData.isEnabled}
-                onChange={(e) =>
-                  setFormData({ ...formData, isEnabled: e.target.checked })
-                }
-                className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-              />
-              <label htmlFor="isEnabled" className="text-sm text-slate-700">
-                启用此支付方式
-              </label>
-            </div>
-
-            <div className="flex gap-3 pt-4">
+            <div className="flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
@@ -397,118 +451,121 @@ const PaymentManagement: React.FC = () => {
                 className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
               >
                 <Save size={16} />
-                保存支付方式
+                保存
               </button>
             </div>
           </form>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  支付方式
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  类型
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  货币/汇率
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  状态
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
-              {paymentMethods.map((method) => (
-                <tr key={method.id} className="hover:bg-slate-50">
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-100">
-                        {getPaymentTypeIcon(method.paymentType)}
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-slate-900">
-                          {method.name}
-                        </div>
-                        {method.englishName && (
-                          <div className="text-sm text-slate-500">
-                            {method.englishName}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm text-slate-900">
-                      {getPaymentTypeName(method.paymentType)}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm text-slate-900">
-                      {method.currency}
-                    </div>
-                    {method.exchangeRate !== 1.0 && (
-                      <div className="text-sm text-slate-500">
-                        参考汇率 Reference Rate:{' '}
-                        {method.exchangeRate.toFixed(4)}
-                      </div>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    {method.isEnabled ? (
-                      <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
-                        启用
-                      </span>
-                    ) : (
-                      <span className="inline-flex rounded-full bg-slate-100 px-2 text-xs font-semibold leading-5 text-slate-800">
-                        禁用
-                      </span>
-                    )}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(method)}
-                        className="flex items-center gap-1 text-slate-600 hover:text-slate-900"
-                      >
-                        <Edit3 size={14} />
-                        编辑
-                      </button>
-                      <button
-                        onClick={() => handleDelete(method.id)}
-                        className="flex items-center gap-1 text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 size={14} />
-                        删除
-                      </button>
-                    </div>
-                  </td>
+      {paymentMethods.length > 0 ? (
+        <div className="rounded-xl border border-slate-100 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-lg">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
+                  >
+                    支付方式
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
+                  >
+                    类型
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
+                  >
+                    货币/汇率
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500"
+                  >
+                    状态
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500"
+                  >
+                    操作
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {paymentMethods.length === 0 && (
-          <div className="py-12 text-center">
-            <CreditCard className="mx-auto h-12 w-12 text-slate-400" />
-            <h3 className="mt-2 text-sm font-medium text-slate-900">
-              暂无支付方式
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              点击&quot;添加支付方式&quot;按钮创建新的支付方式。
-            </p>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {paymentMethods
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((method) => (
+                    <tr key={method.id} className="hover:bg-slate-50">
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            {getPaymentTypeIcon(method.paymentType)}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-slate-900">
+                              {method.name}
+                            </div>
+                            {method.englishName && (
+                              <div className="text-sm text-slate-500">
+                                {method.englishName}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                        {getPaymentTypeName(method.paymentType)}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                        {method.currency} ({method.exchangeRate})
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                        {method.isEnabled ? (
+                          <span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+                            启用
+                          </span>
+                        ) : (
+                          <span className="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">
+                            禁用
+                          </span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEdit(method)}
+                          className="mr-3 text-slate-600 hover:text-slate-900"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(method.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+          <CreditCard className="mx-auto h-12 w-12 text-slate-400" />
+          <h3 className="mt-2 text-sm font-medium text-slate-900">
+            暂无支付方式
+          </h3>
+          <p className="mt-1 text-sm text-slate-500">
+            点击&quot;添加支付方式&quot;按钮创建新的支付方式。
+          </p>
+        </div>
+      )}
     </div>
   );
 };
