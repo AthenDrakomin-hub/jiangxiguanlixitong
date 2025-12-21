@@ -230,7 +230,7 @@ export const kvClient = {
    * @param itemData The data to store
    * @returns The created item with ID
    */
-  async create(entityType: string, itemData: unknown) {
+  async create(entityType: string, itemData: Record<string, unknown>) {
     // If no redis client, throw error
     if (!redis) {
       console.error(
@@ -272,7 +272,11 @@ export const kvClient = {
    * @param itemData The data to update
    * @returns The updated item
    */
-  async update(entityType: string, id: string, itemData: unknown) {
+  async update(
+    entityType: string,
+    id: string,
+    itemData: Record<string, unknown>
+  ) {
     // If no redis client, throw error
     if (!redis) {
       console.error(
