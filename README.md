@@ -38,7 +38,7 @@
 
 - Vercel Serverless Functions
 - RESTful API
-- Vercel Blob Storage (@vercel/blob)
+- Vercel KV Storage (Upstash Redis)
 
 ## 📁 项目结构
 
@@ -63,7 +63,7 @@ jiangxijiudian/
 │   ├── Dashboard.tsx   # 仪表板
 │   └── Settings.tsx   # 系统设置
 ├── hooks/              # React 自定义 Hooks
-├── services/           # 业务逻辑层
+├── lib/                # 核心库文件
 ├── utils/              # 工具函数
 ├── scripts/            # 数据初始化脚本
 ├── public/             # 静态资源文件
@@ -78,8 +78,8 @@ jiangxijiudian/
 ### 环境准备
 
 1. 注册 [Vercel](https://vercel.com) 账号
-2. 在 Vercel 项目设置中创建 Blob Storage 存储桶
-3. 获取 `BLOB_READ_WRITE_TOKEN` 并配置到环境变量
+2. 在 Vercel 项目设置中创建 KV Storage 数据库 (Upstash Redis)
+3. 获取 `KV_REST_API_TOKEN` 和 `KV_REST_API_URL` 并配置到环境变量
 
 ### 部署步骤
 
@@ -87,7 +87,11 @@ jiangxijiudian/
 2. 在 Vercel 中导入该项目
 3. 配置环境变量：
    ```
-   BLOB_READ_WRITE_TOKEN=your_blob_read_write_token_here
+   KV_REST_API_TOKEN=your_kv_rest_api_token_here
+   KV_REST_API_URL=your_kv_rest_api_url_here
+   KV_REST_API_READ_ONLY_TOKEN=your_kv_read_only_token_here
+   KV_URL=your_kv_url_here
+   REDIS_URL=your_redis_url_here
    ```
 4. 点击 Deploy 进行部署
 

@@ -1,5 +1,13 @@
+// api/kv-index.ts
+/**
+ * Vercel API Handler for KV Storage
+ * 
+ * This module provides a RESTful API interface for the KV storage system,
+ * serving as a drop-in replacement for the existing Blob storage API.
+ */
+
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { kvClient } from './db';
+import { kvClient } from '../lib/kv-client';
 
 // Define allowed collections
 const ALLOWED_COLLECTIONS = [
@@ -90,13 +98,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'POST':
         // Create new item
         if (collectionName && body) {
-          const newItem = await kvClient.create(collectionName, body);
-
-          res.status(201).json({
-            success: true,
-            data: newItem,
-            message: `Successfully created new record in ${collectionName}`,
-          });
+          try {
+            const newItem = await kvClient.create(collectionName, body);
+            
+            res.status(201).json({
+              success: true,
+              data: newItem,
+              message: `Successfully created new record in ${collectionName}`,
+            });
+          } catch (error) {
+            console.error('Error creating item in KV storage:', error);
+            res.status(500).json({
+              success: false,
+              message: 'Failed to create item',
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          }
         } else {
           res.status(400).json({
             success: false,
@@ -109,18 +126,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'PUT':
         // Update existing item
         if (collectionName && query.id && body) {
-          const updatedItem = await kvClient.update(collectionName, query.id as string, body);
-
-          if (updatedItem) {
-            res.status(200).json({
-              success: true,
-              data: updatedItem,
-              message: `Successfully updated record in ${collectionName}`,
-            });
-          } else {
-            res.status(404).json({
+          try {
+            const updatedItem = await kvClient.update(collectionName, query.id as string, body);
+            
+            if (updatedItem) {
+              res.status(200).json({
+                success: true,
+                data: updatedItem,
+                message: `Successfully updated record in ${collectionName}`,
+              });
+            } else {
+              res.status(404).json({
+                success: false,
+                message: `Record with ID ${query.id} not found in ${collectionName}`,
+              });
+            }
+          } catch (error) {
+            console.error('Error updating item in KV storage:', error);
+            res.status(500).json({
               success: false,
-              message: `Record not found in ${collectionName}`,
+              message: 'Failed to update item',
+              error: error instanceof Error ? error.message : 'Unknown error',
             });
           }
         } else {
@@ -135,17 +161,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'DELETE':
         // Delete item
         if (collectionName && query.id) {
-          const deleted = await kvClient.delete(collectionName, query.id as string);
-          
-          if (deleted) {
-            res.status(200).json({
-              success: true,
-              message: `Successfully deleted record from ${collectionName}`,
-            });
-          } else {
-            res.status(404).json({
+          try {
+            const deleted = await kvClient.delete(collectionName, query.id as string);
+            
+            if (deleted) {
+              res.status(200).json({
+                success: true,
+                message: `Successfully deleted record from ${collectionName}`,
+              });
+            } else {
+              res.status(404).json({
+                success: false,
+                message: `Record with ID ${query.id} not found in ${collectionName}`,
+              });
+            }
+          } catch (error) {
+            console.error('Error deleting item from KV storage:', error);
+            res.status(500).json({
               success: false,
-              message: `Record not found in ${collectionName}`,
+              message: 'Failed to delete item',
+              error: error instanceof Error ? error.message : 'Unknown error',
             });
           }
         } else {

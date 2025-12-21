@@ -93,3 +93,7 @@ temp/
 *.pem
 *.crt
 *.key
+.vercel
+
+# Upstash Redis CLI
+.upstash/

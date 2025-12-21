@@ -1,5 +1,14 @@
+// api/unified-index.ts
+/**
+ * Unified API Handler for both Blob and KV storage
+ * 
+ * This module provides a single API endpoint that can work with
+ * both Vercel Blob Storage and Vercel KV storage based on
+ * environment configuration.
+ */
+
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { kvClient } from './db';
+import { storageManager } from '../lib/storage-manager';
 
 // Define allowed collections
 const ALLOWED_COLLECTIONS = [
@@ -42,6 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       pathParts[pathParts.length - 1]?.split('?')[0] ||
       (query.collection as string);
 
+    // Log current storage backend
+    const backendInfo = storageManager.getBackendInfo();
+    console.log(`Using storage backend: ${backendInfo.type} (${backendInfo.description})`);
+
     // Validate collection name
     if (
       collectionName &&
@@ -60,20 +73,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (collectionName) {
           // Get all items in collection
           try {
-            const items = await kvClient.getAll(collectionName);
+            const items = await storageManager.getAll(collectionName);
             
             res.status(200).json({
               success: true,
               data: items,
               timestamp: new Date().toISOString(),
+              storageBackend: backendInfo.type,
             });
           } catch (error) {
-            console.error('Error fetching data from KV storage:', error);
+            console.error('Error fetching data from storage:', error);
             // Return empty data array on error but still success status
             res.status(200).json({
               success: true,
               data: [],
               timestamp: new Date().toISOString(),
+              storageBackend: backendInfo.type,
             });
           }
         } else {
@@ -81,8 +96,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           res.status(200).json({
             success: true,
             message:
-              'Jiangxi Hotel Management System API (KV Storage Version)',
+              'Jiangxi Hotel Management System API (Unified Storage Version)',
             timestamp: new Date().toISOString(),
+            storageBackend: backendInfo.type,
+            storageDescription: backendInfo.description,
           });
         }
         break;
@@ -90,13 +107,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'POST':
         // Create new item
         if (collectionName && body) {
-          const newItem = await kvClient.create(collectionName, body);
-
-          res.status(201).json({
-            success: true,
-            data: newItem,
-            message: `Successfully created new record in ${collectionName}`,
-          });
+          try {
+            const newItem = await storageManager.create(collectionName, body);
+            
+            res.status(201).json({
+              success: true,
+              data: newItem,
+              message: `Successfully created new record in ${collectionName}`,
+              storageBackend: backendInfo.type,
+            });
+          } catch (error) {
+            console.error('Error creating item in storage:', error);
+            res.status(500).json({
+              success: false,
+              message: 'Failed to create item',
+              error: error instanceof Error ? error.message : 'Unknown error',
+              storageBackend: backendInfo.type,
+            });
+          }
         } else {
           res.status(400).json({
             success: false,
@@ -109,18 +137,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'PUT':
         // Update existing item
         if (collectionName && query.id && body) {
-          const updatedItem = await kvClient.update(collectionName, query.id as string, body);
-
-          if (updatedItem) {
-            res.status(200).json({
-              success: true,
-              data: updatedItem,
-              message: `Successfully updated record in ${collectionName}`,
-            });
-          } else {
-            res.status(404).json({
+          try {
+            const updatedItem = await storageManager.update(collectionName, query.id as string, body);
+            
+            if (updatedItem) {
+              res.status(200).json({
+                success: true,
+                data: updatedItem,
+                message: `Successfully updated record in ${collectionName}`,
+                storageBackend: backendInfo.type,
+              });
+            } else {
+              res.status(404).json({
+                success: false,
+                message: `Record with ID ${query.id} not found in ${collectionName}`,
+                storageBackend: backendInfo.type,
+              });
+            }
+          } catch (error) {
+            console.error('Error updating item in storage:', error);
+            res.status(500).json({
               success: false,
-              message: `Record not found in ${collectionName}`,
+              message: 'Failed to update item',
+              error: error instanceof Error ? error.message : 'Unknown error',
+              storageBackend: backendInfo.type,
             });
           }
         } else {
@@ -135,17 +175,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'DELETE':
         // Delete item
         if (collectionName && query.id) {
-          const deleted = await kvClient.delete(collectionName, query.id as string);
-          
-          if (deleted) {
-            res.status(200).json({
-              success: true,
-              message: `Successfully deleted record from ${collectionName}`,
-            });
-          } else {
-            res.status(404).json({
+          try {
+            const deleted = await storageManager.delete(collectionName, query.id as string);
+            
+            if (deleted) {
+              res.status(200).json({
+                success: true,
+                message: `Successfully deleted record from ${collectionName}`,
+                storageBackend: backendInfo.type,
+              });
+            } else {
+              res.status(404).json({
+                success: false,
+                message: `Record with ID ${query.id} not found in ${collectionName}`,
+                storageBackend: backendInfo.type,
+              });
+            }
+          } catch (error) {
+            console.error('Error deleting item from storage:', error);
+            res.status(500).json({
               success: false,
-              message: `Record not found in ${collectionName}`,
+              message: 'Failed to delete item',
+              error: error instanceof Error ? error.message : 'Unknown error',
+              storageBackend: backendInfo.type,
             });
           }
         } else {
