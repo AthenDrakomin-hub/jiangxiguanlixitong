@@ -146,8 +146,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
   });
 
   // Storage State
-  const [storageSettings, setStorageSettings] =
-    useState<StorageSettings>(getStorageSettings());
+  const [storageSettings, setStorageSettings] = useState<StorageSettings>(
+    getStorageSettings() || { type: 'blob' }
+  );
   const [showToast, setShowToast] = useState(false);
 
   // Safety Confirmation State
