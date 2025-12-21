@@ -164,35 +164,74 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
   // Load standard settings on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('jx_settings');
-    if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
-      if (parsed.storeInfo)
-        setStoreInfo((prev) => ({
-          ...prev,
-          ...(parsed.storeInfo as StoreInfo),
-        }));
-      if (parsed.notifications) setNotifications(parsed.notifications);
-      if (parsed.exchangeRate)
-        setLocalFinancials((prev) => ({
-          ...prev,
-          exchangeRate: parsed.exchangeRate,
-        }));
-      if (parsed.serviceChargeRate)
-        setLocalFinancials((prev) => ({
-          ...prev,
-          serviceCharge: parsed.serviceChargeRate * 100,
-        }));
-      if (parsed.categories && Array.isArray(parsed.categories))
-        setCategories(parsed.categories);
-      if (parsed.h5PageSettings) setH5PageSettings(parsed.h5PageSettings);
-    }
+    const loadSettings = async () => {
+      try {
+        // First, try to load settings from database
+        const dbSettings = await apiClient.fetchSystemSettings();
+        if (dbSettings) {
+          console.log('从数据库加载设置:', dbSettings);
+          // Apply database settings
+          if (dbSettings.storeInfo)
+            setStoreInfo((prev) => ({
+              ...prev,
+              ...(dbSettings.storeInfo as StoreInfo),
+            }));
+          if (dbSettings.notifications)
+            setNotifications(dbSettings.notifications);
+          if (dbSettings.exchangeRate)
+            setLocalFinancials((prev) => ({
+              ...prev,
+              exchangeRate: dbSettings.exchangeRate,
+            }));
+          if (dbSettings.serviceChargeRate)
+            setLocalFinancials((prev) => ({
+              ...prev,
+              serviceCharge: dbSettings.serviceChargeRate * 100,
+            }));
+          if (dbSettings.categories && Array.isArray(dbSettings.categories))
+            setCategories(dbSettings.categories);
+          if (dbSettings.h5PageSettings)
+            setH5PageSettings(dbSettings.h5PageSettings);
+          return;
+        }
+
+        // If no database settings, fall back to localStorage
+        const savedSettings = localStorage.getItem('jx_settings');
+        if (savedSettings) {
+          const parsed = JSON.parse(savedSettings);
+          console.log('从localStorage加载设置:', parsed);
+          if (parsed.storeInfo)
+            setStoreInfo((prev) => ({
+              ...prev,
+              ...(parsed.storeInfo as StoreInfo),
+            }));
+          if (parsed.notifications) setNotifications(parsed.notifications);
+          if (parsed.exchangeRate)
+            setLocalFinancials((prev) => ({
+              ...prev,
+              exchangeRate: parsed.exchangeRate,
+            }));
+          if (parsed.serviceChargeRate)
+            setLocalFinancials((prev) => ({
+              ...prev,
+              serviceCharge: parsed.serviceChargeRate * 100,
+            }));
+          if (parsed.categories && Array.isArray(parsed.categories))
+            setCategories(parsed.categories);
+          if (parsed.h5PageSettings) setH5PageSettings(parsed.h5PageSettings);
+        }
+      } catch (error) {
+        console.error('加载设置时出错:', error);
+      }
+    };
+
+    loadSettings();
 
     // Auto-test connection if configured
     // Removed connection testing as we're only using Vercel Blob Storage now
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
       // Save UI settings
       const settings = {
@@ -207,6 +246,18 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
       // Save Storage Settings
       saveStorageSettings(storageSettings);
+
+      // Save settings to database
+      try {
+        await apiClient.saveSystemSettings(settings);
+        console.log('系统设置已保存到数据库');
+      } catch (dbError) {
+        console.error('保存系统设置到数据库时出错:', dbError);
+        alert(
+          '保存系统设置到数据库时出错: ' +
+            (dbError instanceof Error ? dbError.message : '未知错误')
+        );
+      }
 
       // Notify Parent
       if (onSettingsChange) {

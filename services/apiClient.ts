@@ -129,4 +129,40 @@ export const apiClient = {
       return [];
     }
   },
+
+  /**
+   * Save system settings to the database
+   * @param settings The system settings to save
+   * @returns The saved settings
+   */
+  async saveSystemSettings(settings: unknown) {
+    try {
+      // We'll store system settings as a single item with a fixed ID
+      const response = await this.put<{ success: boolean; data: unknown }>(
+        `/system_settings?id=settings`,
+        settings
+      );
+      return response.success ? response.data : null;
+    } catch (error) {
+      console.error('Error saving system settings:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Fetch system settings from the database
+   * @returns The system settings
+   */
+  async fetchSystemSettings() {
+    try {
+      // We'll fetch the single system settings item with the fixed ID
+      const response = await this.get<{ success: boolean; data: unknown }>(
+        `/system_settings?id=settings`
+      );
+      return response.success ? response.data : null;
+    } catch (error) {
+      console.error('Error fetching system settings:', error);
+      return null;
+    }
+  },
 };

@@ -11,6 +11,7 @@ const ALLOWED_COLLECTIONS = [
   'sign_bill_accounts',
   'hotel_rooms',
   'payment_methods',
+  'system_settings',
 ];
 
 // Validate collection name
