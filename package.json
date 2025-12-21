@@ -67,8 +67,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
+      "eslint --fix --quiet",
+      "prettier --write --loglevel silent"
     ]
   }
 }
