@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { APP_CONFIG } from '../src/config';
 
 interface LoginProps {
   onLogin: () => void;
@@ -30,12 +29,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         return;
       }
 
-      // 获取环境变量或默认凭证
-      // 产品备注: 使用类型安全的方式访问环境变量
-      const validUser =
-        import.meta.env.VITE_ADMIN_USER || APP_CONFIG.DEFAULT_ADMIN.username;
-      const validPass =
-        import.meta.env.VITE_ADMIN_PASS || APP_CONFIG.DEFAULT_ADMIN.password;
+      // 获取环境变量中的管理员凭据，如果没有设置则不允许登录
+      const validUser = import.meta.env.VITE_ADMIN_USER;
+      const validPass = import.meta.env.VITE_ADMIN_PASS;
+
+      // 检查是否设置了管理员凭据
+      if (!validUser || !validPass) {
+        setError(
+          '系统未配置管理员账户，请联系系统管理员 / System administrator account not configured'
+        );
+        return;
+      }
 
       if (username === validUser) {
         // 检查密码

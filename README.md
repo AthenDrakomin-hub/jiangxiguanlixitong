@@ -96,7 +96,13 @@ jiangxijiudian/
    KV_REST_API_TOKEN=your_actual_upstash_redis_token_here
    ```
 
-3. 或者，您可以直接在系统环境中设置这些变量
+3. 设置管理员账户凭据（重要）：
+   ```bash
+   VITE_ADMIN_USER=your_admin_username
+   VITE_ADMIN_PASS=your_strong_admin_password
+   ```
+
+4. 或者，您可以直接在系统环境中设置这些变量
 
 ### 验证数据库连接
 
