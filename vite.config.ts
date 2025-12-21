@@ -42,13 +42,7 @@ export default defineConfig({
   // 配置开发服务器和代理
   server: {
     port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    // 移除API代理配置，因为Vercel无服务器函数在同一进程中处理
   },
   // 确保正确的模块解析和构建设置
   resolve: {
