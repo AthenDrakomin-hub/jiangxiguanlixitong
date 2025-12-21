@@ -136,6 +136,16 @@ npm run dev
 npm run add-sample-data
 ```
 
+### 域名配置
+
+部署完成后，您需要配置自定义域名：
+
+1. 在Vercel项目设置中添加您的域名
+2. 按照Vercel提供的指示在您的域名注册商处配置DNS记录
+3. 等待DNS传播完成（通常需要几分钟到几小时）
+
+详细指南请参考 [DOMAIN_SETUP.md](../DOMAIN_SETUP.md)
+
 ## 📱 使用说明
 
 ### 管理后台
