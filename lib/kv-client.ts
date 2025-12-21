@@ -58,9 +58,12 @@ export const kvClient = {
    * @param key The key to retrieve
    * @returns The parsed JSON data or null if not found
    */
-  async get<T>(key: string): Promise<T | null> {
+  async get(key: string) {
     try {
-      const data = await redis.get<T>(key);
+      const data = await redis.get(key);
+      if (typeof data === 'string') {
+        return JSON.parse(data);
+      }
       return data;
     } catch (error) {
       console.error(`Error getting key ${key}:`, error);
@@ -74,7 +77,7 @@ export const kvClient = {
    * @param value The value to store (will be JSON serialized)
    * @returns The result of the set operation
    */
-  async set<T>(key: string, value: T): Promise<string | null> {
+  async set(key: string, value: any) {
     try {
       return await redis.set(key, JSON.stringify(value));
     } catch (error) {
@@ -88,7 +91,7 @@ export const kvClient = {
    * @param key The key to delete
    * @returns The number of keys deleted
    */
-  async del(key: string): Promise<number> {
+  async del(key: string) {
     try {
       return await redis.del(key);
     } catch (error) {
@@ -102,7 +105,7 @@ export const kvClient = {
    * @param entityType The type of entity (e.g., 'dishes', 'orders')
    * @returns Array of IDs
    */
-  async getIndex(entityType: string): Promise<string[]> {
+  async getIndex(entityType: string) {
     try {
       const indexKey = `${entityType}:index`;
       const members = await redis.smembers(indexKey);
@@ -119,7 +122,7 @@ export const kvClient = {
    * @param id The ID to add
    * @returns Number of elements added to the set
    */
-  async addToIndex(entityType: string, id: string): Promise<number> {
+  async addToIndex(entityType: string, id: string) {
     try {
       const indexKey = `${entityType}:index`;
       return await redis.sadd(indexKey, id);
@@ -135,7 +138,7 @@ export const kvClient = {
    * @param id The ID to remove
    * @returns Number of elements removed from the set
    */
-  async removeFromIndex(entityType: string, id: string): Promise<number> {
+  async removeFromIndex(entityType: string, id: string) {
     try {
       const indexKey = `${entityType}:index`;
       return await redis.srem(indexKey, id);
@@ -150,13 +153,13 @@ export const kvClient = {
    * @param entityType The type of entity (e.g., 'dishes', 'orders')
    * @returns Array of all items
    */
-  async getAll<T>(entityType: string): Promise<T[]> {
+  async getAll(entityType: string) {
     try {
       const ids = await this.getIndex(entityType);
-      const items: T[] = [];
+      const items = [];
 
       for (const id of ids) {
-        const item = await this.get<T>(`${entityType}:${id}`);
+        const item = await this.get(`${entityType}:${id}`);
         if (item) {
           items.push(item);
         }
@@ -175,10 +178,7 @@ export const kvClient = {
    * @param itemData The data to store
    * @returns The created item with ID
    */
-  async create<T extends { id?: string }>(
-    entityType: string,
-    itemData: Omit<T, 'id'>
-  ): Promise<T & { id: string }> {
+  async create(entityType: string, itemData: any) {
     try {
       // Generate a unique ID
       const id = this.generateId();
@@ -189,7 +189,7 @@ export const kvClient = {
         id,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      } as T & { id: string; createdAt: string; updatedAt: string };
+      };
 
       // Store the item
       const key = `${entityType}:${id}`;
@@ -212,16 +212,12 @@ export const kvClient = {
    * @param itemData The data to update
    * @returns The updated item
    */
-  async update<T>(
-    entityType: string,
-    id: string,
-    itemData: Partial<T>
-  ): Promise<T | null> {
+  async update(entityType: string, id: string, itemData: any) {
     try {
       const key = `${entityType}:${id}`;
 
       // Get existing item
-      const existingItem = await this.get<T & { updatedAt: string }>(key);
+      const existingItem = await this.get(key);
       if (!existingItem) {
         return null;
       }
@@ -249,7 +245,7 @@ export const kvClient = {
    * @param id The ID of the item to delete
    * @returns True if deleted, false otherwise
    */
-  async delete(entityType: string, id: string): Promise<boolean> {
+  async delete(entityType: string, id: string) {
     try {
       const key = `${entityType}:${id}`;
 
