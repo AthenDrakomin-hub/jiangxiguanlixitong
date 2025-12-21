@@ -18,7 +18,6 @@ docs/
 
 # Script files that are not needed in production
 scripts/
-*.js
 
 # Library documentation
 lib/SAFE_EXEC_README.md
@@ -51,7 +50,7 @@ Desktop.ini
 temp/
 
 # Build artifacts (handled by build process)
-dist/
+/dist/
 .build/
 .out/
 

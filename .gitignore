@@ -37,7 +37,7 @@ Thumbs.db
 # OS generated files
 .DS_Store
 .DS_Store?
-._*
+._
 .Spotlight-V100
 .Trashes
 ehthumbs.db
@@ -115,7 +115,6 @@ docs/
 
 # Script files that shouldn't be deployed
 scripts/
-*.js
 
 # Library documentation
 lib/SAFE_EXEC_README.md
