@@ -35,6 +35,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Check if database is connected
+  if (!kvClient.isConnected()) {
+    res.status(503).json({
+      success: false,
+      message: 'Database connection not available',
+      error: 'Missing Redis configuration',
+    });
+    return;
+  }
+
   try {
     // Extract collection name from URL path
     const pathParts = req.url?.split('/').filter((p: string) => p) || [];

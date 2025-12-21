@@ -19,7 +19,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky install",
-    "build:force": "npm run build"
+    "build:force": "npm run build",
+    "check-db": "node check-db-connection.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

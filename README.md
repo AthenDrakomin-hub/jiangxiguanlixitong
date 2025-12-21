@@ -81,7 +81,29 @@ jiangxijiudian/
 2. 在 Vercel 项目设置中创建 KV Storage 数据库 (Upstash Redis)
 3. 获取 `KV_REST_API_TOKEN` 和 `KV_REST_API_URL` 并配置到环境变量
 
-### 部署步骤
+### 环境变量配置
+
+为了使数据库连接正常工作，您需要配置以下环境变量：
+
+1. 复制 `.env.local.example` 文件并重命名为 `.env.local`：
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+2. 编辑 `.env.local` 文件，填入您的 Upstash Redis 凭据：
+   ```bash
+   KV_REST_API_URL=your_actual_upstash_redis_url_here
+   KV_REST_API_TOKEN=your_actual_upstash_redis_token_here
+   ```
+
+3. 或者，您可以直接在系统环境中设置这些变量
+
+### 验证数据库连接
+
+您可以运行以下命令来检查数据库连接状态：
+```bash
+npm run check-db
+```
 
 1. Fork 本项目到您的 GitHub 账户
 2. 在 Vercel 中导入该项目
@@ -150,6 +172,7 @@ npm run dev          # 启动开发服务器
 npm run build        # 构建生产版本
 npm run preview      # 预览生产构建
 npm run add-sample-data # 添加示例数据
+npm run check-db     # 检查数据库连接状态
 npm run lint         # 运行 ESLint 检查
 npm run lint:fix     # 运行 ESLint 并自动修复问题
 npm run format       # 运行 Prettier 格式化代码

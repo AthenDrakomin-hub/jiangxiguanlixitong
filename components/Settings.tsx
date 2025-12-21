@@ -192,35 +192,39 @@ const Settings: React.FC<SettingsProps> = (props) => {
   }, []);
 
   const handleSave = () => {
-    // Save UI settings
-    const settings = {
-      storeInfo,
-      notifications,
-      exchangeRate: localFinancials.exchangeRate,
-      serviceChargeRate: localFinancials.serviceCharge / 100,
-      categories,
-      h5PageSettings,
-    };
-    localStorage.setItem('jx_settings', JSON.stringify(settings));
+    try {
+      // Save UI settings
+      const settings = {
+        storeInfo,
+        notifications,
+        exchangeRate: localFinancials.exchangeRate,
+        serviceChargeRate: localFinancials.serviceCharge / 100,
+        categories,
+        h5PageSettings,
+      };
+      localStorage.setItem('jx_settings', JSON.stringify(settings));
 
-    // Save Storage Settings
-    saveStorageSettings(storageSettings);
+      // Save Storage Settings
+      saveStorageSettings(storageSettings);
 
-    // Notify Parent
-    if (onSettingsChange) {
-      onSettingsChange(settings);
-    }
+      // Notify Parent
+      if (onSettingsChange) {
+        onSettingsChange(settings);
+      }
 
-    // Show toast
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+      // Show toast
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
 
-    // 记录系统设置变更日志
-    auditLogger.log('info', 'SETTINGS_UPDATE', '系统设置已更新', 'admin');
-
-    // 调用父组件的设置变更回调
-    if (onSettingsChange) {
-      onSettingsChange(settings);
+      // 记录系统设置变更日志
+      auditLogger.log('info', 'SETTINGS_UPDATE', '系统设置已更新', 'admin');
+    } catch (error) {
+      console.error('保存设置时发生错误:', error);
+      // 显示错误消息给用户
+      alert(
+        '保存设置时发生错误: ' +
+          (error instanceof Error ? error.message : '未知错误')
+      );
     }
   };
 
@@ -262,22 +266,35 @@ const Settings: React.FC<SettingsProps> = (props) => {
   // Category Logic
 
   const handleTestPrint = () => {
-    // 产品备注: 为dummyOrder变量指定明确的类型，避免使用any
-    const dummyOrder: Order = {
-      id: 'TEST-001',
-      tableNumber: 'A1',
-      source: 'LOBBY',
-      createdAt: new Date().toISOString(),
-      paymentMethod: 'CASH',
-      totalAmount: 1234,
-      status: OrderStatus.PENDING, // 添加必需的status字段，使用正确的枚举值
-      items: [
-        { dishId: '1', dishName: 'Kung Pao Chicken', quantity: 1, price: 500 },
-        { dishId: '2', dishName: 'Rice', quantity: 2, price: 50 },
-        { dishId: '3', dishName: 'Cola', quantity: 2, price: 80 },
-      ],
-    };
-    PrinterService.printOrder(dummyOrder);
+    try {
+      // 产品备注: 为dummyOrder变量指定明确的类型，避免使用any
+      const dummyOrder: Order = {
+        id: 'TEST-001',
+        tableNumber: 'A1',
+        source: 'LOBBY',
+        createdAt: new Date().toISOString(),
+        paymentMethod: 'CASH',
+        totalAmount: 1234,
+        status: OrderStatus.PENDING, // 添加必需的status字段，使用正确的枚举值
+        items: [
+          {
+            dishId: '1',
+            dishName: 'Kung Pao Chicken',
+            quantity: 1,
+            price: 500,
+          },
+          { dishId: '2', dishName: 'Rice', quantity: 2, price: 50 },
+          { dishId: '3', dishName: 'Cola', quantity: 2, price: 80 },
+        ],
+      };
+      PrinterService.printOrder(dummyOrder);
+    } catch (error) {
+      console.error('测试打印时发生错误:', error);
+      alert(
+        '测试打印时发生错误: ' +
+          (error instanceof Error ? error.message : '未知错误')
+      );
+    }
   };
 
   // 添加同步状态
@@ -825,7 +842,14 @@ const Settings: React.FC<SettingsProps> = (props) => {
       </div>
 
       {/* Data Management */}
-      <DataManagement onDataUpdate={() => window.location.reload()} />
+      <DataManagement
+        onDataUpdate={() => {
+          // 显示一个提示消息而不是直接重新加载页面
+          alert('数据已更新，请手动刷新页面以查看最新数据');
+          // 或者可以调用一个状态更新函数来刷新数据
+          // onDataUpdate?.();
+        }}
+      />
 
       {/* Confirmation Modal */}
       {confirmModal.open && (
