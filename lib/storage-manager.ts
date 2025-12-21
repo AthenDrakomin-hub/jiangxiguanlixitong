@@ -6,7 +6,7 @@
  * Vercel KV (Upstash Redis) as the storage backend.
  */
 
-import { kvClient } from './kv-client.js';
+import { kvClient } from './kv-client.ts';
 
 /**
  * Storage Manager with KV backend support
