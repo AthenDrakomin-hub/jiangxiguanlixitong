@@ -1,19 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import checker from 'vite-plugin-checker';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    checker({
-      typescript: true,
-      // 移除可能导致child_process警告的ESLint配置
-      // eslint: {
-      //   lintCommand: 'eslint "./**/*.{ts,tsx}"',
-      // },
-    }),
-    // 移除PWA插件
+    // 移除vite-plugin-checker以解决DEP0190警告
   ], // Allow these prefixes to be exposed to client-side code via import.meta.env
   // This enables reading the default environment variables
   envPrefix: ['VITE_'],
