@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { kvClient } from './db';
+import { kvClient } from './db.js';
 
 // Define allowed collections
 const ALLOWED_COLLECTIONS = [

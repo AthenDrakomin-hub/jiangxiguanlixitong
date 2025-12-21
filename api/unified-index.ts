@@ -8,7 +8,7 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { storageManager } from '../lib/storage-manager';
+import { storageManager } from '../lib/storage-manager.js';
 
 // Define allowed collections
 const ALLOWED_COLLECTIONS = [
