@@ -103,5 +103,27 @@ temp/
 test-*.js
 *-test.js
 *.test.js
-scripts/COMPRESS_ASSETS_README.md
+*.test.ts
+*.test.tsx
+
+# Documentation files that shouldn't be deployed
+README*.md
+LICENSE
+RELEASE_NOTES.md
+VERCEL_DEPLOYMENT_GUIDE.md
+docs/
+
+# Script files that shouldn't be deployed
+scripts/
+*.js
+
+# Library documentation
 lib/SAFE_EXEC_README.md
+
+# Configuration files that shouldn't be deployed
+.eslint*
+.prettier*
+.stylelint*
+
+# Husky git hooks
+.husky/
