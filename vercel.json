@@ -36,7 +36,7 @@
   "trailingSlash": false,
   "build": {
     "env": {
-      "FORCE_BUILD": "true"
+      "NODE_VERSION": "20.19.0"
     }
   }
 }
