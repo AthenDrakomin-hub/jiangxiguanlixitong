@@ -33,5 +33,10 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "build": {
+    "env": {
+      "FORCE_BUILD": "true"
+    }
+  }
 }
