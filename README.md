@@ -85,22 +85,27 @@ jiangxijiudian/
 
 为了使数据库连接正常工作，您需要配置以下环境变量：
 
-1. 复制 `.env.local.example` 文件并重命名为 `.env.local`：
+1. 复制 `.env.local.template` 文件并重命名为 `.env.local`：
    ```bash
-   cp .env.local.example .env.local
+   cp .env.local.template .env.local
    ```
 
 2. 编辑 `.env.local` 文件，填入您的 Upstash Redis 凭据：
    ```bash
-   KV_REST_API_URL=your_actual_upstash_redis_url_here
-   KV_REST_API_TOKEN=your_actual_upstash_redis_token_here
-   ```
-
-3. 设置管理员账户凭据（重要）：
-   ```bash
+   # 获取这些值从您的 Upstash Redis 数据库设置页面
+   KV_REST_API_URL=https://YOUR_UPSTASH_REDIS_ENDPOINT.upstash.io
+   KV_REST_API_TOKEN=YOUR_UPSTASH_REDIS_TOKEN
+   
+   # 管理员账户凭据（登录系统必需）
    VITE_ADMIN_USER=your_admin_username
    VITE_ADMIN_PASS=your_strong_admin_password
    ```
+
+3. 如何获取 Upstash Redis 凭据：
+   - 访问 [Upstash Console](https://console.upstash.com/)
+   - 创建一个新的 Redis 数据库
+   - 在数据库详情页面找到 REST API URL 和 Token
+   - 复制这些值到您的 .env.local 文件中
 
 4. 或者，您可以直接在系统环境中设置这些变量
 
