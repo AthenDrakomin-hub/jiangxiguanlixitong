@@ -300,10 +300,10 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
   const handleTestConnection = async () => {
     try {
-      // Connection testing removed as we're only using Vercel Blob Storage now
-      // All connections are handled automatically by the Vercel Blob Storage client
+      // Connection testing removed as we're now using Upstash Redis
+      // All connections are handled automatically by the Upstash Redis client
       // Return a resolved promise to satisfy async signature
-      console.log('Connection test skipped - using Vercel Blob Storage');
+      console.log('Connection test skipped - using Upstash Redis');
       return Promise.resolve();
     } catch (error) {
       console.error('Connection test failed:', error);
@@ -574,9 +574,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
               <div className="flex items-center gap-3">
                 <span className="font-bold text-slate-800">数据存储</span>
               </div>
-              <span className="text-sm text-slate-500">
-                Vercel Blob Storage
-              </span>
+              <span className="text-sm text-slate-500">Upstash Redis</span>
             </div>
 
             <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4">
@@ -657,8 +655,8 @@ const Settings: React.FC<SettingsProps> = (props) => {
               <Info size={16} /> 系统数据存储说明
             </h4>
             <p className="text-sm text-blue-700">
-              本系统现在使用 Vercel Blob Storage
-              作为主要数据存储方案，所有数据（菜单、订单、财务等）都实时存储在云端存储中。
+              本系统现在使用 Upstash Redis
+              作为主要数据存储方案，所有数据（菜单、订单、财务等）都实时存储在云端数据库中。
             </p>
           </div>
 
@@ -676,8 +674,8 @@ const Settings: React.FC<SettingsProps> = (props) => {
               >
                 <Cloud size={20} className="text-slate-600" />
                 <div>
-                  <div className="text-sm font-bold">Vercel Blob Storage</div>
-                  <div className="text-xs text-slate-500">Cloud Storage</div>
+                  <div className="text-sm font-bold">Upstash Redis</div>
+                  <div className="text-xs text-slate-500">Cloud Database</div>
                 </div>
               </button>
             </div>
@@ -687,7 +685,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 <div className="flex h-full flex-col items-center justify-center space-y-4 py-6 text-center text-slate-500">
                   <Cloud size={48} className="opacity-20" />
                   <p>
-                    数据存储在 Vercel Blob Storage 中。
+                    数据存储在 Upstash Redis 数据库中。
                     <br />
                     所有数据实时备份到云端，确保数据安全。
                   </p>
