@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+
+# Test files and directories
+__tests__/
+*.test.js
+*.test.ts
+*.test.tsx
+*-test.js
+test-*.js
+
+# Documentation files (except those needed for the app)
+README*.md
+LICENSE
+RELEASE_NOTES.md
+VERCEL_DEPLOYMENT_GUIDE.md
+docs/
+
+# Script files that are not needed in production
+scripts/COMPRESS_ASSETS_README.md
+scripts/check-env-config.js
+scripts/migrate-blob-to-kv.js
+scripts/test-kv-storage.js
+scripts/update-env-config.js
+scripts/verify-kv-storage.js
+
+# Library documentation
+lib/SAFE_EXEC_README.md
+
+# Configuration files
+.env*
+.eslint*
+.prettier*
+.stylelint*
+
+# IDE and editor files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Log files
+*.log
+
+# Runtime data
+*.pid
+*.seed
+
+# Cache files
+.cache/
+.tmp/
+temp/
+
+# Build artifacts (handled by build process)
+dist/
+.build/
+.out/
+
+# Git files
+.git/
+.gitignore
+
+# Vercel files (avoid circular deployment)
+.vercel/

@@ -45,6 +45,7 @@ Thumbs.db
 Desktop.ini
 
 # Testing
+__tests__/
 coverage/
 .nyc_output/
 
@@ -97,3 +98,10 @@ temp/
 
 # Upstash Redis CLI
 .upstash/
+
+# Test and development files that shouldn't be deployed
+test-*.js
+*-test.js
+*.test.js
+scripts/COMPRESS_ASSETS_README.md
+lib/SAFE_EXEC_README.md
