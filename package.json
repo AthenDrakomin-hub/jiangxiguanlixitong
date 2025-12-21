@@ -24,7 +24,6 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@tailwindcss/postcss": "^4.1.17",
     "@upstash/redis": "^1.35.8",
-    
     "axios": "^1.13.2",
     "csv-parse": "^6.1.0",
     "lucide-react": "^0.556.0",
@@ -42,7 +41,7 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
     "@typescript-eslint/parser": "^8.50.0",
-    "@vercel/node": "^2.3.0",
+    "@vercel/node": "^5.5.16",
     "@vitejs/plugin-react": "^4.3.1",
     "@vitest/ui": "^4.0.15",
     "autoprefixer": "^10.4.19",
