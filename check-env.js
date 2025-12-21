@@ -6,6 +6,18 @@
  * This script checks if the required environment variables are set.
  */
 
+// Load environment variables from .env.local
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from .env.local
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+// Also try to load from .env if .env.local doesn't exist
+if (!process.env.KV_REST_API_URL) {
+  dotenv.config();
+}
+
 console.log('🔍 Checking environment variables...\n');
 
 // Check for required environment variables

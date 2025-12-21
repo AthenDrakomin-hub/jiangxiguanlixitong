@@ -20,7 +20,8 @@
     "test:watch": "vitest",
     "prepare": "husky install",
     "build:force": "npm run build",
-    "check-db": "node check-env.js"
+    "check-db": "node check-env.js",
+    "test-db": "node test-api.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
