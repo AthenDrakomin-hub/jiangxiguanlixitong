@@ -61,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Get all items in collection
           try {
             const items = await kvClient.getAll(collectionName);
-            
+
             res.status(200).json({
               success: true,
               data: items,
@@ -80,8 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Return API info
           res.status(200).json({
             success: true,
-            message:
-              'Jiangxi Hotel Management System API (KV Storage Version)',
+            message: 'Jiangxi Hotel Management System API (KV Storage Version)',
             timestamp: new Date().toISOString(),
           });
         }
@@ -109,7 +108,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'PUT':
         // Update existing item
         if (collectionName && query.id && body) {
-          const updatedItem = await kvClient.update(collectionName, query.id as string, body);
+          const updatedItem = await kvClient.update(
+            collectionName,
+            query.id as string,
+            body
+          );
 
           if (updatedItem) {
             res.status(200).json({
@@ -135,8 +138,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       case 'DELETE':
         // Delete item
         if (collectionName && query.id) {
-          const deleted = await kvClient.delete(collectionName, query.id as string);
-          
+          const deleted = await kvClient.delete(
+            collectionName,
+            query.id as string
+          );
+
           if (deleted) {
             res.status(200).json({
               success: true,

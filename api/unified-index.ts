@@ -1,7 +1,7 @@
 // api/unified-index.ts
 /**
  * Unified API Handler for both Blob and KV storage
- * 
+ *
  * This module provides a single API endpoint that can work with
  * both Vercel Blob Storage and Vercel KV storage based on
  * environment configuration.
@@ -53,7 +53,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Log current storage backend
     const backendInfo = storageManager.getBackendInfo();
-    console.log(`Using storage backend: ${backendInfo.type} (${backendInfo.description})`);
+    console.log(
+      `Using storage backend: ${backendInfo.type} (${backendInfo.description})`
+    );
 
     // Validate collection name
     if (
@@ -74,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Get all items in collection
           try {
             const items = await storageManager.getAll(collectionName);
-            
+
             res.status(200).json({
               success: true,
               data: items,
@@ -109,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (collectionName && body) {
           try {
             const newItem = await storageManager.create(collectionName, body);
-            
+
             res.status(201).json({
               success: true,
               data: newItem,
@@ -138,8 +140,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Update existing item
         if (collectionName && query.id && body) {
           try {
-            const updatedItem = await storageManager.update(collectionName, query.id as string, body);
-            
+            const updatedItem = await storageManager.update(
+              collectionName,
+              query.id as string,
+              body
+            );
+
             if (updatedItem) {
               res.status(200).json({
                 success: true,
@@ -176,8 +182,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Delete item
         if (collectionName && query.id) {
           try {
-            const deleted = await storageManager.delete(collectionName, query.id as string);
-            
+            const deleted = await storageManager.delete(
+              collectionName,
+              query.id as string
+            );
+
             if (deleted) {
               res.status(200).json({
                 success: true,

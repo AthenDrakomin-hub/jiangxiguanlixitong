@@ -5,6 +5,7 @@
 ## 功能
 
 ### safeSpawn(command, args, options)
+
 安全地启动子进程，避免 shell 注入风险。
 
 ```javascript
@@ -12,13 +13,14 @@ import { safeSpawn } from './lib/safe-exec.js';
 
 // 安全的方式启动子进程（推荐）
 const child = safeSpawn('uglifyjs', [
-  './public/order-8201.js', 
-  '-o', 
-  './public/order-8201.min.js'
+  './public/order-8201.js',
+  '-o',
+  './public/order-8201.min.js',
 ]);
 ```
 
 ### safeExecWithShell(command, args, options)
+
 安全地执行带有 shell 选项的命令。
 
 ```javascript
@@ -26,13 +28,14 @@ import { safeExecWithShell } from './lib/safe-exec.js';
 
 // 必须使用 shell 时的安全方式
 const child = safeExecWithShell('uglifyjs', [
-  './public/order-*.js', 
-  '-o', 
-  './public/order.min.js'
+  './public/order-*.js',
+  '-o',
+  './public/order.min.js',
 ]);
 ```
 
 ### validateLocation(location)
+
 验证和清理前端生成的位置参数（如房间号）。
 
 ```javascript
@@ -46,6 +49,7 @@ if (!location) {
 ```
 
 ### escapeHtml(str)
+
 转义 HTML 以防止 XSS 攻击。
 
 ```javascript

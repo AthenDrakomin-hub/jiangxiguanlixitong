@@ -1,7 +1,7 @@
 // update-env-config.js
 /**
  * Script to update environment configuration for KV migration
- * 
+ *
  * This script helps update the .env.local file to switch between
  * Blob storage and KV storage.
  */
@@ -18,7 +18,7 @@ function updateEnvConfig(useKvStorage = true) {
     if (fs.existsSync(envFilePath)) {
       envContent = fs.readFileSync(envFilePath, 'utf8');
     }
-    
+
     // Update or add the USE_KV_STORAGE variable
     if (envContent.includes('USE_KV_STORAGE=')) {
       // Replace existing value
@@ -30,14 +30,19 @@ function updateEnvConfig(useKvStorage = true) {
       // Add new line
       envContent += `\nUSE_KV_STORAGE=${useKvStorage}\n`;
     }
-    
+
     // Write back to file
     fs.writeFileSync(envFilePath, envContent);
-    
-    console.log(`✅ Environment configuration updated: USE_KV_STORAGE=${useKvStorage}`);
+
+    console.log(
+      `✅ Environment configuration updated: USE_KV_STORAGE=${useKvStorage}`
+    );
     return true;
   } catch (error) {
-    console.error('❌ Failed to update environment configuration:', error.message);
+    console.error(
+      '❌ Failed to update environment configuration:',
+      error.message
+    );
     return false;
   }
 }
@@ -49,14 +54,18 @@ const command = args[0];
 switch (command) {
   case 'enable-kv':
     updateEnvConfig(true);
-    console.log('💡 KV storage is now enabled. Restart your application to apply changes.');
+    console.log(
+      '💡 KV storage is now enabled. Restart your application to apply changes.'
+    );
     break;
-    
+
   case 'disable-kv':
     updateEnvConfig(false);
-    console.log('💡 KV storage is now disabled. Restart your application to apply changes.');
+    console.log(
+      '💡 KV storage is now disabled. Restart your application to apply changes.'
+    );
     break;
-    
+
   case 'status':
     try {
       if (fs.existsSync(envFilePath)) {
@@ -69,20 +78,29 @@ switch (command) {
           console.log('📊 Current status: Using default storage (Blob)');
         }
       } else {
-        console.log('📊 Current status: No .env.local file found (using default storage)');
+        console.log(
+          '📊 Current status: No .env.local file found (using default storage)'
+        );
       }
     } catch (error) {
-      console.error('❌ Failed to read environment configuration:', error.message);
+      console.error(
+        '❌ Failed to read environment configuration:',
+        error.message
+      );
     }
     break;
-    
+
   default:
     console.log('🔧 Environment Configuration Updater');
     console.log('====================================');
     console.log('Usage:');
     console.log('  node update-env-config.js enable-kv    Enable KV storage');
-    console.log('  node update-env-config.js disable-kv   Disable KV storage (use Blob)');
-    console.log('  node update-env-config.js status       Check current status');
+    console.log(
+      '  node update-env-config.js disable-kv   Disable KV storage (use Blob)'
+    );
+    console.log(
+      '  node update-env-config.js status       Check current status'
+    );
     break;
 }
 

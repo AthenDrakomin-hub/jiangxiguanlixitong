@@ -1,7 +1,7 @@
 // api/kv-index.ts
 /**
  * Vercel API Handler for KV Storage
- * 
+ *
  * This module provides a RESTful API interface for the KV storage system,
  * serving as a drop-in replacement for the existing Blob storage API.
  */
@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Get all items in collection
           try {
             const items = await kvClient.getAll(collectionName);
-            
+
             res.status(200).json({
               success: true,
               data: items,
@@ -88,8 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Return API info
           res.status(200).json({
             success: true,
-            message:
-              'Jiangxi Hotel Management System API (KV Storage Version)',
+            message: 'Jiangxi Hotel Management System API (KV Storage Version)',
             timestamp: new Date().toISOString(),
           });
         }
@@ -100,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (collectionName && body) {
           try {
             const newItem = await kvClient.create(collectionName, body);
-            
+
             res.status(201).json({
               success: true,
               data: newItem,
@@ -127,8 +126,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Update existing item
         if (collectionName && query.id && body) {
           try {
-            const updatedItem = await kvClient.update(collectionName, query.id as string, body);
-            
+            const updatedItem = await kvClient.update(
+              collectionName,
+              query.id as string,
+              body
+            );
+
             if (updatedItem) {
               res.status(200).json({
                 success: true,
@@ -162,8 +165,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Delete item
         if (collectionName && query.id) {
           try {
-            const deleted = await kvClient.delete(collectionName, query.id as string);
-            
+            const deleted = await kvClient.delete(
+              collectionName,
+              query.id as string
+            );
+
             if (deleted) {
               res.status(200).json({
                 success: true,

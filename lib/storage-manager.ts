@@ -1,7 +1,7 @@
 // lib/storage-manager.ts
 /**
  * Storage Manager for handling KV storage backend
- * 
+ *
  * This module provides a unified interface for data storage that uses
  * Vercel KV (Upstash Redis) as the storage backend.
  */
@@ -28,7 +28,10 @@ export const storageManager = {
    * @param itemData The data to store
    * @returns The created item with ID
    */
-  async create<T extends { id?: string }>(entityType: string, itemData: Omit<T, 'id'>): Promise<T & { id: string }> {
+  async create<T extends { id?: string }>(
+    entityType: string,
+    itemData: Omit<T, 'id'>
+  ): Promise<T & { id: string }> {
     // Use KV storage
     return await kvClient.create<T>(entityType, itemData);
   },
@@ -40,7 +43,11 @@ export const storageManager = {
    * @param itemData The data to update
    * @returns The updated item
    */
-  async update<T>(entityType: string, id: string, itemData: Partial<T>): Promise<T | null> {
+  async update<T>(
+    entityType: string,
+    id: string,
+    itemData: Partial<T>
+  ): Promise<T | null> {
     // Use KV storage
     return await kvClient.update<T>(entityType, id, itemData);
   },
@@ -74,7 +81,7 @@ export const storageManager = {
   getBackendInfo(): { type: string; description: string } {
     return {
       type: 'KV',
-      description: 'Vercel KV (Upstash Redis) Storage'
+      description: 'Vercel KV (Upstash Redis) Storage',
     };
-  }
+  },
 };

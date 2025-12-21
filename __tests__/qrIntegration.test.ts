@@ -1,10 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/dom';
+import { describe, it, expect, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 // Mock the global objects that are normally available in the browser
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-global.window = dom.window as any;
+global.window = dom.window as unknown as Window & typeof globalThis;
 global.document = dom.window.document;
 
 // Mock React components
@@ -26,7 +25,7 @@ describe('QR Code and Customer Order Integration', () => {
     const testRoomNumber = '8201';
     const baseUrl = 'http://localhost:5173';
     const expectedUrl = `${baseUrl}?page=customer&id=${testRoomNumber}`;
-    
+
     // In a real test, we would mount the component and check the generated URLs
     expect(expectedUrl).toContain('page=customer');
     expect(expectedUrl).toContain('id=8201');
@@ -35,7 +34,7 @@ describe('QR Code and Customer Order Integration', () => {
   it('should render CustomerOrder component when page=customer parameter is present', () => {
     // This would test that the App component routes correctly to CustomerOrder
     // when the URL contains ?page=customer
-    
+
     // Simulate URL with customer parameter
     Object.defineProperty(window, 'location', {
       value: {
@@ -44,8 +43,8 @@ describe('QR Code and Customer Order Integration', () => {
       },
       writable: true,
     });
-    
-    // In a real test, we would mount the App component and check that 
+
+    // In a real test, we would mount the App component and check that
     // CustomerOrder is rendered
     expect(window.location.search).toContain('page=customer');
   });
@@ -53,7 +52,7 @@ describe('QR Code and Customer Order Integration', () => {
   it('should pass correct table ID to CustomerOrder component', () => {
     // This would test that the ID parameter from the QR code URL
     // is correctly passed to the CustomerOrder component
-    
+
     const testId = '8201';
     Object.defineProperty(window, 'location', {
       value: {
@@ -62,7 +61,7 @@ describe('QR Code and Customer Order Integration', () => {
       },
       writable: true,
     });
-    
+
     // In a real test, we would check that the CustomerOrder component
     // receives the correct tableId prop
     expect(window.location.search).toContain(`id=${testId}`);

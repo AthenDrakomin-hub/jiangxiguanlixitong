@@ -22,6 +22,7 @@ The system currently uses Vercel Blob Storage for data persistence. This migrati
 ### 1. Prepare the Environment
 
 Ensure all required dependencies are installed:
+
 ```bash
 npm install @upstash/redis
 ```
@@ -29,6 +30,7 @@ npm install @upstash/redis
 ### 2. Test KV Storage Functionality
 
 Run the test script to verify KV storage works correctly:
+
 ```bash
 node scripts/test-kv-storage.js
 ```
@@ -36,6 +38,7 @@ node scripts/test-kv-storage.js
 ### 3. Perform the Migration
 
 Run the migration script to transfer all data from Blob to KV:
+
 ```bash
 node scripts/migrate-blob-to-kv.js
 ```
@@ -43,6 +46,7 @@ node scripts/migrate-blob-to-kv.js
 ### 4. Verify the Migration
 
 Run the verification script to ensure data integrity:
+
 ```bash
 node scripts/verify-kv-storage.js
 ```
@@ -50,6 +54,7 @@ node scripts/verify-kv-storage.js
 ### 5. Switch to KV Storage
 
 Update your `.env.local` file to use KV storage:
+
 ```bash
 USE_KV_STORAGE=true
 ```
@@ -63,6 +68,7 @@ Verify that all application functionality works correctly with the new storage b
 If issues are encountered, you can rollback to Blob storage:
 
 1. Update `.env.local`:
+
    ```bash
    USE_KV_STORAGE=false
    ```

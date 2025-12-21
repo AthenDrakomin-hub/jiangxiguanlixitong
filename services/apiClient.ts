@@ -4,7 +4,7 @@
 const API_BASE_URL = '/api';
 
 export const apiClient = {
-  async get(endpoint: string) {
+  async get<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -12,7 +12,7 @@ export const apiClient = {
     return await response.json();
   },
 
-  async post(endpoint: string, data: any) {
+  async post<T>(endpoint: string, data: T): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
@@ -26,7 +26,7 @@ export const apiClient = {
     return await response.json();
   },
 
-  async put(endpoint: string, data: any) {
+  async put<T>(endpoint: string, data: T): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: {
@@ -40,7 +40,7 @@ export const apiClient = {
     return await response.json();
   },
 
-  async delete(endpoint: string) {
+  async delete<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
     });
