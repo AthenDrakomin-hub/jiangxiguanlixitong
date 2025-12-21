@@ -6,7 +6,7 @@
  * Vercel KV (Upstash Redis) as the storage backend.
  */
 
-import { kvClient } from './kv-client.ts';
+import { kvClient } from './kv-client.js';
 
 /**
  * Storage Manager with KV backend support
@@ -17,9 +17,9 @@ export const storageManager = {
    * @param entityType The type of entity (e.g., 'dishes', 'orders')
    * @returns Array of all items
    */
-  async getAll<T>(entityType: string): Promise<T[]> {
+  async getAll(entityType: string) {
     // Use KV storage
-    return await kvClient.getAll<T>(entityType);
+    return await kvClient.getAll(entityType);
   },
 
   /**
@@ -28,12 +28,9 @@ export const storageManager = {
    * @param itemData The data to store
    * @returns The created item with ID
    */
-  async create<T extends { id?: string }>(
-    entityType: string,
-    itemData: Omit<T, 'id'>
-  ): Promise<T & { id: string }> {
+  async create(entityType: string, itemData: Record<string, unknown>) {
     // Use KV storage
-    return await kvClient.create<T>(entityType, itemData);
+    return await kvClient.create(entityType, itemData);
   },
 
   /**
@@ -43,13 +40,13 @@ export const storageManager = {
    * @param itemData The data to update
    * @returns The updated item
    */
-  async update<T>(
+  async update(
     entityType: string,
     id: string,
-    itemData: Partial<T>
-  ): Promise<T | null> {
+    itemData: Record<string, unknown>
+  ) {
     // Use KV storage
-    return await kvClient.update<T>(entityType, id, itemData);
+    return await kvClient.update(entityType, id, itemData);
   },
 
   /**
