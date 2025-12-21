@@ -7,7 +7,7 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { kvClient } from '../lib/kv-client.ts';
+import { kvClient } from '../lib/kv-client.js';
 
 // Define allowed collections
 const ALLOWED_COLLECTIONS = [

@@ -13,6 +13,25 @@ export const APP_CONFIG = {
     DESCRIPTION: '酒店管理后台系统',
   },
 
+  // 默认存储信息
+  DEFAULT_STORE_INFO: {
+    name: '江西酒店',
+    address: '江西省南昌市',
+    phone: '0791-88888888',
+    openingHours: '24小时营业',
+  },
+
+  // 默认财务信息
+  DEFAULT_FINANCIAL: {
+    exchangeRate: 8.2,
+    serviceChargeRate: 0.1,
+  },
+
+  // 通知配置
+  NOTIFICATION: {
+    soundUrl: '/notification.mp3',
+  },
+
   // API配置
   API: {
     BASE_URL: '/api',
