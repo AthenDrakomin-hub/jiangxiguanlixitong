@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import './index.css';
-import { APP_CONFIG } from './config/appConfig';
+import { APP_CONFIG } from './src/config';
 import {
   Order,
   Dish,

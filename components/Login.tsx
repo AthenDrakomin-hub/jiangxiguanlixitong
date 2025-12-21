@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { APP_CONFIG } from '../config/appConfig';
+import { APP_CONFIG } from '../src/config';
 
 interface LoginProps {
   onLogin: () => void;

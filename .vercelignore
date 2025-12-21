@@ -17,12 +17,8 @@ VERCEL_DEPLOYMENT_GUIDE.md
 docs/
 
 # Script files that are not needed in production
-scripts/COMPRESS_ASSETS_README.md
-scripts/check-env-config.js
-scripts/migrate-blob-to-kv.js
-scripts/test-kv-storage.js
-scripts/update-env-config.js
-scripts/verify-kv-storage.js
+scripts/
+*.js
 
 # Library documentation
 lib/SAFE_EXEC_README.md
