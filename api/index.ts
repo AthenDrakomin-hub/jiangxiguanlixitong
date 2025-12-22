@@ -1,4 +1,4 @@
-import { kvClient } from './db.js';
+import { kvClient } from '../lib/kv-client.js';
 
 // Edge Runtime 配置（极致性能）
 export const config = {
