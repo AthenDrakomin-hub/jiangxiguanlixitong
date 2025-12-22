@@ -33,7 +33,7 @@ import DataManagement from './DataManagement';
 import DevToolkit from './DevToolkit';
 import PrinterConfig from './PrinterConfig';
 
-import auditLogger from '../services/auditLogger';
+import { auditLogger } from '../services/auditLogger';
 
 interface SettingsProps {
   onSettingsChange?: (settings: SystemSettings) => void;

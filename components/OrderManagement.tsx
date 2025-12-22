@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types';
 import { PrinterService } from '../services/printer';
-import auditLogger from '../services/auditLogger';
+import { auditLogger } from '../services/auditLogger';
 import { apiClient } from '../services/apiClient';
 
 interface OrderManagementProps {
