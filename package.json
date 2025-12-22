@@ -6,74 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "check-api": "node check-api.js",
-    "test-github-sync": "node test-github-sync.js",
-    "migrate-data": "node scripts/migrate-data-to-blob.js",
-    "add-sample-data": "node scripts/add-sample-data.js",
-    "compress-assets": "node scripts/compress-frontend-assets.js",
-    "compress-assets-all": "node scripts/compress-frontend-assets.js --all",
-    "lint": "eslint . --ext .ts,.tsx",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --write .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "prepare": "husky install",
-    "build:force": "npm run build",
-    "check-db": "node check-env.js",
-    "test-db": "node test-api.mjs"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.1.0",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
-    "@tailwindcss/postcss": "^4.1.17",
-    "@upstash/redis": "^1.35.8",
-    "axios": "^1.13.2",
-    "csv-parse": "^6.1.0",
-    "lucide-react": "^0.556.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "recharts": "^3.5.1",
-    "shell-quote": "^1.8.3"
+    "@upstash/redis": "^1.35.8"
   },
   "devDependencies": {
-    "@jridgewell/sourcemap-codec": "^1.5.5",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
     "@types/node": "^24.10.2",
-    "@types/node-fetch": "^2.6.11",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.50.0",
-    "@typescript-eslint/parser": "^8.50.0",
     "@vercel/node": "^5.5.16",
     "@vitejs/plugin-react": "^4.3.1",
-    "@vitest/ui": "^4.0.15",
-    "autoprefixer": "^10.4.19",
-    "dotenv": "^17.2.3",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-tailwindcss": "^3.15.0",
-    "husky": "^8.0.0",
-    "jsdom": "^27.0.1",
-    "lint-staged": "^15.2.2",
-    "postcss": "^8.4.38",
-    "prettier": "^3.2.5",
-    "tailwindcss": "^3.4.18",
-    "terser": "^5.44.1",
-    "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "vite": "^7.2.7",
-    "vitest": "^4.0.15"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix --quiet",
-      "prettier --write --loglevel silent"
-    ]
+    "vite": "^7.2.7"
   }
 }

@@ -1,62 +1,23 @@
 # Dependencies
 node_modules/
 
-# Test files and directories
-__tests__/
-*.test.js
-*.test.ts
-*.test.tsx
-*-test.js
-test-*.js
-
-# Documentation files (except those needed for the app)
-README*.md
-LICENSE
-RELEASE_NOTES.md
-VERCEL_DEPLOYMENT_GUIDE.md
-docs/
-
-# Script files that are not needed in production
-scripts/
-
-# Library documentation
-lib/SAFE_EXEC_README.md
-
-# Configuration files
+# Environment files
 .env*
-.eslint*
-.prettier*
-.stylelint*
 
-# IDE and editor files
+# IDE files
 .vscode/
 .idea/
 
-# OS generated files
+# OS files
 .DS_Store
 Thumbs.db
-Desktop.ini
 
 # Log files
 *.log
-
-# Runtime data
-*.pid
-*.seed
-
-# Cache files
-.cache/
-.tmp/
-temp/
-
-# Build artifacts (handled by build process)
-/dist/
-.build/
-.out/
 
 # Git files
 .git/
 .gitignore
 
-# Vercel files (avoid circular deployment)
+# Vercel files
 .vercel/

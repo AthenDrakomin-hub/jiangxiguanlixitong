@@ -1,55 +1,36 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
+/**
+ * Vite 构建配置
+ * - 依赖通过 importmap 从 esm.sh CDN 加载
+ * - 构建仅转译 TSX，不打包依赖
+ */
 export default defineConfig({
-  plugins: [
-    react(),
-    // 移除vite-plugin-checker以解决DEP0190警告
-  ], // Allow these prefixes to be exposed to client-side code via import.meta.env
-  // This enables reading the default environment variables
+  plugins: [react()],
   envPrefix: ['VITE_'],
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          recharts: ['recharts'],
-          'dnd-kit': [
-            '@dnd-kit/core',
-            '@dnd-kit/sortable',
-            '@dnd-kit/utilities',
-          ],
-          lucide: ['lucide-react'],
-          // Split large components into separate chunks
-          dashboard: ['./components/Dashboard.tsx'],
-          'menu-management': ['./components/MenuManagement.tsx'],
-          'customer-order': ['./components/CustomerOrder.tsx'],
-          'order-management': ['./components/OrderManagement.tsx'],
-          'finance-system': ['./components/FinanceSystem.tsx'],
-          'inventory-management': ['./components/InventoryManagement.tsx'],
-          settings: ['./components/Settings.tsx'],
-          // Split utility functions into separate chunks
-          utils: ['./utils/cache.ts', './utils/cookie.ts', './utils/i18n.ts'],
-          services: ['./services/apiClient.ts', './services/auditLogger.ts'],
-          hooks: ['./hooks/useAppData.ts', './hooks/useCachedData.ts'],
-        },
-      },
+      // 构建时排除所有 npm 依赖，由 importmap 加载
+      external: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'recharts',
+        'lucide-react',
+        '@dnd-kit/core',
+        '@dnd-kit/sortable',
+        '@dnd-kit/utilities',
+        'axios',
+      ],
     },
   },
-  // 配置开发服务器和代理
   server: {
     port: 5173,
-    // 移除API代理配置，因为Vercel无服务器函数在同一进程中处理
   },
-  // 确保正确的模块解析和构建设置
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
-  },
-  esbuild: {
-    // TypeScript特定设置
-    tsconfigRaw: '{}',
   },
 });

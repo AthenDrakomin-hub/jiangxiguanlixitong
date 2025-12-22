@@ -33,10 +33,5 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false,
-  "build": {
-    "env": {
-      "NODE_VERSION": "20.19.0"
-    }
-  }
+  "trailingSlash": false
 }

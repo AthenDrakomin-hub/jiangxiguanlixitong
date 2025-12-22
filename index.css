@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* No-Build 架构: Tailwind CSS 通过 CDN 加载，此文件仅包含自定义样式 */
 
 body {
   font-family: 'Inter', sans-serif;
