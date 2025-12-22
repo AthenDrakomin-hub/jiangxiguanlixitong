@@ -38,10 +38,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Check if database is connected
   if (!kvClient.isConnected()) {
+    const status = kvClient.getConnectionStatus();
     res.status(503).json({
       success: false,
       message: 'Database connection not available',
       error: 'Missing Redis configuration',
+      debug: {
+        ...status,
+        hint: 'Please link Vercel KV in dashboard and redeploy',
+      },
     });
     return;
   }
@@ -88,10 +93,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             });
           }
         } else {
-          // Return API info
+          // Return API info with connection status
+          const status = kvClient.getConnectionStatus();
           res.status(200).json({
             success: true,
             message: 'Jiangxi Hotel Management System API (KV Storage Version)',
+            kvStatus: status,
             timestamp: new Date().toISOString(),
           });
         }

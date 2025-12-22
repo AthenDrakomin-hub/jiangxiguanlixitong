@@ -1,55 +1,93 @@
 // kv-client.js
 /**
  * KV Client for Upstash Redis integration
- *
- * This module provides a wrapper around the Upstash Redis client
- * to handle data storage and retrieval for the hotel management system.
+ * 
+ * Edge Runtime 兼容配置，显式传入环境变量
+ * 支持 Vercel KV 自动注入的环境变量
  */
 
 import { Redis } from '@upstash/redis';
 
-// Get Redis configuration from environment variables
-const redisUrl =
-  process.env.HOTEL_KV_KV_REST_API_URL ||
-  process.env.HOTEL_KV_REST_API_URL ||
-  process.env.KV_REST_API_URL ||
-  process.env.UPSTASH_REDIS_URL;
+// 获取环境变量（Vercel KV 自动注入）
+const getEnvVar = (key: string): string | undefined => {
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
 
-const redisToken =
-  process.env.HOTEL_KV_KV_REST_API_TOKEN ||
-  process.env.HOTEL_KV_REST_API_TOKEN ||
-  process.env.KV_REST_API_TOKEN ||
-  process.env.UPSTASH_REDIS_TOKEN;
+const redisUrl = getEnvVar('KV_REST_API_URL') || getEnvVar('KV_URL');
+const redisToken = getEnvVar('KV_REST_API_TOKEN');
 
-// Validate required environment variables
+// 环境变量检查（不阻塞，仅记录）
 if (!redisUrl || !redisToken) {
-  console.error('❌ Missing required Upstash Redis environment variables!');
-  console.error(
-    'Please set: HOTEL_KV_KV_REST_API_URL and HOTEL_KV_KV_REST_API_TOKEN (or HOTEL_KV_REST_API_URL and HOTEL_KV_REST_API_TOKEN, or KV_REST_API_URL and KV_REST_API_TOKEN, or UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN)'
-  );
-  // Instead of throwing an error, we'll create a mock client for development
-  console.warn('🔧 Using mock KV client for development purposes');
+  console.warn('⚠️ KV environment variables not found');
+  console.warn('Expected: KV_REST_API_URL and KV_REST_API_TOKEN');
+  console.warn('Please link Vercel KV in dashboard or redeploy');
 }
 
-// Initialize Redis client with environment variables
-const redis =
-  redisUrl && redisToken
-    ? new Redis({
-        url: redisUrl,
-        token: redisToken,
-      })
-    : null;
+// 显式初始化 Redis 客户端（Edge Runtime 兼容）
+const redis = redisUrl && redisToken
+  ? new Redis({
+      url: redisUrl,
+      token: redisToken,
+      // Edge Runtime 配置
+      automaticDeserialization: true,
+    })
+  : null;
 
 /**
  * KV Client with helper methods for the hotel management system
  */
 export const kvClient = {
   /**
-   * Check if the client is connected
-   * @returns Boolean indicating if the client is properly configured
+   * 检查连接状态并返回配置信息
+   * @returns 连接状态和配置详情
    */
+  getConnectionStatus() {
+    return {
+      connected: redis !== null,
+      hasUrl: !!redisUrl,
+      hasToken: !!redisToken,
+      urlPreview: redisUrl ? `${redisUrl.substring(0, 30)}...` : 'NOT_SET',
+    };
+  },
   isConnected() {
     return !!redis;
+  },
+
+  /**
+   * 序列化数据（处理 BigInt 等特殊类型）
+   * @param data 原始数据
+   * @returns 序列化后的数据
+   */
+  serializeData(data: any): any {
+    if (data === null || data === undefined) {
+      return data;
+    }
+
+    // 处理 BigInt
+    if (typeof data === 'bigint') {
+      return Number(data);
+    }
+
+    // 处理数组
+    if (Array.isArray(data)) {
+      return data.map((item) => this.serializeData(item));
+    }
+
+    // 处理对象
+    if (typeof data === 'object') {
+      const result: Record<string, any> = {};
+      for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          result[key] = this.serializeData(data[key]);
+        }
+      }
+      return result;
+    }
+
+    return data;
   },
 
   /**
@@ -66,10 +104,16 @@ export const kvClient = {
 
     try {
       const data = await redis.get(key);
+      let parsedData;
+      
       if (typeof data === 'string') {
-        return JSON.parse(data);
+        parsedData = JSON.parse(data);
+      } else {
+        parsedData = data;
       }
-      return data;
+      
+      // 深度序列化处理（BigInt 等）
+      return parsedData ? this.serializeData(parsedData) : null;
     } catch (error) {
       console.error(`Error getting key ${key}:`, error);
       return null;
@@ -203,9 +247,17 @@ export const kvClient = {
 
     try {
       const ids = await this.getIndex(entityType);
-      const items = [];
+      
+      // 强化检查：确保 ids 是数组
+      if (!Array.isArray(ids) || ids.length === 0) {
+        console.warn(`No items found in index for: ${entityType}`);
+        return [];
+      }
 
+      const items = [];
       for (const id of ids) {
+        if (!id) continue; // 跳过空值
+        
         const item = await this.get(`${entityType}:${id}`);
         if (item) {
           items.push(item);
