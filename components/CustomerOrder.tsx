@@ -33,6 +33,8 @@ import { setLanguage, t, LANGUAGE_COOKIE_NAME } from '../utils/i18n';
 import { getCookie, setCookie } from '../utils/cookie';
 import ImageLazyLoad from './ImageLazyLoad';
 import OrderDetail from './OrderDetail';
+import { apiClient } from '../services/apiClient';
+import { auditLogger } from '../services/auditLogger';
 
 interface CustomerOrderProps {
   dishes: Dish[];
@@ -210,6 +212,8 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
 
   // Loading State
   const [loadingText, setLoadingText] = useState('加载中...');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Settings
   const storeInfo = systemSettings?.storeInfo;
@@ -472,10 +476,9 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
 
     setIsProcessingPayment(true);
     setLoadingText(t('processing_payment'));
-    try {
-      // Simulate network request
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    setError(null);
 
+    try {
       const newOrder: Order = {
         id: `ORD-${Date.now()}`,
         tableNumber: tableId,
@@ -493,7 +496,17 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
         notes: notes || '',
       };
 
+      // 创建订单
+      await apiClient.create('orders', newOrder);
       onPlaceOrder(newOrder);
+
+      // 记录日志
+      auditLogger.log(
+        'info',
+        'CUSTOMER_ORDER',
+        `H5点餐: ${tableId} - ${selectedPaymentMethod} - ₱${totalAmount.toFixed(2)}`,
+        'customer'
+      );
 
       // Post message to React Native WebView if available
       if (
@@ -523,11 +536,15 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
       setCashAmountTendered('');
       setNotes('');
 
+      // 显示成功消息
+      setSuccess(t('order_placed_successfully') || '订单提交成功！');
+      setTimeout(() => setSuccess(null), 3000);
+
       // Switch to history tab
       setActiveTab('ORDERS');
     } catch (error) {
       console.error('Failed to process payment:', error);
-      alert(t('error'));
+      setError(t('error') || '订单提交失败，请重试');
     } finally {
       setIsProcessingPayment(false);
     }
@@ -580,6 +597,26 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
 
   return (
     <div className="fade-in relative mx-auto min-h-screen max-w-md overflow-hidden bg-slate-50 pb-24 font-sans shadow-2xl">
+      {/* Error Message */}
+      {error && (
+        <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 transform rounded-lg border border-red-200 bg-red-50 px-6 py-3 text-red-700 shadow-lg">
+          <div className="flex items-center gap-2">
+            <X size={18} />
+            <span className="font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {success && (
+        <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 transform rounded-lg border border-green-200 bg-green-50 px-6 py-3 text-green-700 shadow-lg">
+          <div className="flex items-center gap-2">
+            <Receipt size={18} />
+            <span className="font-medium">{success}</span>
+          </div>
+        </div>
+      )}
+
       {/* Loading Overlay */}
       {isProcessingPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
@@ -648,7 +685,8 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                       onClick={() => {
                         const wifiInfo = `WiFi: ${storeInfo.wifiSsid}${storeInfo.wifiPassword ? `, Pass: ${storeInfo.wifiPassword}` : ''}`;
                         navigator.clipboard.writeText(wifiInfo).then(() => {
-                          alert('WiFi信息已复制到剪贴板');
+                          setSuccess('WiFi信息已复制到剪贴板');
+                          setTimeout(() => setSuccess(null), 2000);
                         });
                       }}
                       className="text-xs text-blue-500 hover:text-blue-700"
