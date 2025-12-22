@@ -7,7 +7,7 @@ export const config = {
 
 // 定义认证凭证
 const ADMIN_USER = process.env.VITE_ADMIN_USER || 'admin';
-const ADMIN_PASS = process.env.VITE_ADMIN_PASS || 'admin123';
+const ADMIN_PASS = process.env.VITE_ADMIN_PASS || 'JX88888888';
 
 // 处理登录请求
 async function handleLogin(req: Request) {

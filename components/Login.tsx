@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { apiClient } from '../services/apiClient';
 
 interface LoginProps {
   onLogin: () => void;
