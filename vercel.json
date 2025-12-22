@@ -10,11 +10,7 @@
   },
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/((?!api).*)",
+      "source": "/:path((?:(?!api).)*)",
       "destination": "/index.html"
     }
   ],
@@ -38,11 +34,5 @@
     }
   ],
   "cleanUrls": true,
-  "trailingSlash": false,
-  "routes": [
-    {
-      "src": "/api/.*",
-      "dest": "/api/index"
-    }
-  ]
+  "trailingSlash": false
 }
