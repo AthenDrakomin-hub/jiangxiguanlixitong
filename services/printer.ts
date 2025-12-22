@@ -216,6 +216,13 @@ export class PrinterService {
       )
       .join('');
 
+    // 判断是否为房间订单（以 8/2/3 开头的为房间号）
+    const isRoomService = /^[823]\d+$/.test(order.tableId || '');
+    const locationLabel = isRoomService 
+      ? `🚪 房间号 Room No.` 
+      : `🍽️ 桌号 Table`;
+    const locationValue = order.tableId || 'N/A';
+
     return `
       <!DOCTYPE html>
       <html>
@@ -234,6 +241,24 @@ export class PrinterService {
             margin: 0 auto;
           }
           h2 { text-align: center; margin: 5px 0; }
+          .room-highlight {
+            background: #000;
+            color: #fff;
+            padding: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            border-radius: 4px;
+          }
+          .location-badge {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: bold;
+          }
           table { width: 100%; border-collapse: collapse; margin: 10px 0; }
           th, td { padding: 5px 2px; font-size: 12px; }
           th { border-bottom: 1px dashed #000; }
@@ -244,10 +269,21 @@ export class PrinterService {
       <body>
         <h2>江西酒店 Jiangxi Hotel</h2>
         <p style="text-align: center; margin: 5px 0;">Pasay City, Manila</p>
+        
+        ${isRoomService ? `
+          <div class="room-highlight">
+            🚪 送至房间 DELIVER TO ROOM<br>
+            <span style="font-size: 24px;">${locationValue}</span>
+          </div>
+        ` : `
+          <p style="text-align: center; margin: 10px 0;">
+            <span class="location-badge">${locationLabel}: ${locationValue}</span>
+          </p>
+        `}
+        
         <p style="text-align: center; margin: 5px 0; border-bottom: 1px dashed #000; padding-bottom: 5px;">
-          订单号: ${order.id}<br>
-          桌号: ${order.tableId || 'N/A'}<br>
-          时间: ${new Date(order.timestamp).toLocaleString('zh-CN')}
+          订单号 Order No: ${order.id}<br>
+          时间 Time: ${new Date(order.timestamp).toLocaleString('zh-CN')}
         </p>
         <table>
           <thead>
@@ -337,13 +373,25 @@ export class PrinterService {
 
   private static generateOrderESCPOS(order: Order): string {
     // ESC/POS 指令格式（飞鹅云支持）
+    // 判断是否为房间订单
+    const isRoomService = /^[823]\d+$/.test(order.tableId || '');
+    
     let content = '';
     content += '<CB>江西酒店 Jiangxi Hotel</CB><BR>';
     content += '<C>Pasay City, Manila</C><BR>';
     content += '--------------------------------<BR>';
-    content += `订单号: ${order.id}<BR>`;
-    content += `桌号: ${order.tableId || 'N/A'}<BR>`;
-    content += `时间: ${new Date(order.timestamp).toLocaleString('zh-CN')}<BR>`;
+    
+    // 如果是房间订单，醒目显示房间号
+    if (isRoomService) {
+      content += '<CB><BOLD>🚪 送至房间 DELIVER TO ROOM</BOLD></CB><BR>';
+      content += '<CB><BOLD><font size="tall">${order.tableId}</font></BOLD></CB><BR>';
+      content += '--------------------------------<BR>';
+    } else {
+      content += `<B>🍽️ 桌号 Table: ${order.tableId || 'N/A'}</B><BR>`;
+    }
+    
+    content += `订单号 Order: ${order.id}<BR>`;
+    content += `时间 Time: ${new Date(order.timestamp).toLocaleString('zh-CN')}<BR>`;
     content += '--------------------------------<BR>';
 
     order.items.forEach((item) => {

@@ -10,6 +10,8 @@ import {
   Wifi,
   Info,
   Monitor,
+  QrCode,
+  BedDouble,
 } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings } from '../services/storage';
 import { apiClient } from '../services/apiClient';
@@ -601,6 +603,94 @@ const Settings: React.FC<SettingsProps> = (props) => {
 
         {/* Printer Configuration */}
         <PrinterConfig />
+
+        {/* Room QR Code Management Info */}
+        <div className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-blue-900">
+            <QrCode className="text-blue-600" size={20} /> 房间二维码配置说明
+          </h3>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-blue-200 bg-white p-4">
+              <h4 className="mb-2 flex items-center gap-2 font-bold text-blue-800">
+                <BedDouble size={16} />
+                如何使用房间二维码？
+              </h4>
+              <ol className="space-y-2 text-sm text-slate-700">
+                <li className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                    1
+                  </span>
+                  <span>
+                    进入 <strong>二维码生成中心</strong> 菜单，选择「客房 Rooms」标签
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                    2
+                  </span>
+                  <span>
+                    系统已自动为每个房间生成独特二维码（包含房间号）
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                    3
+                  </span>
+                  <span>
+                    点击 <strong>批量打印</strong> 按钮，打印所有房间二维码
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                    4
+                  </span>
+                  <span>
+                    将打印好的二维码贴到对应房间内（如床头、桌面）
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">
+                    <Check size={12} />
+                  </span>
+                  <span>
+                    <strong>完成！</strong>客户扫码后，系统自动识别房间号
+                  </span>
+                </li>
+              </ol>
+            </div>
+
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+              <h4 className="mb-2 font-bold text-green-800">
+                ✅ 客户点餐流程
+              </h4>
+              <ul className="space-y-1 text-sm text-green-700">
+                <li>• 客户在房间扫码 → 自动识别房间号（如 801、302）</li>
+                <li>• 选菜、提交订单 → 订单自动包含房间信息</li>
+                <li>• 收银台/厨房打印小票 → <strong>醒目显示房间号</strong></li>
+                <li>• 服务员看到房间号 → 直接送餐到房间</li>
+              </ul>
+            </div>
+
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+              <h4 className="mb-2 font-bold text-orange-800">
+                💡 技术原理
+              </h4>
+              <ul className="space-y-1 text-sm text-orange-700">
+                <li>• 二维码 URL 格式：<code className="rounded bg-orange-100 px-1 py-0.5 font-mono text-xs">?page=customer&id=801</code></li>
+                <li>• 房间号自动传递给 H5 点餐页面</li>
+                <li>• 订单提交时包含 <code className="rounded bg-orange-100 px-1 py-0.5 font-mono text-xs">tableNumber</code> 字段</li>
+                <li>• 打印服务自动识别房间订单（801/802/803... 开头）</li>
+              </ul>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-3">
+              <Info className="mt-0.5 shrink-0 text-blue-600" size={16} />
+              <p className="text-xs text-slate-600">
+                <strong>注意：</strong>客户扫码后不需要手动输入房间号，系统已自动识别。打印小票时会用黑色醒目块显示房间号，方便服务员快速识别送餐位置。
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* 3. Financial Parameters */}
         <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
