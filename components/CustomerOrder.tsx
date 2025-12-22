@@ -508,6 +508,20 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
         'customer'
       );
 
+      // 自动打印到收银台/厨房（不是客户端打印）
+      try {
+        // 调用后台打印 API，使用已配置的打印机（云打印或浏览器打印）
+        await fetch('/api/print-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: newOrder }),
+        });
+        console.log('[CustomerOrder] 订单已发送到打印队列');
+      } catch (printError) {
+        // 打印失败不影响订单提交
+        console.warn('[CustomerOrder] 打印失败，但订单已成功创建:', printError);
+      }
+
       // Post message to React Native WebView if available
       if (
         typeof window !== 'undefined' &&
