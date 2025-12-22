@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { apiClient } from '../services/apiClient';
 
 interface LoginProps {
   onLogin: () => void;
@@ -10,66 +11,36 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loginAttempts, setLoginAttempts] = useState(0);
-
-  // 检查密码强度
-  const isPasswordStrong = (password: string) => {
-    // 至少8位，包含大小写字母和数字
-    const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
-    return strongRegex.test(password);
-  };
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
 
     try {
-      // 检查是否已达到最大登录尝试次数
-      if (loginAttempts >= 3) {
-        setError('登录尝试次数已达上限 / Max login attempts reached');
-        return;
-      }
+      // 调用后端 API 验证
+      const response = await apiClient.post('/auth/login', {
+        username,
+        password,
+      });
 
-      // 获取环境变量中的管理员凭据，如果没有设置则不允许登录
-      const validUser = import.meta.env.VITE_ADMIN_USER;
-      const validPass = import.meta.env.VITE_ADMIN_PASS;
-
-      // 检查是否设置了管理员凭据
-      if (!validUser || !validPass) {
-        setError(
-          '系统未配置管理员账户，请联系系统管理员 / System administrator account not configured'
-        );
-        return;
-      }
-
-      if (username === validUser) {
-        // 检查密码
-        if (password === validPass) {
-          // 重置登录尝试次数
-          setLoginAttempts(0);
-          onLogin();
-        } else {
-          // 增加登录尝试次数
-          const newAttempts = loginAttempts + 1;
-          setLoginAttempts(newAttempts);
-          setError(
-            `密码错误 / Invalid Password (${3 - newAttempts} attempts left)`
-          );
+      if (response.success) {
+        // 登录成功，保存 token
+        if (response.token) {
+          localStorage.setItem('auth_token', response.token);
         }
+        onLogin();
       } else {
-        // 增加登录尝试次数
-        const newAttempts = loginAttempts + 1;
-        setLoginAttempts(newAttempts);
-        setError(
-          `用户名不存在 / User not found (${3 - newAttempts} attempts left)`
-        );
+        setError(response.message || '登录失败 / Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);
-      // 添加错误处理，防止白屏
       setError(
-        '登录过程中发生错误: ' +
-          (error instanceof Error ? error.message : '未知错误')
+        '登录失败: ' + (error instanceof Error ? error.message : '网络错误')
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -131,6 +102,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 className="w-full rounded-xl border border-slate-200 py-3 pl-10 pr-12 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
                 placeholder=""
                 autoComplete="current-password"
+                disabled={isLoading}
               />
               <button
                 type="button"
@@ -140,24 +112,19 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            {password && !isPasswordStrong(password) && (
-              <div className="mt-2 text-xs text-amber-600">
-                密码至少8位，需包含大小写字母和数字
-              </div>
-            )}
           </div>
 
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-4 font-bold text-white shadow-lg transition-all hover:bg-slate-800 hover:shadow-xl"
-            disabled={loginAttempts >= 3}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-4 font-bold text-white shadow-lg transition-all hover:bg-slate-800 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isLoading || !username || !password}
           >
-            <LogIn size={20} /> Login 登录
+            <LogIn size={20} /> {isLoading ? 'Logging in...' : 'Login 登录'}
           </button>
         </form>
 
         <div className="border-t border-slate-100 bg-slate-50 p-4 text-center text-xs text-slate-400">
-          Secure Access • Vercel Protected • 登录失败次数: {loginAttempts}/3
+          Secure Access • Backend Authentication
         </div>
       </div>
     </div>
