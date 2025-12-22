@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, Users, Shield, Edit3, Trash2, Plus } from 'lucide-react';
+import { Save, Users, Shield, Edit3, Trash2, Plus, AlertCircle } from 'lucide-react';
+import { apiClient } from '../services/apiClient';
 
 // 角色类型定义
 interface Role {
@@ -124,6 +125,7 @@ const PermissionManagement: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userFormData, setUserFormData] = useState({
     username: '',
+    password: '', // 添加密码字段
     role: '',
     isActive: true,
   });
@@ -131,8 +133,12 @@ const PermissionManagement: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      // 模拟加载角色和用户数据
-      // 在实际应用中，这些数据会从API加载
+      
+      // TODO: 从 API 加载真实数据
+      // const rolesResponse = await apiClient.get('/roles');
+      // const usersResponse = await apiClient.get('/users');
+      
+      // 暂时使用 Mock 数据（等待后端 API 实现）
       const mockRoles: Role[] = [
         {
           id: 'admin',
@@ -193,6 +199,7 @@ const PermissionManagement: React.FC = () => {
       setUsers(mockUsers);
     } catch (error) {
       console.error('加载权限数据失败:', error);
+      alert('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
     } finally {
       setLoading(false);
     }
@@ -279,6 +286,7 @@ const PermissionManagement: React.FC = () => {
     setEditingUser(null);
     setUserFormData({
       username: '',
+      password: '',
       role: '',
       isActive: true,
     });
@@ -329,6 +337,22 @@ const PermissionManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* 功能说明提示 */}
+      <div className="rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4">
+        <div className="flex items-start">
+          <AlertCircle className="mt-0.5 h-5 w-5 text-yellow-500" />
+          <div className="ml-3 flex-1">
+            <h3 className="text-sm font-medium text-yellow-800">
+              模拟模式运行中
+            </h3>
+            <div className="mt-1 text-sm text-yellow-700">
+              <p>当前权限管理使用本地 Mock 数据，所有修改仅在前端生效。</p>
+              <p className="mt-1">完整功能需要后端 API 支持，包括：用户认证、角色授权、权限验证等。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">权限管理</h2>
@@ -547,8 +571,13 @@ const PermissionManagement: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteRole(role.id)}
-                            className="flex items-center gap-1 text-red-600 hover:text-red-900"
-                            disabled={role.id === 'admin'} // 禁止删除管理员角色
+                            className={`flex items-center gap-1 ${
+                              role.id === 'admin'
+                                ? 'cursor-not-allowed text-slate-300'
+                                : 'text-red-600 hover:text-red-900'
+                            }`}
+                            disabled={role.id === 'admin'}
+                            title={role.id === 'admin' ? '禁止删除系统默认角色' : ''}
                           >
                             <Trash2 size={14} />
                             删除
@@ -574,6 +603,7 @@ const PermissionManagement: React.FC = () => {
                 setShowUserForm(true);
                 setUserFormData({
                   username: '',
+                  password: '',
                   role: '',
                   isActive: true,
                 });
@@ -608,8 +638,31 @@ const PermissionManagement: React.FC = () => {
                       }
                       className="w-full rounded-lg border border-slate-300 px-3 py-2"
                       required
+                      disabled={!!editingUser} // 编辑时不允许修改用户名
                     />
                   </div>
+
+                  {!editingUser && (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                        密码 *
+                      </label>
+                      <input
+                        type="password"
+                        value={userFormData.password}
+                        onChange={(e) =>
+                          setUserFormData({
+                            ...userFormData,
+                            password: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                        required={!editingUser}
+                        minLength={6}
+                        placeholder="最少 6 位字符"
+                      />
+                    </div>
+                  )}
 
                   <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -742,8 +795,13 @@ const PermissionManagement: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id)}
-                            className="flex items-center gap-1 text-red-600 hover:text-red-900"
-                            disabled={user.username === 'admin'} // 禁止删除管理员用户
+                            className={`flex items-center gap-1 ${
+                              user.username === 'admin'
+                                ? 'cursor-not-allowed text-slate-300'
+                                : 'text-red-600 hover:text-red-900'
+                            }`}
+                            disabled={user.username === 'admin'}
+                            title={user.username === 'admin' ? '禁止删除系统管理员' : ''}
                           >
                             <Trash2 size={14} />
                             删除
