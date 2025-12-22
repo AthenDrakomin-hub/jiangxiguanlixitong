@@ -113,7 +113,7 @@ const App = () => {
   });
 
   // --- Data Initialization ---
-  const { data, loading, error } = useAppData();
+  const { data, loading, error, refresh } = useAppData();
 
   // Update state when data changes
   useEffect(() => {
@@ -147,12 +147,12 @@ const App = () => {
   useEffect(() => {
     const handleDataRefresh = () => {
       // 强制刷新数据，不使用缓存
-      useAppData(0)[0].refetch(false);
+      refresh();
     };
     
     window.addEventListener('data-refresh', handleDataRefresh);
     return () => window.removeEventListener('data-refresh', handleDataRefresh);
-  }, []);
+  }, [refresh]);
 
   // --- Optimized Persistence Layer (Debounced) ---
 
