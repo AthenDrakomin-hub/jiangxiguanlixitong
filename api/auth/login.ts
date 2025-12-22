@@ -2,7 +2,7 @@
 // 登录认证 API（Edge Runtime）
 
 export const config = {
-  runtime: 'edge',
+  runtime: 'edge-runtime@1.5.0',
 };
 
 // 定义认证凭证
