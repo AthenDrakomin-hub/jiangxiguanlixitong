@@ -29,6 +29,7 @@ import {
 import { PrinterService } from '../services/printer';
 import DataManagement from './DataManagement';
 import DevToolkit from './DevToolkit';
+import PrinterConfig from './PrinterConfig';
 
 import auditLogger from '../services/auditLogger';
 
@@ -146,6 +147,16 @@ const Settings: React.FC<SettingsProps> = (props) => {
     showStoreInfo: true,
     showWiFiInfo: true,
   });
+
+  // Printer Configuration State
+  const [printerMode, setPrinterMode] = useState<'browser' | 'cloud'>('browser');
+  const [cloudPrinterConfig, setCloudPrinterConfig] = useState({
+    apiUrl: 'https://api.feieyun.cn/Api/Open/',
+    user: '',
+    ukey: '',
+    sn: '',
+  });
+  const [printerTestStatus, setPrinterTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
   // Storage State
   const [storageSettings, setStorageSettings] = useState<StorageSettings>(
@@ -587,6 +598,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
             </div>
           </div>
         </div>
+
+        {/* Printer Configuration */}
+        <PrinterConfig />
 
         {/* 3. Financial Parameters */}
         <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
