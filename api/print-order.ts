@@ -1,7 +1,7 @@
 // api/print-order.ts
 // 后台自动打印订单接口（用于H5客户点餐后自动打印到收银台/厨房）
 
-import { PrinterService } from '../services/printer';
+import { PrinterService } from '../services/printer.js';
 
 export const config = {
   runtime: 'edge',

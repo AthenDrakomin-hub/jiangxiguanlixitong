@@ -73,7 +73,7 @@ async function printToFeyin(
   try {
     // 生成签名（飞鹅云要求）
     const timestamp = Math.floor(Date.now() / 1000);
-    const sign = generateFeyinSign(config.user, config.ukey, timestamp);
+    const sign = await generateFeyinSign(config.user, config.ukey, timestamp);
 
     // 构造请求参数
     const params = new URLSearchParams({
@@ -116,13 +116,13 @@ async function printToFeyin(
  * 生成飞鹅云签名
  * 算法: SHA1(user + ukey + timestamp)
  */
-function generateFeyinSign(
+async function generateFeyinSign(
   user: string,
   ukey: string,
   timestamp: number
-): string {
+): Promise<string> {
   const str = user + ukey + timestamp.toString();
-  return sha1(str);
+  return await sha1(str);
 }
 
 /**
