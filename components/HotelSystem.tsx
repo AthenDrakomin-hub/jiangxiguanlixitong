@@ -17,6 +17,8 @@ import {
   HotelRoomStatus,
 } from '../types';
 import ImageLazyLoad from './ImageLazyLoad';
+import { apiClient } from '../services/apiClient';
+import { auditLogger } from '../services/auditLogger';
 
 interface HotelSystemProps {
   rooms: HotelRoom[];
@@ -40,6 +42,8 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('加载中...');
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Filter rooms by active floor
   const displayRooms = rooms.filter((r: HotelRoom) => r.floor === activeFloor);
@@ -119,11 +123,9 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
 
     setIsLoading(true);
     setLoadingText('正在提交订单...');
+    setError(null);
 
     try {
-      // Simulate network request delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
       const newOrder: Order = {
         id: `ORD-${Date.now()}`,
         tableNumber: selectedRoom.number,
@@ -138,39 +140,51 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
         notes: '客房点餐 Room Service',
       };
 
+      // 创建订单
+      await apiClient.create('orders', newOrder);
       onPlaceOrder(newOrder);
 
-      const updateFn = (r: HotelRoom) => {
-        if (r.id === selectedRoom.id) {
-          const updatedOrders = [...r.orders];
-          cart.forEach((cartItem) => {
-            const existing = updatedOrders.find(
-              (o) => o.dishId === cartItem.dishId
-            );
-            if (existing) existing.quantity += cartItem.quantity;
-            else updatedOrders.push(cartItem);
-          });
+      // 更新房间状态
+      const updatedOrders = [...selectedRoom.orders];
+      cart.forEach((cartItem) => {
+        const existing = updatedOrders.find(
+          (o) => o.dishId === cartItem.dishId
+        );
+        if (existing) existing.quantity += cartItem.quantity;
+        else updatedOrders.push(cartItem);
+      });
 
-          return {
-            ...r,
-            // 对于纯送餐服务，房间状态始终保持为Occupied以表示该房间有订单历史
-            status: 'Occupied' as HotelRoomStatus,
-            orders: updatedOrders,
-            guestName: r.guestName || '点餐客人 Guest',
-            lastOrderTime: new Date().toISOString(),
-          };
-        }
-        return r;
+      const updatedRoom = {
+        ...selectedRoom,
+        status: 'Occupied' as HotelRoomStatus,
+        orders: updatedOrders,
+        guestName: selectedRoom.guestName || '点餐客人 Guest',
+        lastOrderTime: new Date().toISOString(),
       };
 
-      setRooms((prev) => prev.map(updateFn));
+      await apiClient.update('hotel_rooms', selectedRoom.id, updatedRoom);
 
-      // Success feedback
-      alert(`订单已发送至厨房！Order Sent!\n房号: ${selectedRoom.number}`);
-      setCart([]); // 清空购物车而不是关闭模态框，允许继续点餐
+      setRooms((prev) =>
+        prev.map((r) => (r.id === selectedRoom.id ? updatedRoom : r))
+      );
+
+      auditLogger.log(
+        'info',
+        'ROOM_ORDER',
+        `客房点餐: ${selectedRoom.number} - ₱${newOrder.totalAmount}`,
+        'admin'
+      );
+
+      setSuccessMessage(
+        `订单已发送至厨房！Order Sent!\n房号: ${selectedRoom.number}`
+      );
+      setCart([]);
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
       console.error('Failed to submit order:', error);
-      alert('订单提交失败，请重试。Order submission failed, please try again.');
+      setError(
+        '订单提交失败，请重试。Order submission failed, please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -178,6 +192,26 @@ const HotelSystem: React.FC<HotelSystemProps> = ({
 
   return (
     <div className="relative mx-auto min-h-screen max-w-md overflow-hidden bg-slate-50 pb-24 font-sans shadow-2xl">
+      {/* Error Message */}
+      {error && (
+        <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 transform rounded-lg border border-red-200 bg-red-50 px-6 py-3 text-red-700 shadow-lg">
+          <div className="flex items-center gap-2">
+            <X size={18} />
+            <span className="font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 transform rounded-lg border border-green-200 bg-green-50 px-6 py-3 text-green-700 shadow-lg">
+          <div className="flex items-center gap-2">
+            <Receipt size={18} />
+            <span className="font-medium">{successMessage}</span>
+          </div>
+        </div>
+      )}
+
       {/* Loading Overlay */}
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
