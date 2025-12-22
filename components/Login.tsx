@@ -19,20 +19,26 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      // 调用后端 API 验证
-      const response = await apiClient.post('/auth/login', {
-        username,
-        password,
+      // 调用后端认证 API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
       });
 
-      if (response.success) {
-        // 登录成功，保存 token
-        if (response.token) {
-          localStorage.setItem('auth_token', response.token);
-        }
+      const result = await response.json();
+
+      if (result.success) {
+        // 登录成功，保存认证状态到 sessionStorage
+        sessionStorage.setItem('jx_auth', 'true');
         onLogin();
       } else {
-        setError(response.message || '登录失败 / Login failed');
+        setError(result.message || '登录失败 / Login failed');
       }
     } catch (error) {
       console.error('Login error:', error);

@@ -5,6 +5,151 @@ export const config = {
   runtime: 'edge',
 };
 
+// 定义认证凭证
+const ADMIN_USER = process.env.VITE_ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.VITE_ADMIN_PASS || 'admin123';
+
+// 处理登录请求
+async function handleLogin(req: Request) {
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Method not allowed',
+      }),
+      {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST',
+        },
+      }
+    );
+  }
+
+  try {
+    const { username, password } = await req.json();
+
+    // 验证凭据
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Login successful',
+          token: 'fake-jwt-token-for-demo',
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    } else {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Invalid credentials',
+        }),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
+  }
+}
+
+async function handleLogin(req: Request) {
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Method not allowed',
+      }),
+      {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST',
+        },
+      }
+    );
+  }
+
+  try {
+    const { username, password } = await req.json();
+
+    // 验证凭据
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Login successful',
+          token: 'fake-jwt-token-for-demo',
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    } else {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Invalid credentials',
+        }),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
+  }
+}
+
 // Define allowed collections
 const ALLOWED_COLLECTIONS = [
   'dishes',
@@ -26,6 +171,12 @@ function isValidCollection(collectionName: string): boolean {
 export default async function handler(req: Request) {
   const url = new URL(req.url);
   const method = req.method;
+  const pathname = url.pathname;
+
+  // 处理认证端点
+  if (pathname === '/api/auth/login') {
+    return handleLogin(req);
+  }
 
   // CORS 头设置
   const corsHeaders = {
