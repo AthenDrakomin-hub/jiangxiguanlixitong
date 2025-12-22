@@ -63,6 +63,11 @@ const DevToolkit: React.FC = () => {
           `- 酒店房间: ${data.created?.hotel_rooms || 0} 个\n` +
           `- 支付方式: ${data.created?.payment_methods || 0} 种`
         );
+        
+        // 清除应用缓存并刷新数据
+        localStorage.removeItem('jx_cache_app_data');
+        window.dispatchEvent(new CustomEvent('data-refresh'));
+        
         // 重新加载状态
         setTimeout(() => loadDBStatus(), 1000);
       } else {
