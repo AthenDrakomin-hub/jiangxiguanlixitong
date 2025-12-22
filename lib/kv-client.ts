@@ -7,16 +7,6 @@
  */
 
 import { Redis } from '@upstash/redis';
-import dotenv from 'dotenv';
-import path from 'path';
-
-// Load environment variables from .env.local
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
-
-// Also try to load from .env if .env.local doesn't exist
-if (!process.env.KV_REST_API_URL) {
-  dotenv.config();
-}
 
 // Get Redis configuration from environment variables
 const redisUrl =
