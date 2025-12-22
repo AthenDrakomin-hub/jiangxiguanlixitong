@@ -1,15 +1,40 @@
+// api/auth/login.ts
+// 登录认证 API（Edge Runtime）
+
 export const config = {
   runtime: 'edge',
 };
 
+// 定义认证凭证
+const ADMIN_USER = process.env.VITE_ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.VITE_ADMIN_PASS || 'admin123';
+
 export default async function handler(req: Request) {
-  // 只允许 POST 请求
+  // CORS 头设置
+  const corsHeaders = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }
+
   if (req.method !== 'POST') {
     return new Response(
-      JSON.stringify({ success: false, message: 'Method not allowed' }),
+      JSON.stringify({
+        success: false,
+        message: 'Method not allowed',
+      }),
       {
         status: 405,
-        headers: { 'Content-Type': 'application/json' },
+        headers: corsHeaders,
       }
     );
   }
@@ -17,49 +42,41 @@ export default async function handler(req: Request) {
   try {
     const { username, password } = await req.json();
 
-    // 从服务器环境变量读取管理员凭据（不会暴露到前端）
-    const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-    const ADMIN_PASS = process.env.ADMIN_PASS || 'Admin123';
-
-    // 验证用户名和密码
+    // 验证凭据
     if (username === ADMIN_USER && password === ADMIN_PASS) {
-      // 登录成功，生成简单的 token（实际项目中应使用 JWT）
-      const token = btoa(`${username}:${Date.now()}`);
-
       return new Response(
         JSON.stringify({
           success: true,
-          token: token,
-          message: '登录成功 / Login successful',
+          message: 'Login successful',
+          token: 'fake-jwt-token-for-demo',
         }),
         {
           status: 200,
-          headers: { 'Content-Type': 'application/json' },
+          headers: corsHeaders,
+        }
+      );
+    } else {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Invalid credentials',
+        }),
+        {
+          status: 401,
+          headers: corsHeaders,
         }
       );
     }
-
-    // 登录失败
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: '用户名或密码错误 / Invalid username or password',
-      }),
-      {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
   } catch (error) {
-    console.error('Login error:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        message: '登录失败 / Login failed',
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: corsHeaders,
       }
     );
   }
