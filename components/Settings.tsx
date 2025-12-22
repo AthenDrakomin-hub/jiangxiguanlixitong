@@ -12,6 +12,7 @@ import {
   Monitor,
 } from 'lucide-react';
 import { getStorageSettings, saveStorageSettings } from '../services/storage';
+import { apiClient } from '../services/apiClient';
 import {
   StorageSettings,
   StoreInfo,
@@ -27,6 +28,7 @@ import {
 } from '../types';
 import { PrinterService } from '../services/printer';
 import DataManagement from './DataManagement';
+import DevToolkit from './DevToolkit';
 
 import auditLogger from '../services/auditLogger';
 
@@ -900,6 +902,9 @@ const Settings: React.FC<SettingsProps> = (props) => {
           // onDataUpdate?.();
         }}
       />
+
+      {/* Developer Toolkit */}
+      <DevToolkit />
 
       {/* Confirmation Modal */}
       {confirmModal.open && (
