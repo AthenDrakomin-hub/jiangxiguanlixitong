@@ -17,10 +17,12 @@ import {
   Mic2,
   Archive,
   Receipt,
+  AlertCircle,
 } from 'lucide-react';
 import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types';
 import { PrinterService } from '../services/printer';
 import auditLogger from '../services/auditLogger';
+import { apiClient } from '../services/apiClient';
 
 interface OrderManagementProps {
   orders: Order[];
@@ -34,6 +36,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'All'>('All');
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [newOrderNotification, setNewOrderNotification] = useState<{
     count: number;
     timestamp: number;
@@ -41,7 +44,12 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
 
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20; // 默认每页20条记录
+  const itemsPerPage = 20;
+
+  // 筛选条件变化时重置页码
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus]);
 
   // 检查是否有新订单
   useEffect(() => {
@@ -67,7 +75,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
     }
   }, [orders]);
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     // 如果是要支付，先打开支付模态框
     if (newStatus === OrderStatus.PAID) {
       setActiveOrderId(orderId);
@@ -75,54 +83,74 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
       return;
     }
 
-    // 记录订单状态变更日志
-    const order = orders.find((o) => o.id === orderId);
-    if (order) {
-      auditLogger.log(
-        'info',
-        'ORDER_STATUS_CHANGE',
-        `订单 ${orderId} 状态从 ${order.status} 变更为 ${newStatus}`,
-        'admin'
-      );
-    }
+    try {
+      // 记录订单状态变更日志
+      const order = orders.find((o) => o.id === orderId);
+      if (order) {
+        auditLogger.log(
+          'info',
+          'ORDER_STATUS_CHANGE',
+          `订单 ${orderId} 状态从 ${order.status} 变更为 ${newStatus}`,
+          'admin'
+        );
+      }
 
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
+      // 更新后端数据
+      await apiClient.update('orders', orderId, { status: newStatus });
+
+      // 更新前端状态
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      );
+      setError(null);
+    } catch (error) {
+      console.error('更新订单状态失败:', error);
+      setError('更新状态失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
-  const confirmPayment = (method: PaymentMethod) => {
+  const confirmPayment = async (method: PaymentMethod) => {
     if (!activeOrderId) return;
 
-    // 记录支付日志
-    auditLogger.log(
-      'info',
-      'ORDER_PAYMENT',
-      `订单 ${activeOrderId} 通过 ${method} 方式完成支付`,
-      'admin'
-    );
+    try {
+      // 记录支付日志
+      auditLogger.log(
+        'info',
+        'ORDER_PAYMENT',
+        `订单 ${activeOrderId} 通过 ${method} 方式完成支付`,
+        'admin'
+      );
 
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id === activeOrderId) {
-          // 逻辑：外卖 -> 立即完成。堂食 -> 已上菜（保留在桌/活跃列表）。
-          const isTakeout = o.source === 'TAKEOUT';
-          const nextStatus = isTakeout
-            ? OrderStatus.COMPLETED
-            : OrderStatus.SERVED;
+      const order = orders.find((o) => o.id === activeOrderId);
+      if (!order) return;
 
-          // 支付时自动打印小票
-          const paidOrder = { ...o, status: nextStatus, paymentMethod: method };
-          PrinterService.printOrder(paidOrder);
+      // 逻辑：外卖 -> 立即完成。堂食 -> 已上菜（保留在桌/活跃列表）。
+      const isTakeout = order.source === 'TAKEOUT';
+      const nextStatus = isTakeout ? OrderStatus.COMPLETED : OrderStatus.SERVED;
 
-          return paidOrder;
-        }
-        return o;
-      })
-    );
+      const paidOrder = { ...order, status: nextStatus, paymentMethod: method };
 
-    setPaymentModalOpen(false);
-    setActiveOrderId(null);
+      // 更新后端数据
+      await apiClient.update('orders', activeOrderId, {
+        status: nextStatus,
+        paymentMethod: method,
+      });
+
+      // 支付时自动打印小票
+      PrinterService.printOrder(paidOrder);
+
+      // 更新前端状态
+      setOrders((prev) =>
+        prev.map((o) => (o.id === activeOrderId ? paidOrder : o))
+      );
+
+      setPaymentModalOpen(false);
+      setActiveOrderId(null);
+      setError(null);
+    } catch (error) {
+      console.error('支付失败:', error);
+      setError('支付失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
   const handlePrintBill = (order: Order) => {
@@ -278,6 +306,25 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* 错误提示 */}
+      {error && (
+        <div className="rounded-lg border-l-4 border-red-500 bg-red-50 p-4">
+          <div className="flex items-start">
+            <AlertCircle className="mt-0.5 h-5 w-5 text-red-500" />
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-red-800">操作失败</h3>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-sm font-medium text-red-800 underline hover:text-red-900"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 新订单通知横幅 */}
       {newOrderNotification && (
         <div className="fixed right-4 top-20 z-50 flex animate-bounce items-center gap-2 rounded-lg bg-red-500 px-4 py-3 text-white shadow-lg">
@@ -445,7 +492,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
                       </div>
                       <div className="text-xs text-slate-400">
                         参考价 Reference: ≈ ¥
-                        {(order.totalAmount / 8.2).toFixed(1)}
+                        {(order.totalAmount / 8.2).toFixed(1)} {/* TODO: 从设置中加载汇率 */}
                       </div>
                     </div>
 
@@ -525,16 +572,14 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
                       {/* Cancel Option */}
                       {(order.status === OrderStatus.PENDING ||
                         order.status === OrderStatus.COOKING) && (
-                        <button
-                          onClick={() => {
-                            if (confirm('Cancel order? 确定取消订单吗?'))
-                              handleStatusChange(
-                                order.id,
-                                OrderStatus.CANCELLED
-                              );
-                          }}
-                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-                        >
+                          <button
+                            onClick={async () => {
+                              if (confirm('Cancel order? 确定取消订单吗?')) {
+                                await handleStatusChange(order.id, OrderStatus.CANCELLED);
+                              }
+                            }}
+                            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                          >
                           <XCircle size={16} /> Cancel / Kanselahin
                         </button>
                       )}
