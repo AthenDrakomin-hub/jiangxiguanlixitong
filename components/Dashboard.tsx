@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   PieChart,
   Pie,
@@ -14,6 +14,8 @@ import {
   FileSignature,
   BedDouble,
   Utensils,
+  Heart,
+  Eye,
 } from 'lucide-react';
 import {
   Order,
@@ -332,6 +334,193 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
         </div>
+
+        {/* 技术栈实时热度统计 */}
+        <TechStackStats />
+      </div>
+    </div>
+  );
+};
+
+// 技术栈统计组件
+interface TechStat {
+  techId: string;
+  likes: number;
+  views: number;
+}
+
+const TechStackStats: React.FC = () => {
+  const [stats, setStats] = useState<TechStat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const techNames: Record<string, string> = {
+    react: 'React 18',
+    typescript: 'TypeScript',
+    vite: 'Vite',
+    tailwind: 'Tailwind CSS',
+    vercel: 'Vercel',
+    'upstash-redis': 'Upstash Redis',
+    recharts: 'Recharts',
+    'lucide-react': 'Lucide Icons',
+    'dnd-kit': 'DnD Kit',
+  };
+
+  // 获取统计数据
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/stats');
+      const result = await response.json();
+
+      if (result.success) {
+        setStats(result.data);
+        setError(null);
+      } else {
+        setError(result.message || '获取数据失败');
+      }
+    } catch (err) {
+      setError('网络请求失败');
+      console.error('Failed to fetch stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 点赞功能
+  const handleLike = async (techId: string) => {
+    try {
+      const response = await fetch('/api/stats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          techId,
+          action: 'like',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // 更新本地状态
+        setStats((prevStats) =>
+          prevStats.map((stat) =>
+            stat.techId === techId
+              ? { ...stat, likes: result.data.likes }
+              : stat
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Failed to like:', err);
+    }
+  };
+
+  // 查看功能（页面加载时自动触发）
+  useEffect(() => {
+    const recordViews = async () => {
+      // 为所有技术栈记录查看
+      for (const techId of Object.keys(techNames)) {
+        try {
+          await fetch('/api/stats', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              techId,
+              action: 'view',
+            }),
+          });
+        } catch (err) {
+          console.error(`Failed to record view for ${techId}:`, err);
+        }
+      }
+      // 记录后重新获取数据
+      fetchStats();
+    };
+
+    recordViews();
+  }, []); // 仅在组件挂载时执行一次
+
+  if (loading) {
+    return (
+      <div className="card-hover rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+        <div className="animate-pulse">
+          <div className="mb-4 h-6 w-48 rounded bg-slate-200"></div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-20 rounded bg-slate-100"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="card-hover rounded-xl border border-red-100 bg-red-50 p-6 shadow-sm">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card-hover rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 text-xl font-bold text-slate-800">
+          <TrendingUp size={20} className="text-indigo-500" />
+          技术栈实时热度
+        </h3>
+        <button
+          onClick={fetchStats}
+          className="rounded-lg bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-600 hover:bg-indigo-100"
+        >
+          刷新
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {stats.map((stat) => (
+          <div
+            key={stat.techId}
+            className="transition-smooth group rounded-lg border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 hover:border-indigo-300 hover:shadow-md"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h4 className="font-semibold text-slate-800">
+                {techNames[stat.techId] || stat.techId}
+              </h4>
+              <button
+                onClick={() => handleLike(stat.techId)}
+                className="rounded-full p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                title="点赞"
+              >
+                <Heart size={18} />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-1.5 text-red-500">
+                <Heart size={16} className="fill-current" />
+                <span className="font-bold">{stat.likes}</span>
+                <span className="text-slate-400">点赞</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-blue-500">
+                <Eye size={16} />
+                <span className="font-bold">{stat.views}</span>
+                <span className="text-slate-400">查看</span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
