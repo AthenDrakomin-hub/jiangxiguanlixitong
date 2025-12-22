@@ -22,6 +22,8 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { KTVRoom, Dish, OrderItem, PaymentMethod } from '../types';
+import { apiClient } from '../services/apiClient';
+import { auditLogger } from '../services/auditLogger';
 
 interface KTVSystemProps {
   rooms: KTVRoom[];
@@ -33,6 +35,7 @@ const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
   const [selectedRoom, setSelectedRoom] = useState<KTVRoom | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [openRoomData, setOpenRoomData] = useState({ guestName: '' });
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -91,137 +94,191 @@ const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
     setIsModalOpen(true);
   };
 
-  const handleOpenRoom = () => {
+  const handleOpenRoom = async () => {
     if (!selectedRoom || !openRoomData.guestName) return;
 
-    setRooms((prev) =>
-      prev.map((r) =>
-        r.id === selectedRoom.id
-          ? {
-              ...r,
-              status: 'InUse',
-              currentSession: {
-                guestName: openRoomData.guestName,
-                startTime: new Date().toISOString(),
-                orders: [],
-              },
-              currentSong: 'Ready to play...',
-            }
-          : r
-      )
-    );
+    try {
+      const updatedRoom = {
+        ...selectedRoom,
+        status: 'InUse' as const,
+        currentSession: {
+          guestName: openRoomData.guestName,
+          startTime: new Date().toISOString(),
+          orders: [],
+        },
+        currentSong: 'Ready to play...',
+      };
 
-    setIsModalOpen(false);
+      await apiClient.put(`/ktv_rooms/${selectedRoom.id}`, updatedRoom);
+
+      setRooms((prev) =>
+        prev.map((r) => (r.id === selectedRoom.id ? updatedRoom : r))
+      );
+
+      auditLogger.log(
+        'info',
+        'KTV_OPEN',
+        `开台: ${selectedRoom.name} - ${openRoomData.guestName}`,
+        'admin'
+      );
+
+      setIsModalOpen(false);
+      setError(null);
+    } catch (error) {
+      setError('开台失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
   const initiateCheckout = () => {
     setShowPaymentSelector(true);
   };
 
-  const confirmCheckout = (method: PaymentMethod) => {
+  const confirmCheckout = async (method: PaymentMethod) => {
     if (!selectedRoom || !selectedRoom.currentSession) return;
 
-    const bill = calculateTotal(selectedRoom);
+    try {
+      const bill = calculateTotal(selectedRoom);
 
-    setRooms((prev) =>
-      prev.map((r) =>
-        r.id === selectedRoom.id
-          ? {
-              ...r,
-              status: 'Cleaning',
-              currentSession: undefined,
-              currentSong: undefined,
-            }
-          : r
-      )
-    );
+      const updatedRoom = {
+        ...selectedRoom,
+        status: 'Cleaning' as const,
+        currentSession: undefined,
+        currentSong: undefined,
+      };
 
-    alert(
-      `Checkout Success!\nMethod: ${method}\nAmount: ₱${bill.total.toFixed(2)}`
-    );
-    setIsModalOpen(false);
-  };
+      await apiClient.put(`/ktv_rooms/${selectedRoom.id}`, updatedRoom);
 
-  const handleFinishCleaning = (roomId: string) => {
-    setRooms((prev) =>
-      prev.map((r) => (r.id === roomId ? { ...r, status: 'Available' } : r))
-    );
-    if (selectedRoom?.id === roomId) {
-      setSelectedRoom((prev) =>
-        prev ? { ...prev, status: 'Available' } : null
+      setRooms((prev) =>
+        prev.map((r) => (r.id === selectedRoom.id ? updatedRoom : r))
       );
+
+      auditLogger.log(
+        'info',
+        'KTV_CHECKOUT',
+        `结账: ${selectedRoom.name} - ${method} - ₱${bill.total.toFixed(2)}`,
+        'admin'
+      );
+
+      setError(null);
+      setIsModalOpen(false);
+
+      // 使用 setTimeout 延迟显示成功消息，避免闪烁
+      setTimeout(() => {
+        alert(
+          `结账成功 Checkout Success!\n支付方式 Method: ${method}\n金额 Amount: ₱${bill.total.toFixed(2)}`
+        );
+      }, 100);
+    } catch (error) {
+      setError('结账失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
-  const handleAddOrder = (dish: Dish) => {
-    if (!selectedRoom || !selectedRoom.currentSession) return;
+  const handleFinishCleaning = async (roomId: string) => {
+    try {
+      const room = rooms.find((r) => r.id === roomId);
+      if (!room) return;
 
-    const updateOrders = (currentOrders: OrderItem[]) => {
-      const existingItem = currentOrders.find((o) => o.dishId === dish.id);
-      if (existingItem) {
-        return currentOrders.map((o) =>
-          o.dishId === dish.id ? { ...o, quantity: o.quantity + 1 } : o
-        );
-      } else {
-        const newItem: OrderItem = {
-          dishId: dish.id,
-          dishName: dish.name,
-          price: dish.price,
-          quantity: 1,
-        };
-        return [...currentOrders, newItem];
+      const updatedRoom = { ...room, status: 'Available' as const };
+
+      await apiClient.put(`/ktv_rooms/${roomId}`, updatedRoom);
+
+      setRooms((prev) =>
+        prev.map((r) => (r.id === roomId ? updatedRoom : r))
+      );
+
+      if (selectedRoom?.id === roomId) {
+        setSelectedRoom(updatedRoom);
       }
-    };
 
-    setRooms((prev) =>
-      prev.map((r) => {
-        if (r.id === selectedRoom.id && r.currentSession) {
-          return {
-            ...r,
-            currentSession: {
-              ...r.currentSession,
-              orders: updateOrders(r.currentSession.orders),
-            },
-          };
-        }
-        return r;
-      })
-    );
-
-    setSelectedRoom((prev) => {
-      if (!prev || !prev.currentSession) return prev;
-      return {
-        ...prev,
-        currentSession: {
-          ...prev.currentSession,
-          orders: updateOrders(prev.currentSession.orders),
-        },
-      };
-    });
+      auditLogger.log('info', 'KTV_CLEANED', `清理完成: ${room.name}`, 'admin');
+      setError(null);
+    } catch (error) {
+      setError('清理状态更新失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
-  const handleSkipSong = () => {
+  const handleAddOrder = async (dish: Dish) => {
+    if (!selectedRoom || !selectedRoom.currentSession) return;
+
+    try {
+      const updateOrders = (currentOrders: OrderItem[]) => {
+        const existingItem = currentOrders.find((o) => o.dishId === dish.id);
+        if (existingItem) {
+          return currentOrders.map((o) =>
+            o.dishId === dish.id ? { ...o, quantity: o.quantity + 1 } : o
+          );
+        } else {
+          const newItem: OrderItem = {
+            dishId: dish.id,
+            dishName: dish.name,
+            price: dish.price,
+            quantity: 1,
+          };
+          return [...currentOrders, newItem];
+        }
+      };
+
+      const updatedSession = {
+        ...selectedRoom.currentSession,
+        orders: updateOrders(selectedRoom.currentSession.orders),
+      };
+
+      const updatedRoom = {
+        ...selectedRoom,
+        currentSession: updatedSession,
+      };
+
+      await apiClient.put(`/ktv_rooms/${selectedRoom.id}`, updatedRoom);
+
+      setRooms((prev) =>
+        prev.map((r) => (r.id === selectedRoom.id ? updatedRoom : r))
+      );
+
+      setSelectedRoom(updatedRoom);
+
+      auditLogger.log(
+        'info',
+        'KTV_ORDER',
+        `KTV加点: ${selectedRoom.name} - ${dish.name}`,
+        'admin'
+      );
+
+      setError(null);
+    } catch (error) {
+      setError('加点失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
+  };
+
+  const handleSkipSong = async () => {
     if (!selectedRoom) return;
-    const songs = [
-      'Blue and White Porcelain',
-      'Legend of Phoenix',
-      'Ten Years',
-      'Monica',
-      'Last Dance',
-      'Sunny Day',
-      'King of Karaoke',
-      'Boundless Sea & Sky',
-      'Luxury Lady',
-    ];
-    const randomSong = songs[Math.floor(Math.random() * songs.length)];
 
-    const updateRoom = (r: KTVRoom) =>
-      r.id === selectedRoom.id ? { ...r, currentSong: randomSong } : r;
+    try {
+      const songs = [
+        'Qing Hua Ci (青花瓷)',
+        'Zui Xuan Min Zu Feng (最炫民族风)',
+        'Shi Nian (十年)',
+        'Monica',
+        'Zui Hou Yi Zhi Wu (最后一支舞)',
+        'Qing Tian (晴天)',
+        'K Ge Zhi Wang (K歌之王)',
+        'Hai Kuo Tian Kong (海阔天空)',
+        'Hao Ri Zi (好日子)',
+      ];
+      const randomSong = songs[Math.floor(Math.random() * songs.length)];
 
-    setRooms((prev) => prev.map(updateRoom));
-    setSelectedRoom((prev) =>
-      prev ? { ...prev, currentSong: randomSong } : null
-    );
+      const updatedRoom = { ...selectedRoom, currentSong: randomSong };
+
+      await apiClient.put(`/ktv_rooms/${selectedRoom.id}`, updatedRoom);
+
+      setRooms((prev) =>
+        prev.map((r) => (r.id === selectedRoom.id ? updatedRoom : r))
+      );
+      setSelectedRoom(updatedRoom);
+
+      setError(null);
+    } catch (error) {
+      setError('切歌失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
   // Fixed error: Category is now a type (string), so we use string literals
@@ -317,6 +374,15 @@ const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
 
   return (
     <div className="animate-fade-in space-y-6 pb-20 md:pb-0">
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="flex items-center gap-2">
+            <X size={18} />
+            <span className="font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-800">
@@ -646,6 +712,7 @@ const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
                       ₱{calculateTotal(selectedRoom).total.toFixed(0)}
                       <div className="mt-2 text-base font-normal text-slate-500">
                         参考价 Reference: ≈ ¥
+                        {/* TODO: 从系统设置读取汇率 */}
                         {(calculateTotal(selectedRoom).total / 8.2).toFixed(1)}
                       </div>
                     </div>
