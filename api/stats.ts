@@ -83,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 /**
  * 获取所有技术栈的统计数据
  */
-async function handleGetStats(req: VercelRequest, res: VercelResponse) {
+async function handleGetStats(_req: VercelRequest, res: VercelResponse) {
   const statsData: TechStats[] = [];
 
   // 批量获取所有技术栈的统计数据
