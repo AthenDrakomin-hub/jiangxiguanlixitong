@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ChefHat,
   Clock,
   CheckCircle2,
   AlertTriangle,
   LogOut,
+  X,
 } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
+import { apiClient } from '../services/apiClient';
+import { auditLogger } from '../services/auditLogger';
 
 interface KitchenDisplayProps {
   orders: Order[];
@@ -113,6 +116,39 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({
   onStatusChange,
   onBack,
 }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [error, setError] = useState<string | null>(null);
+
+  // 实时更新时钟
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 包装 onStatusChange 添加 API 集成和错误处理
+  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
+    try {
+      await apiClient.update('orders', orderId, { status });
+
+      const order = orders.find((o) => o.id === orderId);
+      if (order) {
+        const statusLabel =
+          status === OrderStatus.COOKING ? '开始烹饪' : '完成上菜';
+        auditLogger.log(
+          'info',
+          'KITCHEN_STATUS',
+          `厨房: ${statusLabel} - #${order.tableNumber}`,
+          'kitchen'
+        );
+      }
+
+      onStatusChange(orderId, status);
+      setError(null);
+    } catch (error) {
+      setError('状态更新失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
+  };
+
   // Filter only active orders for kitchen
   const pendingOrders = orders
     .filter((o) => o.status === OrderStatus.PENDING)
@@ -129,13 +165,22 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({
 
   return (
     <div className="flex h-[calc(100vh-2rem)] flex-col">
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-300 bg-red-100 p-4 text-red-800">
+          <div className="flex items-center gap-2">
+            <X size={18} />
+            <span className="font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex items-center justify-between">
         <h2 className="flex items-center gap-3 text-3xl font-bold text-white">
           <ChefHat size={32} /> Kitchen Display (KDS)
         </h2>
         <div className="flex items-center gap-4">
           <div className="font-mono text-xl text-white/80">
-            {new Date().toLocaleTimeString()}
+            {currentTime.toLocaleTimeString()}
           </div>
           <button
             onClick={onBack}
@@ -167,7 +212,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({
                 nextStatus={OrderStatus.COOKING}
                 buttonText="Start Cooking / Simulan"
                 colorClass="#f97316"
-                onStatusChange={onStatusChange}
+                onStatusChange={handleStatusChange}
               />
             ))}
             {pendingOrders.length === 0 && (
@@ -198,7 +243,7 @@ const KitchenDisplay: React.FC<KitchenDisplayProps> = ({
                 nextStatus={OrderStatus.SERVED}
                 buttonText="Serve / I-serve"
                 colorClass="#3b82f6"
-                onStatusChange={onStatusChange}
+                onStatusChange={handleStatusChange}
               />
             ))}
             {cookingOrders.length === 0 && (
