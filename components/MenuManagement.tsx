@@ -14,9 +14,11 @@ import {
   Download,
   FileSpreadsheet,
   Utensils,
+  AlertCircle,
 } from 'lucide-react';
 import { Dish, Category, Ingredient, DishIngredient } from '../types';
 import auditLogger from '../services/auditLogger';
+import { apiClient } from '../services/apiClient';
 
 // dnd-kit imports (commented out as not currently used)
 /*
@@ -163,6 +165,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
   const [isBulkActionsOpen, setIsBulkActionsOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20; // 默认每页20条记录
@@ -223,14 +226,25 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
     setSelectedIds(newSet);
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
 
     if (!confirm(`Delete ${selectedIds.size} dishes? 确定要删除选中的菜品吗？`))
       return;
 
-    setDishes((prev) => prev.filter((d) => !selectedIds.has(d.id)));
-    setSelectedIds(new Set());
+    try {
+      // 批量删除后端数据
+      for (const id of selectedIds) {
+        await apiClient.delete('dishes', id);
+      }
+
+      setDishes((prev) => prev.filter((d) => !selectedIds.has(d.id)));
+      setSelectedIds(new Set());
+      setError(null);
+    } catch (error) {
+      console.error('批量删除失败:', error);
+      setError('批量删除失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
   const handleBulkAvailability = (newState: boolean) => {
@@ -264,53 +278,78 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleDeleteDish = (id: string) => {
-    if (confirm('Delete this dish? 确定要删除这道菜吗？')) {
+  const handleDeleteDish = async (id: string) => {
+    const dish = dishes.find((d) => d.id === id);
+    if (!dish) return;
+
+    if (!confirm('Delete this dish? 确定要删除这道菜吗？')) return;
+
+    try {
+      // 删除后端数据
+      await apiClient.delete('dishes', id);
+
+      // 更新前端状态
       setDishes((prev) => prev.filter((d) => d.id !== id));
       if (selectedIds.has(id)) {
         const newSet = new Set(selectedIds);
         newSet.delete(id);
         setSelectedIds(newSet);
       }
-    }
 
-    // 记录删除菜品日志
-    auditLogger.log('warn', 'DISH_DELETE', `删除菜品: ${name}`, 'admin');
+      // 记录删除菜品日志
+      auditLogger.log('warn', 'DISH_DELETE', `删除菜品: ${dish.name}`, 'admin');
+      setError(null);
+    } catch (error) {
+      console.error('删除菜品失败:', error);
+      setError('删除失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingDish) {
-      // 更新现有菜品
-      const updatedDish = { ...editingDish, ...formData } as Dish;
-      setDishes((prev) =>
-        prev.map((d) => (d.id === editingDish.id ? updatedDish : d))
-      );
 
-      // 记录更新菜品日志
-      auditLogger.log(
-        'info',
-        'DISH_UPDATE',
-        `更新菜品: ${updatedDish.name}`,
-        'admin'
-      );
-    } else {
-      // 添加新菜品
-      const newDish: Dish = {
-        ...(formData as Dish),
-        id: Math.random().toString(36).substr(2, 9),
-      };
-      setDishes((prev) => [...prev, newDish]);
+    try {
+      if (editingDish) {
+        // 更新现有菜品
+        const updatedDish = { ...editingDish, ...formData } as Dish;
+        await apiClient.update('dishes', editingDish.id, updatedDish);
 
-      // 记录添加菜品日志
-      auditLogger.log(
-        'info',
-        'DISH_ADD',
-        `添加新菜品: ${newDish.name}`,
-        'admin'
-      );
+        setDishes((prev) =>
+          prev.map((d) => (d.id === editingDish.id ? updatedDish : d))
+        );
+
+        // 记录更新菜品日志
+        auditLogger.log(
+          'info',
+          'DISH_UPDATE',
+          `更新菜品: ${updatedDish.name}`,
+          'admin'
+        );
+      } else {
+        // 添加新菜品
+        const newDish: Dish = {
+          ...(formData as Dish),
+          id: Math.random().toString(36).substr(2, 9),
+        };
+        await apiClient.create('dishes', newDish);
+
+        setDishes((prev) => [...prev, newDish]);
+
+        // 记录添加菜品日志
+        auditLogger.log(
+          'info',
+          'DISH_ADD',
+          `添加新菜品: ${newDish.name}`,
+          'admin'
+        );
+      }
+
+      setIsModalOpen(false);
+      setError(null);
+    } catch (error) {
+      console.error('保存菜品失败:', error);
+      setError('保存失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
-    setIsModalOpen(false);
   };
 
   const handleAddIngredient = () => {
@@ -415,6 +454,25 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
 
   return (
     <div className="animate-fade-in space-y-6">
+      {/* 错误提示 */}
+      {error && (
+        <div className="rounded-lg border-l-4 border-red-500 bg-red-50 p-4">
+          <div className="flex items-start">
+            <AlertCircle className="mt-0.5 h-5 w-5 text-red-500" />
+            <div className="ml-3 flex-1">
+              <h3 className="text-sm font-medium text-red-800">操作失败</h3>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-sm font-medium text-red-800 underline hover:text-red-900"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
@@ -1168,27 +1226,10 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
                                 ...(newDishes as Dish[]),
                               ]);
 
-                              // Save to backend API
+                              // 使用 apiClient 批量导入
                               try {
-                                const response = await fetch(
-                                  '/api/dishes/batch',
-                                  {
-                                    method: 'POST',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({ dishes: newDishes }),
-                                  }
-                                );
-
-                                const result = await response.json();
-                                if (result.success) {
-                                  alert(`成功导入 ${newDishes.length} 个菜品`);
-                                } else {
-                                  alert(
-                                    `导入成功但保存到数据库失败: ${result.message}`
-                                  );
-                                }
+                                await apiClient.post('/dishes/batch', { dishes: newDishes });
+                                alert(`成功导入 ${newDishes.length} 个菜品`);
                               } catch (apiError) {
                                 console.error('API调用失败:', apiError);
                                 alert('导入成功但保存到数据库失败，请手动保存');
