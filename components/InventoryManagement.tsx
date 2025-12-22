@@ -7,8 +7,11 @@ import {
   AlertTriangle,
   PackageCheck,
   PackageX,
+  X,
 } from 'lucide-react';
 import { Ingredient } from '../types';
+import { apiClient } from '../services/apiClient';
+import { auditLogger } from '../services/auditLogger';
 
 interface InventoryManagementProps {
   inventory: Ingredient[];
@@ -22,6 +25,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Ingredient | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<Partial<Ingredient>>({
     name: '',
@@ -50,49 +54,96 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this item? 确定要删除该食材记录吗？')) {
+  const handleDelete = async (id: string) => {
+    const item = inventory.find((i) => i.id === id);
+    if (!item) return;
+
+    if (!confirm('Delete this item? 确定要删除该食材记录吗？')) return;
+
+    try {
+      await apiClient.delete('inventory', id);
       setInventory((prev) => prev.filter((item) => item.id !== id));
+      auditLogger.log('warn', 'INVENTORY_DELETE', `删除食材: ${item.name}`, 'admin');
+      setError(null);
+    } catch (error) {
+      setError('删除失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const now = new Date().toISOString();
 
-    if (editingItem) {
-      setInventory((prev) =>
-        prev.map((item) =>
-          item.id === editingItem.id
-            ? ({ ...item, ...formData, updatedAt: now } as Ingredient)
-            : item
-        )
-      );
-    } else {
-      const newItem: Ingredient = {
-        ...(formData as Ingredient),
-        id: `ING-${Date.now()}`,
-        updatedAt: now,
-      };
-      setInventory((prev) => [newItem, ...prev]);
+    try {
+      if (editingItem) {
+        const updatedItem = {
+          ...editingItem,
+          ...formData,
+          updatedAt: now,
+        } as Ingredient;
+
+        await apiClient.update('inventory', editingItem.id, updatedItem);
+        setInventory((prev) =>
+          prev.map((item) => (item.id === editingItem.id ? updatedItem : item))
+        );
+        auditLogger.log(
+          'info',
+          'INVENTORY_UPDATE',
+          `更新食材: ${updatedItem.name}`,
+          'admin'
+        );
+      } else {
+        const newItem: Ingredient = {
+          ...(formData as Ingredient),
+          id: `ING-${Date.now()}`,
+          updatedAt: now,
+        };
+
+        await apiClient.create('inventory', newItem);
+        setInventory((prev) => [newItem, ...prev]);
+        auditLogger.log(
+          'info',
+          'INVENTORY_CREATE',
+          `添加食材: ${newItem.name}`,
+          'admin'
+        );
+      }
+
+      setIsModalOpen(false);
+      setError(null);
+    } catch (error) {
+      setError('保存失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
-    setIsModalOpen(false);
   };
 
-  const handleQuickUpdate = (id: string, delta: number) => {
-    setInventory((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const newQuantity = Math.max(0, item.quantity + delta);
-          return {
-            ...item,
-            quantity: newQuantity,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return item;
-      })
-    );
+  const handleQuickUpdate = async (id: string, delta: number) => {
+    try {
+      const item = inventory.find((i) => i.id === id);
+      if (!item) return;
+
+      const newQuantity = Math.max(0, item.quantity + delta);
+      const updatedItem = {
+        ...item,
+        quantity: newQuantity,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await apiClient.update('inventory', id, updatedItem);
+      setInventory((prev) =>
+        prev.map((i) => (i.id === id ? updatedItem : i))
+      );
+
+      auditLogger.log(
+        'info',
+        'INVENTORY_ADJUST',
+        `库存调整: ${item.name} ${delta > 0 ? '+' : ''}${delta} ${item.unit}`,
+        'admin'
+      );
+
+      setError(null);
+    } catch (error) {
+      setError('库存调整失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    }
   };
 
   const filteredInventory = inventory.filter((item) =>
@@ -101,6 +152,15 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
 
   return (
     <div className="animate-fade-in space-y-6">
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="flex items-center gap-2">
+            <X size={18} />
+            <span className="font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">
