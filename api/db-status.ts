@@ -2,7 +2,7 @@ import { kvClient } from '../lib/kv-client.js';
 
 // Edge Runtime 配置
 export const config = {
-  runtime: 'edge-runtime@1.5.0',
+  runtime: 'edge',
 };
 
 /**
