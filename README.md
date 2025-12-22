@@ -57,109 +57,18 @@ npm run preview
 
 ## 部署
 
-### 1. 创建 Vercel KV 存储
-
-1. 登录 [Vercel Dashboard](https://vercel.com/dashboard)
-2. 进入你的项目
-3. 点击 **Storage** 标签
-4. 点击 **Create Database** → 选择 **KV**
-5. 输入数据库名称（如 `hotel-kv`）并选择区域
-6. 点击 **Create**
-
-### 2. 关联 KV 到项目
-
-创建 KV 后，Vercel 会自动将以下环境变量注入到项目：
-- `KV_REST_API_URL`
-- `KV_REST_API_TOKEN`
-- `KV_REST_API_READ_ONLY_TOKEN`
-- `KV_URL`
-
-**重要**：这些变量会自动注入到 Serverless API 运行时，无需手动配置。
-
-### 3. 配置管理员凭证
-
-在 Vercel 项目设置中添加以下环境变量：
-
-| 变量名 | 说明 | 示例 |
-|--------|------|------|
-| `VITE_ADMIN_USER` | 管理员用户名 | `admin` |
-| `VITE_ADMIN_PASS` | 管理员密码 | `your_secure_password` |
-
-### 4. 部署项目
-
-推送代码到 GitHub，Vercel 会自动检测并构建部署。
+1. 推送代码到 GitHub
+2. 在 Vercel 导入项目
+3. 配置环境变量：
+   - `KV_REST_API_URL`
+   - `KV_REST_API_TOKEN`
+   - `VITE_ADMIN_USER`
+   - `VITE_ADMIN_PASS`
+4. 自动部署
 
 ## 环境变量
 
 复制 `.env.local.template` 为 `.env.local` 并填入实际值。
-
-## API 接口
-
-### 技术栈统计 API
-
-**端点**: `/api/stats`
-
-#### GET - 获取统计数据
-
-```bash
-GET /api/stats
-```
-
-**响应示例**:
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "techId": "react",
-      "likes": 42,
-      "views": 156
-    },
-    {
-      "techId": "typescript",
-      "likes": 38,
-      "views": 142
-    }
-  ],
-  "timestamp": "2025-12-22T09:00:00.000Z"
-}
-```
-
-#### POST - 更新统计数据
-
-```bash
-POST /api/stats
-Content-Type: application/json
-
-{
-  "techId": "react",
-  "action": "like"  // 或 "view"
-}
-```
-
-**支持的技术栈 ID**:
-- `react` - React 18
-- `typescript` - TypeScript
-- `vite` - Vite
-- `tailwind` - Tailwind CSS
-- `vercel` - Vercel
-- `upstash-redis` - Upstash Redis
-- `recharts` - Recharts
-- `lucide-react` - Lucide Icons
-- `dnd-kit` - DnD Kit
-
-**响应示例**:
-```json
-{
-  "success": true,
-  "data": {
-    "techId": "react",
-    "likes": 43,
-    "views": 156
-  },
-  "message": "Successfully updated like count for react"
-}
-```
 
 ## 许可证
 
