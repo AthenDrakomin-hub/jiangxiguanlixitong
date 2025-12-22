@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KV 数据库诊断</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    
+    .content {
+      padding: 30px;
+    }
+    
+    .status-card {
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .status-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-badge.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .status-badge.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    .status-badge.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .info-item {
+      padding: 12px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+    
+    .info-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 5px;
+    }
+    
+    .info-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+      word-break: break-all;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .data-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+      font-size: 14px;
+    }
+    
+    .data-table td {
+      color: #6b7280;
+    }
+    
+    .data-count {
+      font-weight: 600;
+      color: #667eea;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6b7280;
+    }
+    
+    .error-message {
+      background: #fee2e2;
+      border: 2px solid #fca5a5;
+      border-radius: 8px;
+      padding: 16px;
+      color: #991b1b;
+      margin-top: 15px;
+    }
+    
+    .help-box {
+      background: #eff6ff;
+      border: 2px solid #93c5fd;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+    }
+    
+    .help-title {
+      font-weight: 600;
+      color: #1e40af;
+      margin-bottom: 10px;
+    }
+    
+    .help-steps {
+      color: #1e3a8a;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    
+    .help-steps li {
+      margin-left: 20px;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔍 KV 数据库诊断工具</h1>
+      <div class="subtitle">Vercel KV / Upstash Redis 连接状态检测</div>
+    </header>
+    
+    <div class="content">
+      <div id="loading" class="loading">
+        <div>正在检测...</div>
+      </div>
+      
+      <div id="result" style="display: none;"></div>
+      
+      <button class="btn" onclick="location.reload()">🔄 重新检测</button>
+    </div>
+  </div>
+
+  <script>
+    async function checkKVStatus() {
+      const loadingEl = document.getElementById('loading');
+      const resultEl = document.getElementById('result');
+      
+      try {
+        const response = await fetch('/api');
+        const data = await response.json();
+        
+        loadingEl.style.display = 'none';
+        resultEl.style.display = 'block';
+        
+        // 连接状态卡片
+        const kvStatus = data.kvStatus || {};
+        const isConnected = kvStatus.connected;
+        
+        let html = `
+          <div class="status-card">
+            <div class="status-header">
+              <div class="status-title">📡 连接状态</div>
+              <div class="status-badge ${isConnected ? 'success' : 'error'}">
+                ${isConnected ? '✅ 已连接' : '❌ 未连接'}
+              </div>
+            </div>
+            
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">URL 状态</div>
+                <div class="info-value">${kvStatus.hasUrl ? '✅ 已配置' : '❌ 未配置'}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Token 状态</div>
+                <div class="info-value">${kvStatus.hasToken ? '✅ 已配置' : '❌ 未配置'}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">URL 预览</div>
+                <div class="info-value" style="font-size: 12px;">${kvStatus.urlPreview || 'N/A'}</div>
+              </div>
+            </div>
+        `;
+        
+        // 如果未连接，显示帮助信息
+        if (!isConnected) {
+          html += `
+            <div class="error-message">
+              ⚠️ KV 环境变量未配置或配置不完整
+            </div>
+            
+            <div class="help-box">
+              <div class="help-title">🔧 配置步骤：</div>
+              <ol class="help-steps">
+                <li>登录 <a href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a></li>
+                <li>选择项目 → 点击 "Storage" 标签页</li>
+                <li>创建或连接 Vercel KV（Upstash Redis）实例</li>
+                <li>点击 "Link to Project" 关联到当前项目</li>
+                <li>重新部署项目（Deployments → Redeploy）</li>
+              </ol>
+            </div>
+          `;
+        }
+        
+        html += `</div>`;
+        
+        // 数据统计卡片
+        if (isConnected && data.dataSummary) {
+          const summary = data.dataSummary;
+          const totalRecords = Object.values(summary).reduce((sum, count) => sum + Math.max(0, count), 0);
+          
+          html += `
+            <div class="status-card">
+              <div class="status-header">
+                <div class="status-title">📊 数据统计</div>
+                <div class="status-badge ${totalRecords > 0 ? 'success' : 'warning'}">
+                  ${totalRecords} 条记录
+                </div>
+              </div>
+              
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>集合名称</th>
+                    <th>记录数量</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+          
+          for (const [collection, count] of Object.entries(summary)) {
+            const displayName = collection.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const status = count === -1 ? '❌ 读取失败' : 
+                          count === 0 ? '⚠️ 无数据' : 
+                          '✅ 正常';
+            
+            html += `
+              <tr>
+                <td>${displayName}</td>
+                <td class="data-count">${count === -1 ? 'N/A' : count}</td>
+                <td>${status}</td>
+              </tr>
+            `;
+          }
+          
+          html += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          
+          // 如果没有数据，显示提示
+          if (totalRecords === 0) {
+            html += `
+              <div class="help-box">
+                <div class="help-title">💡 提示：</div>
+                <div class="help-steps">
+                  数据库连接正常，但尚未添加任何数据。<br>
+                  请登录系统后台，通过菜单管理、订单管理等功能添加数据。
+                </div>
+              </div>
+            `;
+          }
+        }
+        
+        resultEl.innerHTML = html;
+        
+      } catch (error) {
+        loadingEl.style.display = 'none';
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `
+          <div class="status-card">
+            <div class="status-header">
+              <div class="status-title">❌ 检测失败</div>
+              <div class="status-badge error">错误</div>
+            </div>
+            
+            <div class="error-message">
+              ${error.message || '无法连接到 API 端点'}
+            </div>
+            
+            <div class="help-box">
+              <div class="help-title">可能的原因：</div>
+              <ul class="help-steps">
+                <li>API 服务未启动或部署失败</li>
+                <li>网络连接问题</li>
+                <li>CORS 配置错误</li>
+              </ul>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // 页面加载时自动检测
+    checkKVStatus();
+  </script>
+</body>
+</html>

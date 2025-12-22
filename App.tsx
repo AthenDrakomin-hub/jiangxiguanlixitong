@@ -338,21 +338,6 @@ const App = () => {
     setIsAuthenticated(true);
   };
 
-  // 修复useEffect依赖数组警告
-  useEffect(() => {
-    const savedOrders = localStorage.getItem('orders');
-    if (savedOrders) {
-      try {
-        const parsedOrders: Order[] = JSON.parse(savedOrders);
-        // 确保解析的数据符合Order类型
-        if (Array.isArray(parsedOrders)) {
-          setOrders(parsedOrders);
-        }
-      } catch (error) {
-        console.error('Failed to parse orders from localStorage:', error);
-      }
-    }
-  }, [orders]); // 添加orders到依赖数组
 
   // 移除网络状态监听器，避免React错误#310
   // Network status effect has been removed to prevent React error #310

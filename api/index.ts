@@ -120,13 +120,29 @@ export default async function handler(req: Request) {
             );
           }
         } else {
-          // Return API info with connection status
+          // Return API info with connection status and data summary
           const status = kvClient.getConnectionStatus();
+          
+          // 统计各集合的数据量（仅当连接正常时）
+          let dataSummary: Record<string, number> = {};
+          if (status.connected) {
+            for (const collection of ALLOWED_COLLECTIONS) {
+              try {
+                const items = await kvClient.getAll(collection);
+                dataSummary[collection] = Array.isArray(items) ? items.length : 0;
+              } catch (error) {
+                dataSummary[collection] = -1; // -1 表示读取失败
+              }
+            }
+          }
+          
           return new Response(
             JSON.stringify({
               success: true,
               message: 'Jiangxi Hotel Management System API (KV Storage Version)',
               kvStatus: status,
+              dataSummary,
+              collections: ALLOWED_COLLECTIONS,
               timestamp: new Date().toISOString(),
             }),
             {
