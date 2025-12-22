@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus, Expense, ExpenseCategory } from '../types';
 import { PrinterService } from '../services/printer';
+import { apiClient } from '../services/apiClient';
+import { auditLogger } from '../services/auditLogger';
 
 interface FinanceSystemProps {
   orders: Order[];
@@ -49,6 +51,8 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHandoverOpen, setIsHandoverOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({
     amount: 0,
@@ -161,28 +165,46 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
     return { total, byMethod, count: todayOrders.length };
   }, [orders]);
 
-  const handleAddExpense = (e: React.FormEvent) => {
+  const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExpense.amount || !newExpense.description) return;
 
-    const expense: Expense = {
-      id: `EXP-${Date.now()}`,
-      amount: Number(newExpense.amount),
-      category: newExpense.category as ExpenseCategory,
-      description: newExpense.description || '',
-      date: newExpense.date
-        ? new Date(newExpense.date).toISOString()
-        : new Date().toISOString(),
-    };
+    try {
+      setError(null);
+      const expense: Expense = {
+        id: `EXP-${Date.now()}`,
+        amount: Number(newExpense.amount),
+        category: newExpense.category as ExpenseCategory,
+        description: newExpense.description || '',
+        date: newExpense.date
+          ? new Date(newExpense.date).toISOString()
+          : new Date().toISOString(),
+      };
 
-    setExpenses((prev) => [expense, ...prev]);
-    setIsModalOpen(false);
-    setNewExpense({
-      amount: 0,
-      category: ExpenseCategory.INGREDIENTS,
-      description: '',
-      date: new Date().toISOString().split('T')[0],
-    });
+      await apiClient.create('expenses', expense);
+      setExpenses((prev) => [expense, ...prev]);
+
+      auditLogger.log(
+        'info',
+        'EXPENSE_CREATE',
+        `添加支出: ${expense.category} - ₱${expense.amount}`,
+        'admin'
+      );
+
+      setIsModalOpen(false);
+      setNewExpense({
+        amount: 0,
+        category: ExpenseCategory.INGREDIENTS,
+        description: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+
+      setSuccess('支出记录添加成功！');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      console.error('添加支出失败:', error);
+      setError('添加支出失败，请重试');
+    }
   };
 
   const handleExportCSV = () => {
@@ -194,7 +216,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
     );
 
     if (dataToExport.length === 0) {
-      alert('No data in last 30 days');
+      setError('No data in last 30 days');
       return;
     }
 
@@ -223,6 +245,24 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
 
   return (
     <div className="animate-fade-in space-y-6 pb-20">
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="flex items-center gap-2">
+            <X size={18} />
+            <span className="font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+          <div className="flex items-center gap-2">
+            <Plus size={18} />
+            <span className="font-medium">{success}</span>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800">财务系统</h2>
         <div className="flex gap-3">

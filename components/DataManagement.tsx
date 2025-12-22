@@ -22,6 +22,8 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<FormData>({});
   const [bulkData, setBulkData] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // 表格定义
   const tables = [
@@ -179,6 +181,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
 
   const handleSubmit = async () => {
     try {
+      setError(null);
       // 生成唯一ID
       const dataWithId = {
         id:
@@ -198,18 +201,20 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
       // 通知父组件数据已更新
       if (onDataUpdate) onDataUpdate();
 
-      alert('数据添加成功！');
+      setSuccess('数据添加成功！');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       console.error('添加数据失败:', error);
-      alert('添加数据失败，请重试');
+      setError('添加数据失败，请重试');
     }
   };
 
   const handleBulkImport = async () => {
     try {
+      setError(null);
       const dataArray = JSON.parse(bulkData);
       if (!Array.isArray(dataArray)) {
-        alert('批量数据必须是数组格式');
+        setError('批量数据必须是数组格式');
         return;
       }
 
@@ -233,18 +238,37 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
       }
 
       setBulkData('');
-      alert(`成功导入 ${successCount} 条数据`);
+      setSuccess(`成功导入 ${successCount} 条数据`);
+      setTimeout(() => setSuccess(null), 3000);
 
       // 通知父组件数据已更新
       if (onDataUpdate) onDataUpdate();
     } catch (error) {
       console.error('批量导入失败:', error);
-      alert('批量导入失败，请检查数据格式');
+      setError('批量导入失败，请检查数据格式');
     }
   };
 
   return (
     <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-sm">
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="flex items-center gap-2">
+            <X size={18} />
+            <span className="font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+          <div className="flex items-center gap-2">
+            <Plus size={18} />
+            <span className="font-medium">{success}</span>
+          </div>
+        </div>
+      )}
+
       <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
         <Upload className="text-slate-400" size={20} /> 数据管理
       </h3>
