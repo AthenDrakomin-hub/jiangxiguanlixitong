@@ -8,19 +8,20 @@ import {
   Plus,
   Trash2,
   Edit3,
+  AlertCircle,
 } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
-import { PaymentMethod as PaymentMethodType } from '../types';
+import { PaymentMethod as PaymentMethodCode } from '../types';
 
-// 定义支付方式接口，包含所有必要字段
-interface PaymentMethod {
+// 支付方式完整数据接口
+interface PaymentMethodData {
   id: string;
   name: string;
   englishName: string;
   isEnabled: boolean;
   qrCodeUrl?: string;
   accountInfo?: string;
-  paymentType: PaymentMethodType;
+  paymentType: PaymentMethodCode;  // 使用 types.ts 的联合类型
   currency: string;
   exchangeRate: number;
   sortOrder: number;
@@ -29,21 +30,20 @@ interface PaymentMethod {
 }
 
 const PaymentManagement: React.FC = () => {
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(
-    null
-  );
+  const [error, setError] = useState<string | null>(null);
+  const [editingMethod, setEditingMethod] = useState<PaymentMethodData | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<
-    Omit<PaymentMethod, 'id' | 'createdAt' | 'updatedAt'>
+    Omit<PaymentMethodData, 'id' | 'createdAt' | 'updatedAt'>
   >({
     name: '',
     englishName: '',
     isEnabled: true,
     qrCodeUrl: '',
     accountInfo: '',
-    paymentType: 'CASH', // 使用types.ts中定义的类型
+    paymentType: 'CASH',
     currency: 'PHP',
     exchangeRate: 1.0,
     sortOrder: 0,
@@ -57,85 +57,20 @@ const PaymentManagement: React.FC = () => {
   const loadPaymentMethods = async () => {
     try {
       setLoading(true);
-      // 产品备注: 为apiClient.fetchAll()的返回值指定明确的类型，避免使用any
+      setError(null);
+      
       const response = await apiClient.fetchAll();
-      if (response.paymentMethods) {
-        // 注意：这里的paymentMethods是从API返回的实际数据，需要正确处理
-        // API返回的数据结构可能与组件内部定义的PaymentMethod类型不完全一致
-        // 需要进行类型转换，确保数据结构匹配
-
-        // 如果response.paymentMethods是对象数组，直接使用
-        if (
-          Array.isArray(response.paymentMethods) &&
-          response.paymentMethods.length > 0
-        ) {
-          // 检查第一个元素是否具有PaymentMethod的必要属性
-          const firstItem = response.paymentMethods[0];
-          if (
-            typeof firstItem === 'object' &&
-            firstItem !== null &&
-            'id' in firstItem
-          ) {
-            // 假设API返回的数据结构与我们的PaymentMethod接口兼容
-            // 进行显式类型转换以解决类型不匹配问题
-            setPaymentMethods(
-              response.paymentMethods as unknown as PaymentMethod[]
-            );
-          } else {
-            // 如果数据结构不匹配，需要进行转换
-            const convertedMethods: PaymentMethod[] =
-              response.paymentMethods.map((method: unknown, index) => {
-                // 类型守卫检查
-                if (typeof method === 'object' && method !== null) {
-                  const m = method as Record<string, unknown>;
-                  return {
-                    id: (m.id as string) || `PM-${index}`,
-                    name: (m.name as string) || String(method),
-                    englishName:
-                      (m.englishName as string) ||
-                      (m.name as string) ||
-                      String(method),
-                    isEnabled:
-                      typeof m.isEnabled === 'boolean' ? m.isEnabled : true,
-                    qrCodeUrl: (m.qrCodeUrl as string) || '',
-                    accountInfo: (m.accountInfo as string) || '',
-                    paymentType: (m.paymentType as PaymentMethodType) || 'CASH',
-                    currency: (m.currency as string) || 'PHP',
-                    exchangeRate:
-                      typeof m.exchangeRate === 'number' ? m.exchangeRate : 1.0,
-                    sortOrder:
-                      typeof m.sortOrder === 'number' ? m.sortOrder : index,
-                    createdAt: (m.createdAt as string) || undefined,
-                    updatedAt: (m.updatedAt as string) || undefined,
-                  };
-                }
-                // 如果不是对象，创建基本对象
-                return {
-                  id: `PM-${index}`,
-                  name: String(method),
-                  englishName: String(method),
-                  isEnabled: true,
-                  qrCodeUrl: '',
-                  accountInfo: '',
-                  paymentType: 'CASH',
-                  currency: 'PHP',
-                  exchangeRate: 1.0,
-                  sortOrder: index,
-                };
-              });
-
-            setPaymentMethods(
-              convertedMethods.sort((a, b) => a.sortOrder - b.sortOrder)
-            );
-          }
-        } else {
-          // 如果没有数据或不是数组，设置为空数组
-          setPaymentMethods([]);
-        }
+      
+      if (response.paymentMethods && Array.isArray(response.paymentMethods)) {
+        // 简化类型转换，信任 API 返回的数据结构
+        const methods = response.paymentMethods as PaymentMethodData[];
+        setPaymentMethods(methods.sort((a, b) => a.sortOrder - b.sortOrder));
+      } else {
+        setPaymentMethods([]);
       }
     } catch (error) {
-      console.error('Failed to load payment methods:', error);
-      // 发生错误时设置为空数组，避免白屏
+      console.error('加载支付方式失败:', error);
+      setError('加载支付方式失败: ' + (error instanceof Error ? error.message : '未知错误'));
       setPaymentMethods([]);
     } finally {
       setLoading(false);
@@ -147,13 +82,13 @@ const PaymentManagement: React.FC = () => {
 
     try {
       if (editingMethod) {
-        // Update existing payment method
+        // 更新支付方式
         await apiClient.update('payment_methods', editingMethod.id, {
           ...formData,
           id: editingMethod.id,
         });
       } else {
-        // Create new payment method
+        // 创建新支付方式
         const newMethod = {
           ...formData,
           id: `PM-${Date.now()}`,
@@ -161,28 +96,32 @@ const PaymentManagement: React.FC = () => {
         await apiClient.create('payment_methods', newMethod);
       }
 
-      // Reset form and reload data
-      setEditingMethod(null);
-      setShowForm(false);
-      setFormData({
-        name: '',
-        englishName: '',
-        isEnabled: true,
-        qrCodeUrl: '',
-        accountInfo: '',
-        paymentType: 'CASH',
-        currency: 'PHP',
-        exchangeRate: 1.0,
-        sortOrder: 0,
-      });
-
-      loadPaymentMethods();
+      // 重置表单并重新加载数据
+      resetForm();
+      await loadPaymentMethods();
     } catch (error) {
-      console.error('Failed to save payment method:', error);
+      console.error('保存支付方式失败:', error);
+      alert('保存失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
-  const handleEdit = (method: PaymentMethod) => {
+  const resetForm = () => {
+    setEditingMethod(null);
+    setShowForm(false);
+    setFormData({
+      name: '',
+      englishName: '',
+      isEnabled: true,
+      qrCodeUrl: '',
+      accountInfo: '',
+      paymentType: 'CASH',
+      currency: 'PHP',
+      exchangeRate: 1.0,
+      sortOrder: 0,
+    });
+  };
+
+  const handleEdit = (method: PaymentMethodData) => {
     setEditingMethod(method);
     setFormData({
       name: method.name,
@@ -199,13 +138,16 @@ const PaymentManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('确定要删除这个支付方式吗？')) {
-      try {
-        await apiClient.delete('payment_methods', id);
-        loadPaymentMethods();
-      } catch (error) {
-        console.error('Failed to delete payment method:', error);
-      }
+    if (!window.confirm('确定要删除这个支付方式吗？此操作无法撤销。')) {
+      return;
+    }
+
+    try {
+      await apiClient.delete('payment_methods', id);
+      await loadPaymentMethods();
+    } catch (error) {
+      console.error('删除支付方式失败:', error);
+      alert('删除失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -251,6 +193,25 @@ const PaymentManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* 错误提示 */}
+      {error && (
+        <div className="rounded-lg border-l-4 border-red-500 bg-red-50 p-4">
+          <div className="flex items-start">
+            <AlertCircle className="mt-0.5 h-5 w-5 text-red-500" />
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">加载失败</h3>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <button
+                onClick={loadPaymentMethods}
+                className="mt-2 text-sm font-medium text-red-800 underline hover:text-red-900"
+              >
+                重试
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">支付方式管理</h2>
@@ -271,6 +232,7 @@ const PaymentManagement: React.FC = () => {
               exchangeRate: 1.0,
               sortOrder: paymentMethods.length,
             });
+            setError(null);
           }}
           className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
         >
@@ -325,21 +287,21 @@ const PaymentManagement: React.FC = () => {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      paymentType: e.target.value as PaymentMethodType,
+                      paymentType: e.target.value as PaymentMethodCode,
                     })
                   }
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
                   required
                 >
-                  <option value="CASH">现金</option>
-                  <option value="WECHAT">微信支付</option>
-                  <option value="ALIPAY">支付宝</option>
-                  <option value="USDT">USDT</option>
-                  <option value="GCASH">GCash</option>
-                  <option value="MAYA">Maya</option>
-                  <option value="UNIONPAY">银联</option>
-                  <option value="CREDIT_CARD">信用卡</option>
-                  <option value="SIGN_BILL">挂账</option>
+                  <option value="CASH">现金 (Cash)</option>
+                  <option value="WECHAT">微信支付 (WeChat Pay)</option>
+                  <option value="ALIPAY">支付宝 (Alipay)</option>
+                  <option value="USDT">USDT (加密货币)</option>
+                  <option value="GCASH">GCash (菲律宾)</option>
+                  <option value="MAYA">Maya (菲律宾)</option>
+                  <option value="UNIONPAY">银联 (UnionPay)</option>
+                  <option value="CREDIT_CARD">信用卡 (Credit Card)</option>
+                  <option value="SIGN_BILL">挂账 (Sign Bill)</option>
                 </select>
               </div>
 
@@ -441,7 +403,7 @@ const PaymentManagement: React.FC = () => {
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={resetForm}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50"
               >
                 取消
