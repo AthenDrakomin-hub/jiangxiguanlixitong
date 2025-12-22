@@ -1,43 +1,33 @@
-# Dependencies
+# 依赖（Vercel 自动安装）
 node_modules/
 
-# Build outputs
+# 构建产物
 /dist
 /.vercel
 
-# Environment variables
+# 环境变量（敏感信息）
 .env
 .env.local
 .env*.local
 
-# Logs
+# 日志
 *.log
 
-# IDE and editor files
+# IDE 编辑器
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS generated files
+# 操作系统
 .DS_Store
 Thumbs.db
 Desktop.ini
 
-# TypeScript cache
+# TypeScript 缓存
 *.tsbuildinfo
 
-# Vite
-.vite/
-
-# Temporary folders
-tmp/
-temp/
-
-# Debug files
-*.debug.*
-
-# Certificate files
+# 证书文件
 *.pem
 *.crt
 *.key

@@ -1,23 +1,17 @@
-# Dependencies
+# 依赖（Vercel 自动处理）
 node_modules/
 
-# Environment files
+# 环境文件（在 Dashboard 配置）
 .env*
 
-# IDE files
+# IDE 编辑器
 .vscode/
 .idea/
 
-# OS files
+# 操作系统
 .DS_Store
 Thumbs.db
 
-# Log files
-*.log
-
-# Git files
+# Git 文件
 .git/
 .gitignore
-
-# Vercel files
-.vercel/
