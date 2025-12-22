@@ -98,11 +98,11 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
             <div>
               <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
                 <span className="h-6 w-2 rounded-full bg-orange-500"></span>{' '}
-                二楼客房 / 2nd Floor (Room Service)
+                8楼2区 / 8th Floor Area 2 (8201-8232)
               </h3>
               <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:grid-cols-6 print:grid-cols-4">
                 {hotelRooms
-                  .filter((r) => r.floor === 2)
+                  .filter((r) => r.floor === 82)
                   .map((room) => (
                     <QRCodeCard
                       key={room.id}
@@ -118,11 +118,11 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
             <div>
               <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800">
                 <span className="h-6 w-2 rounded-full bg-orange-500"></span>{' '}
-                三楼客房 / 3rd Floor (Room Service)
+                8楼3区 / 8th Floor Area 3 (8301-8332)
               </h3>
               <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:grid-cols-6 print:grid-cols-4">
                 {hotelRooms
-                  .filter((r) => r.floor === 3)
+                  .filter((r) => r.floor === 83)
                   .map((room) => (
                     <QRCodeCard
                       key={room.id}

@@ -216,8 +216,8 @@ export class PrinterService {
       )
       .join('');
 
-    // 判断是否为房间订单（以 8/2/3 开头的为房间号）
-    const isRoomService = /^[823]\d+$/.test(order.tableId || '');
+    // 判断是否为房间订单（以 82xx/83xx 开头为房间号）
+    const isRoomService = /^8[23]\d{2}$/.test(order.tableId || '');
     const locationLabel = isRoomService 
       ? `🚪 房间号 Room No.` 
       : `🍽️ 桌号 Table`;
@@ -373,8 +373,8 @@ export class PrinterService {
 
   private static generateOrderESCPOS(order: Order): string {
     // ESC/POS 指令格式（飞鹅云支持）
-    // 判断是否为房间订单
-    const isRoomService = /^[823]\d+$/.test(order.tableId || '');
+    // 判断是否为房间订单（82xx/83xx）
+    const isRoomService = /^8[23]\d{2}$/.test(order.tableId || '');
     
     let content = '';
     content += '<CB>江西酒店 Jiangxi Hotel</CB><BR>';

@@ -482,7 +482,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
       const newOrder: Order = {
         id: `ORD-${Date.now()}`,
         tableNumber: tableId,
-        source: tableId.startsWith('8') ? 'ROOM_SERVICE' : 'LOBBY',
+        source: /^8[23]\d{2}$/.test(tableId) ? 'ROOM_SERVICE' : 'LOBBY',
         items: cart.map((item) => ({
           dishId: item.dish.id,
           dishName: item.dish.name,

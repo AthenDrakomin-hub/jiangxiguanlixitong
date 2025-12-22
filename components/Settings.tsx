@@ -664,7 +664,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 ✅ 客户点餐流程
               </h4>
               <ul className="space-y-1 text-sm text-green-700">
-                <li>• 客户在房间扫码 → 自动识别房间号（如 801、302）</li>
+                <li>• 客户在房间扫码 → 自动识别房间号（如 8201、8332）</li>
                 <li>• 选菜、提交订单 → 订单自动包含房间信息</li>
                 <li>• 收银台/厨房打印小票 → <strong>醒目显示房间号</strong></li>
                 <li>• 服务员看到房间号 → 直接送餐到房间</li>
@@ -676,10 +676,10 @@ const Settings: React.FC<SettingsProps> = (props) => {
                 💡 技术原理
               </h4>
               <ul className="space-y-1 text-sm text-orange-700">
-                <li>• 二维码 URL 格式：<code className="rounded bg-orange-100 px-1 py-0.5 font-mono text-xs">?page=customer&id=801</code></li>
+                <li>• 二维码 URL 格式：<code className="rounded bg-orange-100 px-1 py-0.5 font-mono text-xs">?page=customer&id=8201</code></li>
                 <li>• 房间号自动传递给 H5 点餐页面</li>
                 <li>• 订单提交时包含 <code className="rounded bg-orange-100 px-1 py-0.5 font-mono text-xs">tableNumber</code> 字段</li>
-                <li>• 打印服务自动识别房间订单（801/802/803... 开头）</li>
+                <li>• 打印服务自动识别房间订单（8201-8232/8301-8332）</li>
               </ul>
             </div>
 
