@@ -46,11 +46,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     const isActive = currentPage === id;
     return (
       <button
-        onClick={() => onNavigate(id)}
+        onClick={() => {
+          onNavigate(id);
+          onClose(); // 移动端点击后自动关闭
+        }}
         className={`mb-1 flex w-full items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200 ${
           isActive
-            ? 'bg-red-600 text-white shadow-lg shadow-red-900/20'
-            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            ? 'bg-red-600 text-white shadow-lg shadow-red-600/20'
+            : 'text-slate-300 hover:bg-slate-800 hover:text-white'
         }`}
       >
         <Icon size={18} />
@@ -80,12 +83,23 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <div
-      className={`
-      fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-slate-900 text-white shadow-xl transition-transform duration-300 ease-in-out
-      ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-    `}
-    >
+    <>
+      {/* 移动端遮罩层 */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={onClose}
+          aria-label="Close menu"
+        />
+      )}
+
+      {/* 侧边栏 */}
+      <div
+        className={`
+        fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-slate-900 text-white shadow-xl transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}
+      >
       <div className="flex items-center justify-between border-b border-slate-700 p-6">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-red-600 p-2">
@@ -131,6 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <p className="mt-1">© 2025 Jiangxi Hotel</p>
       </div>
     </div>
+    </>
   );
 };
 
