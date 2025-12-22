@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   QrCode,
   Printer,
@@ -7,6 +7,7 @@ import {
   Mic2,
   Rocket,
   ExternalLink,
+  AlertCircle,
 } from 'lucide-react';
 import { HotelRoom, KTVRoom } from '../types';
 
@@ -42,17 +43,35 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
   const [activeTab, setActiveTab] = useState<Tab>('HOTEL');
   const [qrStyle, setQrStyle] = useState<QRStyle>('brand');
 
-  // Generate QR Code URL with correct query parameters based on current location
+  // 获取基础 URL（支持环境变量配置）
+  const baseUrl = useMemo(() => {
+    // 生产环境使用环境变量或当前域名
+    if (typeof window !== 'undefined') {
+      const envUrl = import.meta.env.VITE_APP_URL;
+      if (envUrl) return envUrl;
+      
+      // 如果是 Vercel 部署，使用当前域名
+      if (window.location.hostname.includes('vercel.app') || 
+          window.location.hostname !== 'localhost') {
+        return window.location.origin;
+      }
+      
+      // 本地开发回退到当前 URL
+      return window.location.origin;
+    }
+    return '';
+  }, []);
+
+  // Generate QR Code URL with correct query parameters
   const getQRUrl = (data: string) => {
     try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('page', 'customer');
-      url.searchParams.set('id', data);
-
-      const targetUrl = url.toString();
-      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}&color=${qrStyle === 'black' ? '000000' : 'ea580c'}&bgcolor=ffffff`;
+      // 构建目标 URL
+      const targetUrl = `${baseUrl}/?page=customer&id=${encodeURIComponent(data)}`;
+      
+      // 使用 qrserver.com API 生成二维码
+      const color = qrStyle === 'black' ? '000000' : 'ea580c';
+      return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(targetUrl)}&color=${color}&bgcolor=ffffff`;
     } catch (error) {
-      // 产品备注: 使用更具体的error类型而不是e
       console.error('Error generating QR code URL:', error);
       return '';
     }
@@ -60,12 +79,8 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
 
   const getCleanLink = (data: string) => {
     try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('page', 'customer');
-      url.searchParams.set('id', data);
-      return url.toString();
+      return `${baseUrl}/?page=customer&id=${encodeURIComponent(data)}`;
     } catch (error) {
-      // 产品备注: 使用更具体的error类型而不是e
       console.error('Error generating clean link:', error);
       return '#';
     }
@@ -307,6 +322,9 @@ const QRCodeCard: React.FC<QRCodeCardProps> = ({
   getUrl,
   style,
 }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  
   const borderColor =
     style === 'brand'
       ? 'border-orange-500'
@@ -321,11 +339,29 @@ const QRCodeCard: React.FC<QRCodeCardProps> = ({
       className={`rounded-xl border-2 p-4 ${borderColor} ${bgColor} flex flex-col items-center text-center shadow-sm print:break-inside-avoid print:shadow-none`}
     >
       <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-white p-2">
-        <img
-          src={getUrl(value)}
-          alt={title}
-          className="h-full w-full object-contain mix-blend-multiply"
-        />
+        {imageLoading && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-orange-500" />
+          </div>
+        )}
+        
+        {imageError ? (
+          <div className="flex flex-col items-center justify-center text-slate-400">
+            <AlertCircle size={32} />
+            <p className="mt-2 text-xs">加载失败</p>
+          </div>
+        ) : (
+          <img
+            src={getUrl(value)}
+            alt={title}
+            className="h-full w-full object-contain mix-blend-multiply"
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageError(true);
+              setImageLoading(false);
+            }}
+          />
+        )}
       </div>
       <div className={`font-bold ${textColor} text-xl`}>{title}</div>
       <div className="mt-1 text-xs font-medium uppercase tracking-wider text-slate-500">
