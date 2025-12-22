@@ -13,6 +13,7 @@ const COLLECTIONS = [
   'sign_bill_accounts',
   'hotel_rooms',
   'payment_methods',
+  'system_settings',
 ] as const;
 
 type CollectionName = (typeof COLLECTIONS)[number];

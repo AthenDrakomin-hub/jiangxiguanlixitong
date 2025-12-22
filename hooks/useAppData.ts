@@ -9,6 +9,8 @@ import {
   KTVRoom,
   SignBillAccount,
   HotelRoom,
+  PaymentMethod,
+  SystemSettings,
 } from '../types';
 
 /**
@@ -22,6 +24,8 @@ interface AppData {
   ktvRooms: KTVRoom[];
   signBillAccounts: SignBillAccount[];
   hotelRooms: HotelRoom[];
+  paymentMethods: PaymentMethod[];
+  systemSettings: SystemSettings | null;
 }
 
 /**
@@ -38,6 +42,8 @@ export const useAppData = (cacheDuration: number = 5 * 60 * 1000) => {
     ktvRooms: [],
     signBillAccounts: [],
     hotelRooms: [],
+    paymentMethods: [],
+    systemSettings: null,
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -70,6 +76,8 @@ export const useAppData = (cacheDuration: number = 5 * 60 * 1000) => {
           ktvRooms: response.ktvRooms || [],
           signBillAccounts: response.signBillAccounts || [],
           hotelRooms: response.hotelRooms || [],
+          paymentMethods: response.paymentMethods || [],
+          systemSettings: response.systemSettings || null,
         };
 
         // Cache the data if caching is enabled
