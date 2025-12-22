@@ -10,7 +10,8 @@
     "init:rooms": "node scripts/init-all-data.mjs"
   },
   "dependencies": {
-    "@upstash/redis": "^1.35.8"
+    "@upstash/redis": "^1.35.8",
+    "lucide-react": "^0.562.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.2",

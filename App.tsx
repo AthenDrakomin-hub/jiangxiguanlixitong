@@ -147,12 +147,12 @@ const App = () => {
   useEffect(() => {
     const handleDataRefresh = () => {
       // 强制刷新数据，不使用缓存
-      fetchAllData(false);
+      useAppData(0)[0].refetch(false);
     };
     
     window.addEventListener('data-refresh', handleDataRefresh);
     return () => window.removeEventListener('data-refresh', handleDataRefresh);
-  }, [fetchAllData]);
+  }, []);
 
   // --- Optimized Persistence Layer (Debounced) ---
 
