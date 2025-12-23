@@ -2,7 +2,9 @@
 node_modules/
 
 # 环境文件（在 Dashboard 配置）
-.env*
+.env
+.env.local
+.env*.local
 
 # IDE 编辑器
 .vscode/
@@ -15,3 +17,6 @@ Thumbs.db
 # Git 文件
 .git/
 .gitignore
+
+# 测试脚本目录
+test-scripts/

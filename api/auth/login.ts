@@ -6,8 +6,13 @@ export const config = {
 };
 
 // 定义认证凭证
-const ADMIN_USER = process.env.VITE_ADMIN_USER || 'admin';
-const ADMIN_PASS = process.env.VITE_ADMIN_PASS || 'admin123';
+const ADMIN_USER = process.env.VITE_ADMIN_USER;
+const ADMIN_PASS = process.env.VITE_ADMIN_PASS;
+
+// 检查环境变量是否配置
+if (!ADMIN_USER || !ADMIN_PASS) {
+  console.error('❌ 管理员凭据未配置，请设置 VITE_ADMIN_USER 和 VITE_ADMIN_PASS 环境变量');
+}
 
 export default async function handler(req: Request) {
   // CORS 头设置
@@ -40,6 +45,20 @@ export default async function handler(req: Request) {
   }
 
   try {
+    // 检查环境变量是否配置
+    if (!ADMIN_USER || !ADMIN_PASS) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: '服务器配置错误：管理员凭据未设置',
+        }),
+        {
+          status: 500,
+          headers: corsHeaders,
+        }
+      );
+    }
+    
     const { username, password } = await req.json();
 
     // 验证凭据
