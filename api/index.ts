@@ -64,9 +64,16 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // Extract collection name from URL path
+    // Extract collection name from URL path - handle dynamic routes like /api/dishes, /api/orders, etc.
     const pathParts = url.pathname.split('/').filter((p) => p);
-    const collectionName = pathParts[pathParts.length - 1] || url.searchParams.get('collection');
+    let collectionName = null;
+    
+    // Handle /api/[collection] routes
+    if (pathParts.length >= 2 && pathParts[0] === 'api') {
+      collectionName = pathParts[1]; // Get the collection name from /api/[collection]
+    } else {
+      collectionName = url.searchParams.get('collection');
+    }
 
     // Validate collection name
     if (
