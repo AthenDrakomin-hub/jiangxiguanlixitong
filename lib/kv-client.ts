@@ -14,7 +14,7 @@ interface ConnectionStatus {
   urlPreview: string;
 }
 
-import { getRedisClient, getConnectionStatus as getRedisConnectionStatus } from './redis';
+import { getRedisClient, getConnectionStatus as getRedisConnectionStatus } from './redis.js';
 
 // 获取环境变量（Vercel KV 自动注入）
 const getEnvVar = (key: string): string | undefined => {
