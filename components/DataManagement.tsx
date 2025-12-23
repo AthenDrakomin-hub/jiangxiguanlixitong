@@ -212,9 +212,9 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
 
 
 
-  // 初始化示例数据
+  // 统计现有数据
   const handleSeedData = async () => {
-    if (!confirm('确认要初始化数据吗？\n\n这将统计现有数据量，不会添加任何示例数据。')) {
+    if (!confirm('确认要统计现有数据吗？\n\n这将统计各数据表的现有数据量。')) {
       return;
     }
 
@@ -223,28 +223,31 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
     setSuccess(null);
 
     try {
-      const response = await apiClient.seed();
+      // 获取所有数据表的统计信息
+      const allData = await apiClient.fetchAll();
       
-      if (response.success) {
-        const created = response.created || {};
-        const message =
-          `✅ 数据初始化成功！\n` +
-          `- 菜品: ${created.dishes || 0} 条\n` +
-          `- 库存: ${created.inventory || 0} 条\n` +
-          `- KTV房间: ${created.ktv_rooms || 0} 个\n` +
-          `- 酒店房间: ${created.hotel_rooms || 0} 个\n` +
-          `- 支付方式: ${created.payment_methods || 0} 种`;
-        
-        setSuccess(message);
-        
-        // 通知父组件数据已更新
-        if (onDataUpdate) onDataUpdate();
-      } else {
-        setError(`初始化失败: ${response.error || '未知错误'}`);
-      }
+      // 统计各项数据量
+      const dishesCount = allData.dishes?.length || 0;
+      const inventoryCount = allData.inventory?.length || 0;
+      const ktvRoomsCount = allData.ktvRooms?.length || 0;
+      const hotelRoomsCount = allData.hotelRooms?.length || 0;
+      const paymentMethodsCount = allData.paymentMethods?.length || 0;
+      
+      const message =
+        `✅ 数据统计完成！\n` +
+        `- 菜品: ${dishesCount} 条\n` +
+        `- 库存: ${inventoryCount} 条\n` +
+        `- KTV房间: ${ktvRoomsCount} 个\n` +
+        `- 酒店房间: ${hotelRoomsCount} 个\n` +
+        `- 支付方式: ${paymentMethodsCount} 种`;
+      
+      setSuccess(message);
+      
+      // 通知父组件数据已更新
+      if (onDataUpdate) onDataUpdate();
     } catch (err) {
-      console.error('数据初始化失败:', err);
-      setError('数据初始化失败，请重试');
+      console.error('数据统计失败:', err);
+      setError('数据统计失败，请重试');
     } finally {
       setSeeding(false);
     }
