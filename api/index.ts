@@ -27,6 +27,23 @@ export default async function handler(req: Request) {
   const url = new URL(req.url);
   const method = req.method;
 
+  // Extract collection name and ID from the dynamic route
+  // Expected format: /api/[collection]/[id]
+  const pathParts = url.pathname.split('/').filter(part => part !== '');
+  let collectionName = null;
+  let itemId = null;
+
+  // Find the collection and ID in the path
+  const apiIndex = pathParts.indexOf('api');
+  if (apiIndex !== -1 && apiIndex + 1 < pathParts.length) {
+    collectionName = pathParts[apiIndex + 1];
+    
+    // If there's another part after collection, it's the ID
+    if (apiIndex + 2 < pathParts.length) {
+      itemId = pathParts[apiIndex + 2];
+    }
+  }
+
   // CORS 头设置
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -41,6 +58,20 @@ export default async function handler(req: Request) {
       status: 200,
       headers: corsHeaders,
     });
+  }
+
+  // Validate collection name
+  if (collectionName && !isValidCollection(collectionName)) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: `Invalid collection name: ${collectionName}`,
+      }),
+      {
+        status: 400,
+        headers: corsHeaders,
+      }
+    );
   }
 
   // Check if database is connected
@@ -64,96 +95,91 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // Extract collection name from URL path - handle dynamic routes like /api/dishes, /api/orders, etc.
-    const pathParts = url.pathname.split('/').filter((p) => p);
-    let collectionName = null;
-    
-    // Handle /api/[collection] routes
-    if (pathParts.length >= 2 && pathParts[0] === 'api') {
-      collectionName = pathParts[1]; // Get the collection name from /api/[collection]
-    } else {
-      collectionName = url.searchParams.get('collection');
-    }
-
-    // Validate collection name
-    if (
-      collectionName &&
-      collectionName !== 'index' &&
-      !isValidCollection(collectionName)
-    ) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: `Invalid collection name: ${collectionName}`,
-        }),
-        {
-          status: 400,
-          headers: corsHeaders,
-        }
-      );
-    }
-
     switch (method) {
       case 'GET':
         if (collectionName) {
-          // Get all items in collection
-          try {
-            const items = await kvClient.getAll(collectionName);
+          if (itemId) {
+            // Get specific item by ID
+            try {
+              const item = await kvClient.get(collectionName, itemId);
+              
+              if (item) {
+                return new Response(
+                  JSON.stringify({
+                    success: true,
+                    data: item,
+                    timestamp: new Date().toISOString(),
+                  }),
+                  {
+                    status: 200,
+                    headers: corsHeaders,
+                  }
+                );
+              } else {
+                return new Response(
+                  JSON.stringify({
+                    success: false,
+                    message: `Item not found in ${collectionName}`,
+                  }),
+                  {
+                    status: 404,
+                    headers: corsHeaders,
+                  }
+                );
+              }
+            } catch (error) {
+              console.error('Error fetching item from KV storage:', error);
+              return new Response(
+                JSON.stringify({
+                  success: false,
+                  message: `Item not found in ${collectionName}`,
+                }),
+                {
+                  status: 404,
+                  headers: corsHeaders,
+                }
+              );
+            }
+          } else {
+            // Get all items in collection
+            try {
+              const items = await kvClient.getAll(collectionName);
 
-            return new Response(
-              JSON.stringify({
-                success: true,
-                data: items,
-                timestamp: new Date().toISOString(),
-              }),
-              {
-                status: 200,
-                headers: corsHeaders,
-              }
-            );
-          } catch (error) {
-            console.error('Error fetching data from KV storage:', error);
-            // Return empty data array on error but still success status
-            return new Response(
-              JSON.stringify({
-                success: true,
-                data: [],
-                timestamp: new Date().toISOString(),
-              }),
-              {
-                status: 200,
-                headers: corsHeaders,
-              }
-            );
-          }
-        } else {
-          // Return API info with connection status and data summary
-          const status = kvClient.getConnectionStatus();
-          
-          // 统计各集合的数据量（仅当连接正常时）
-          let dataSummary: Record<string, number> = {};
-          if (status.connected) {
-            for (const collection of ALLOWED_COLLECTIONS) {
-              try {
-                const items = await kvClient.getAll(collection);
-                dataSummary[collection] = Array.isArray(items) ? items.length : 0;
-              } catch (error) {
-                dataSummary[collection] = -1; // -1 表示读取失败
-              }
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  data: items,
+                  timestamp: new Date().toISOString(),
+                }),
+                {
+                  status: 200,
+                  headers: corsHeaders,
+                }
+              );
+            } catch (error) {
+              console.error('Error fetching data from KV storage:', error);
+              // Return empty data array on error but still success status
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  data: [],
+                  timestamp: new Date().toISOString(),
+                }),
+                {
+                  status: 200,
+                  headers: corsHeaders,
+                }
+              );
             }
           }
-          
+        } else {
           return new Response(
             JSON.stringify({
-              success: true,
-              message: 'Jiangxi Hotel Management System API (KV Storage Version)',
-              kvStatus: status,
-              dataSummary,
-              collections: ALLOWED_COLLECTIONS,
-              timestamp: new Date().toISOString(),
+              success: false,
+              message: 'Collection name is required',
             }),
             {
-              status: 200,
+              status: 400,
               headers: corsHeaders,
             }
           );
@@ -192,14 +218,26 @@ export default async function handler(req: Request) {
       }
 
       case 'PUT': {
-        // Update existing item
-        const body = await req.json().catch(() => null);
-        const recordId = url.searchParams.get('id');
+        // Update existing item - requires itemId
+        if (!itemId) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: 'Record ID is required for PUT requests',
+            }),
+            {
+              status: 400,
+              headers: corsHeaders,
+            }
+          );
+        }
         
-        if (collectionName && recordId && body) {
+        const body = await req.json().catch(() => null);
+        
+        if (collectionName && itemId && body) {
           const updatedItem = await kvClient.update(
             collectionName,
-            recordId,
+            itemId,
             body
           );
 
@@ -242,13 +280,24 @@ export default async function handler(req: Request) {
       }
 
       case 'DELETE': {
-        // Delete item
-        const recordId = url.searchParams.get('id');
+        // Delete item - requires itemId
+        if (!itemId) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: 'Record ID is required for DELETE requests',
+            }),
+            {
+              status: 400,
+              headers: corsHeaders,
+            }
+          );
+        }
         
-        if (collectionName && recordId) {
+        if (collectionName && itemId) {
           const deleted = await kvClient.delete(
             collectionName,
-            recordId
+            itemId
           );
 
           if (deleted) {
