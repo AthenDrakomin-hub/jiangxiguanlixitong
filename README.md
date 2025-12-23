@@ -73,6 +73,9 @@
 jiangxiguanlixitong/
 ├── api/
 │   ├── index.ts              # 主 API 端点（REST 接口）
+│   ├── [collection].ts       # 动态集合 API 端点
+│   ├── test-connection.ts    # 数据库连接测试端点
+│   ├── db-status.ts          # 数据库状态诊断端点
 │   ├── print.ts              # 云打印 API（飞鹅云集成）
 │   └── print-order.ts        # 订单自动打印 API
 ├── components/               # React 组件
@@ -100,7 +103,8 @@ jiangxiguanlixitong/
 │   ├── i18n.ts               # 国际化（中文/菲律宾语）
 │   └── validation.ts         # 数据验证
 ├── scripts/
-│   └── (scripts removed)     # 初始化脚本已移除
+│   ├── init-hotel-rooms.ts   # 房间数据生成脚本
+│   └── init-all-data.mjs     # 一键初始化脚本
 ├── types.ts                  # TypeScript 类型定义
 ├── App.tsx                   # 主应用组件
 ├── index.tsx                 # React 入口
@@ -252,6 +256,7 @@ npm run build
 npm run preview
 
 # 初始化房间数据（64间房 + 1间KTV + 大厅）
+npm run init:rooms
 
 ```
 
@@ -298,10 +303,21 @@ Vercel 会自动检测并构建部署。
 
 ### 4. 初始化数据
 
-部署成功后，您需要手动创建初始数据：
+部署成功后，访问：
+```
+https://your-app.vercel.app
+```
 
-**通过管理界面**
-- 登录系统后，手动添加房间、菜品等基础数据
+在浏览器控制台运行：
+```bash
+# 调用初始化 API
+fetch('/api/init-rooms', { method: 'POST' })
+```
+
+或使用本地脚本（需先配置 API URL）：
+```bash
+VITE_API_URL=https://your-app.vercel.app npm run init:rooms
+```
 
 ### 5. 验证部署
 
@@ -322,6 +338,21 @@ Vercel 会自动检测并构建部署。
   }
 }
 ```
+
+### 6. 故障排除
+
+**问题：** 房间列表为空
+
+**解决：**
+```bash
+# 运行初始化脚本
+npm run init:rooms
+
+# 或手动调用 API
+fetch('/api/init-rooms', { method: 'POST' })
+```
+
+---
 
 ---
 
