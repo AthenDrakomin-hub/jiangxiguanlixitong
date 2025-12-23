@@ -101,7 +101,8 @@ export default async function handler(req: Request) {
           if (itemId) {
             // Get specific item by ID
             try {
-              const item = await kvClient.get(collectionName, itemId);
+              const key = `${collectionName}:${itemId}`;
+              const item = await kvClient.get(key);
               
               if (item) {
                 return new Response(
