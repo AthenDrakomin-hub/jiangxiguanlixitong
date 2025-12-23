@@ -3,7 +3,7 @@
  */
 
 import 'dotenv/config';
-import { getRedisClient } from './lib/redis';
+import { getRedisClient } from '../lib/redis.js';
 
 async function fixDataStructures() {
   console.log('🔧 开始修复数据结构问题...\n');

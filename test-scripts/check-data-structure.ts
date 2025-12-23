@@ -3,7 +3,7 @@
  */
 
 import 'dotenv/config';
-import { getRedisClient } from './lib/redis';
+import { getRedisClient } from '../lib/redis.js';
 
 async function checkDataStructure() {
   console.log('🔍 检查数据实际结构...\n');

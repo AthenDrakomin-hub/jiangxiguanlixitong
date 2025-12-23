@@ -3,7 +3,7 @@
  */
 
 import 'dotenv/config';
-import { getRedisClient } from './lib/redis';
+import { getRedisClient } from '../lib/redis.js';
 
 // 定义数据类型接口
 interface Dish {

@@ -5,7 +5,7 @@
  * 包括连接验证、读写测试和错误诊断
  */
 
-import { getRedisClient, getConnectionStatus, testRedisConnection } from '../lib/redis';
+import { getRedisClient, getConnectionStatus, testRedisConnection } from '../lib/redis.js';
 
 export const config = {
   runtime: 'edge',
