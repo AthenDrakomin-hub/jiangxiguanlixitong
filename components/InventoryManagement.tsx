@@ -61,7 +61,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
     if (!confirm('Delete this item? 确定要删除该食材记录吗？')) return;
 
     try {
-      await apiClient.delete('inventory', id);
+      await apiClient.remove('inventory', id);
       setInventory((prev) => prev.filter((item) => item.id !== id));
       auditLogger.log('warn', 'INVENTORY_DELETE', `删除食材: ${item.name}`, 'admin');
       setError(null);

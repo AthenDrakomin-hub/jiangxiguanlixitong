@@ -143,7 +143,7 @@ const PaymentManagement: React.FC = () => {
     }
 
     try {
-      await apiClient.delete('payment_methods', id);
+      await apiClient.remove('payment_methods', id);
       await loadPaymentMethods();
     } catch (error) {
       console.error('删除支付方式失败:', error);

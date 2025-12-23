@@ -1,7 +1,25 @@
 // services/apiClient.ts
 // API client for handling HTTP requests
 
-const API_BASE_URL = '/api';
+// Determine the base URL based on environment
+const getApiBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    // Client-side
+    return '/api';
+  } else {
+    // Server-side (Node.js)
+    const VERCEL_URL = process.env.VERCEL_URL;
+    if (VERCEL_URL) {
+      // During Vercel deployment
+      return `https://${VERCEL_URL}/api`;
+    } else {
+      // Local development server
+      return `http://localhost:${process.env.PORT || 5173}/api`;
+    }
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Define collection names
 const COLLECTIONS = [
@@ -16,10 +34,10 @@ const COLLECTIONS = [
   'system_settings',
 ] as const;
 
-type CollectionName = (typeof COLLECTIONS)[number];
+type CollectionName = (typeof COLLECTIONS)[number] | string;
 
 export const apiClient = {
-  async get<T>(endpoint: string): Promise<T> {
+  async get<T = any>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -55,7 +73,7 @@ export const apiClient = {
     return await response.json();
   },
 
-  async delete<T>(endpoint: string): Promise<T> {
+  async delete<T = any>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
     });
@@ -139,7 +157,7 @@ export const apiClient = {
   async saveSystemSettings(settings: unknown) {
     try {
       // We'll store system settings as a single item with a fixed ID
-      const response = await this.put<{ success: boolean; data: unknown }>(
+      const response = await this.put<any>(
         `/system_settings?id=settings`,
         settings
       );
@@ -154,16 +172,90 @@ export const apiClient = {
    * Fetch system settings from the database
    * @returns The system settings
    */
-  async fetchSystemSettings() {
+  async fetchSystemSettings(): Promise<any> {
     try {
       // We'll fetch the single system settings item with the fixed ID
-      const response = await this.get<{ success: boolean; data: unknown }>(
+      const response = await this.get<any>(
         `/system_settings?id=settings`
       );
       return response.success ? response.data : null;
     } catch (error) {
       console.error('Error fetching system settings:', error);
       return null;
+    }
+  },
+
+  /**
+   * Create a new item in a specific collection
+   * @param collection The collection name
+   * @param data The data to create
+   * @returns The created item
+   */
+  async create<T>(collection: CollectionName, data: T): Promise<T> {
+    try {
+      const response = await this.post<T>(
+        `/${collection}`,
+        data
+      );
+      return response;
+    } catch (error) {
+      console.error(`Error creating item in collection ${collection}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update an existing item in a specific collection
+   * @param collection The collection name
+   * @param id The ID of the item to update
+   * @param data The data to update
+   * @returns The updated item
+   */
+  async update<T>(collection: CollectionName, id: string, data: T): Promise<T> {
+    try {
+      const response = await this.put<T>(
+        `/${collection}?id=${id}`,
+        data
+      );
+      return response;
+    } catch (error) {
+      console.error(`Error updating item ${id} in collection ${collection}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete an item from a specific collection
+   * @param collection The collection name
+   * @param id The ID of the item to delete
+   * @returns The response from the delete operation
+   */
+  async remove<T = any>(collection: CollectionName, id: string): Promise<T> {
+    try {
+      const response = await this['delete']<any>(
+        `/${collection}?id=${id}`
+      );
+      return response;
+    } catch (error) {
+      console.error(`Error deleting item ${id} from collection ${collection}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Initialize all system data
+   * @returns The response from the seed operation
+   */
+  async seed(): Promise<any> {
+    try {
+      const response = await this.post<Record<string, unknown>>(
+        `/seed`,
+        {}
+      );
+      return response;
+    } catch (error) {
+      console.error('Error seeding data:', error);
+      throw error;
     }
   },
 };

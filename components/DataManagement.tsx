@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Upload, Download } from 'lucide-react';
+import { Plus, Upload, Download, Zap, X } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
 
 interface DataManagementProps {
@@ -21,9 +21,10 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
   const [activeTab, setActiveTab] = useState('dishes');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState<FormData>({});
-  const [bulkData, setBulkData] = useState('');
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   // 表格定义
   const tables = [
@@ -209,43 +210,43 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
     }
   };
 
-  const handleBulkImport = async () => {
+
+
+  // 初始化示例数据
+  const handleSeedData = async () => {
+    if (!confirm('确认要初始化示例数据吗？\n\n这将添加示例菜品、库存、房间等数据。')) {
+      return;
+    }
+
+    setSeeding(true);
+    setError(null);
+    setSuccess(null);
+
     try {
-      setError(null);
-      const dataArray = JSON.parse(bulkData);
-      if (!Array.isArray(dataArray)) {
-        setError('批量数据必须是数组格式');
-        return;
+      const response = await apiClient.seed();
+      
+      if (response.success) {
+        const created = response.created || {};
+        const message =
+          `✅ 数据初始化成功！\n` +
+          `- 菜品: ${created.dishes || 0} 条\n` +
+          `- 库存: ${created.inventory || 0} 条\n` +
+          `- KTV房间: ${created.ktv_rooms || 0} 个\n` +
+          `- 酒店房间: ${created.hotel_rooms || 0} 个\n` +
+          `- 支付方式: ${created.payment_methods || 0} 种`;
+        
+        setSuccess(message);
+        
+        // 通知父组件数据已更新
+        if (onDataUpdate) onDataUpdate();
+      } else {
+        setError(`初始化失败: ${response.error || '未知错误'}`);
       }
-
-      let successCount = 0;
-      for (const item of dataArray) {
-        try {
-          const dataWithId = {
-            id:
-              Math.random().toString(36).substring(2, 15) +
-              Math.random().toString(36).substring(2, 15),
-            ...item,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-
-          await apiClient.create(activeTab, dataWithId);
-          successCount++;
-        } catch (err) {
-          console.error('单条数据导入失败:', err);
-        }
-      }
-
-      setBulkData('');
-      setSuccess(`成功导入 ${successCount} 条数据`);
-      setTimeout(() => setSuccess(null), 3000);
-
-      // 通知父组件数据已更新
-      if (onDataUpdate) onDataUpdate();
-    } catch (error) {
-      console.error('批量导入失败:', error);
-      setError('批量导入失败，请检查数据格式');
+    } catch (err) {
+      console.error('数据初始化失败:', err);
+      setError('数据初始化失败，请重试');
+    } finally {
+      setSeeding(false);
     }
   };
 
@@ -264,7 +265,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
         <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
           <div className="flex items-center gap-2">
             <Plus size={18} />
-            <span className="font-medium">{success}</span>
+            <span className="font-medium whitespace-pre-line">{success}</span>
           </div>
         </div>
       )}
@@ -297,6 +298,15 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
           className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
         >
           <Plus size={16} /> 添加新记录
+        </button>
+
+        <button
+          onClick={handleSeedData}
+          disabled={seeding}
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 font-bold text-white shadow-lg transition-all hover:from-blue-700 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Zap size={16} className={seeding ? 'animate-pulse' : ''} />
+          {seeding ? '初始化中...' : '初始化示例数据'}
         </button>
 
         <button
@@ -589,22 +599,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
         </div>
       )}
 
-      {/* 批量导入 */}
-      <div className="mb-6 rounded-lg border border-slate-200 p-4">
-        <h4 className="mb-4 font-bold">批量导入</h4>
-        <textarea
-          value={bulkData}
-          onChange={(e) => setBulkData(e.target.value)}
-          placeholder="粘贴JSON格式的批量数据..."
-          className="mb-3 h-32 w-full rounded-lg border border-slate-200 px-3 py-2"
-        />
-        <button
-          onClick={handleBulkImport}
-          className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white hover:bg-slate-800"
-        >
-          <Upload size={16} /> 批量导入
-        </button>
-      </div>
+
     </div>
   );
 };

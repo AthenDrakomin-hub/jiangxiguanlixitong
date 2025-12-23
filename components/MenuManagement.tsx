@@ -235,7 +235,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
     try {
       // 批量删除后端数据
       for (const id of selectedIds) {
-        await apiClient.delete('dishes', id);
+        await apiClient.remove('dishes', id);
       }
 
       setDishes((prev) => prev.filter((d) => !selectedIds.has(d.id)));
@@ -286,7 +286,7 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
 
     try {
       // 删除后端数据
-      await apiClient.delete('dishes', id);
+      await apiClient.remove('dishes', id);
 
       // 更新前端状态
       setDishes((prev) => prev.filter((d) => d.id !== id));
