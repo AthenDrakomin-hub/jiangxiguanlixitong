@@ -214,7 +214,7 @@ const DataManagement: React.FC<DataManagementProps> = ({ onDataUpdate }) => {
 
   // 初始化示例数据
   const handleSeedData = async () => {
-    if (!confirm('确认要初始化示例数据吗？\n\n这将添加示例菜品、库存、房间等数据。')) {
+    if (!confirm('确认要初始化数据吗？\n\n这将统计现有数据量，不会添加任何示例数据。')) {
       return;
     }
 

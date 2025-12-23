@@ -1,15 +1,12 @@
 // services/storage.ts
 // Storage service for handling localStorage operations
 
-interface AppSettings {
-  language?: string;
-  theme?: string;
-  notifications?: boolean;
-}
+import { StorageSettings } from '../types';
 
-export const getStorageSettings = (): AppSettings | null => {
+
+export const getStorageSettings = (): StorageSettings | null => {
   try {
-    const settings = localStorage.getItem('app-settings');
+    const settings = localStorage.getItem('storage-settings');
     return settings ? JSON.parse(settings) : null;
   } catch (error) {
     console.error('Error reading storage settings:', error);
@@ -17,9 +14,9 @@ export const getStorageSettings = (): AppSettings | null => {
   }
 };
 
-export const saveStorageSettings = (settings: AppSettings) => {
+export const saveStorageSettings = (settings: StorageSettings) => {
   try {
-    localStorage.setItem('app-settings', JSON.stringify(settings));
+    localStorage.setItem('storage-settings', JSON.stringify(settings));
     return true;
   } catch (error) {
     console.error('Error saving storage settings:', error);

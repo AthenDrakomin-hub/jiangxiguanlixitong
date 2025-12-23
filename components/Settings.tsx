@@ -13,7 +13,7 @@ import {
   QrCode,
   BedDouble,
 } from 'lucide-react';
-import { getStorageSettings, saveStorageSettings } from '../services/storage';
+import { getStorageSettings as getLocalSettings, saveStorageSettings as saveLocalSettings } from '../services/storage';
 import { apiClient } from '../services/apiClient';
 import {
   StorageSettings,
@@ -26,11 +26,9 @@ import {
   SignBillAccount,
   HotelRoom,
   SystemSettings,
-  OrderStatus, // 导入OrderStatus枚举
 } from '../types';
 import { PrinterService } from '../services/printer';
 import DataManagement from './DataManagement';
-import DevToolkit from './DevToolkit';
 import PrinterConfig from './PrinterConfig';
 
 import { auditLogger } from '../services/auditLogger';
@@ -151,18 +149,19 @@ const Settings: React.FC<SettingsProps> = (props) => {
   });
 
   // Printer Configuration State
-  const [printerMode, setPrinterMode] = useState<'browser' | 'cloud'>('browser');
-  const [cloudPrinterConfig, setCloudPrinterConfig] = useState({
-    apiUrl: 'https://api.feieyun.cn/Api/Open/',
-    user: '',
-    ukey: '',
-    sn: '',
-  });
-  const [printerTestStatus, setPrinterTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  // Removed unused printer configuration state variables
+  // const [printerMode, setPrinterMode] = useState<'browser' | 'cloud'>('browser');
+  // const [cloudPrinterConfig, setCloudPrinterConfig] = useState({
+  //   apiUrl: 'https://api.feieyun.cn/Api/Open/',
+  //   user: '',
+  //   ukey: '',
+  //   sn: '',
+  // });
+  // const [printerTestStatus, setPrinterTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
   // Storage State
   const [storageSettings, setStorageSettings] = useState<StorageSettings>(
-    getStorageSettings() || { type: 'blob' }
+    getLocalSettings() || { type: 'blob' }
   );
   const [showToast, setShowToast] = useState(false);
 
@@ -260,7 +259,7 @@ const Settings: React.FC<SettingsProps> = (props) => {
       localStorage.setItem('jx_settings', JSON.stringify(settings));
 
       // Save Storage Settings
-      saveStorageSettings(storageSettings);
+      saveLocalSettings(storageSettings);
 
       // Save settings to database
       try {
@@ -335,23 +334,21 @@ const Settings: React.FC<SettingsProps> = (props) => {
   const handleTestPrint = () => {
     try {
       // 产品备注: 为dummyOrder变量指定明确的类型，避免使用any
-      const dummyOrder: Order = {
+      // 注意：PrinterService使用自己的Order接口，需要total和timestamp字段
+      const dummyOrder: any = {
         id: 'TEST-001',
-        tableNumber: 'A1',
-        source: 'LOBBY',
-        createdAt: new Date().toISOString(),
-        paymentMethod: 'CASH',
-        totalAmount: 1234,
-        status: OrderStatus.PENDING, // 添加必需的status字段，使用正确的枚举值
+        tableId: 'A1',
+        timestamp: new Date().toISOString(),
+        total: 1234,
         items: [
           {
-            dishId: '1',
-            dishName: 'Kung Pao Chicken',
+            id: '1',
+            name: 'Kung Pao Chicken',
             quantity: 1,
             price: 500,
           },
-          { dishId: '2', dishName: 'Rice', quantity: 2, price: 50 },
-          { dishId: '3', dishName: 'Cola', quantity: 2, price: 80 },
+          { id: '2', name: 'Rice', quantity: 2, price: 50 },
+          { id: '3', name: 'Cola', quantity: 2, price: 80 },
         ],
       };
       PrinterService.printOrder(dummyOrder);
@@ -1006,9 +1003,6 @@ const Settings: React.FC<SettingsProps> = (props) => {
           // onDataUpdate?.();
         }}
       />
-
-      {/* Developer Toolkit */}
-      <DevToolkit />
 
       {/* Confirmation Modal */}
       {confirmModal.open && (
