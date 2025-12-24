@@ -4,6 +4,13 @@
 import { PrinterService } from '../services/printer.js';
 import { Order, OrderStatus } from '../types.js';
 
+// 扩展 Order 类型以包含打印服务需要的额外属性
+interface PrintOrder extends Order {
+  tableNumber?: string;
+  totalAmount?: number;
+  source?: string;
+}
+
 export const config = {
   runtime: 'edge',
 };
@@ -36,15 +43,16 @@ export default async function handler(req: Request) {
     // 对于云打印，订单会自动发送到飞鹅云打印机
     // 对于浏览器打印，需要服务器端触发（或者后续优化为Webhook通知收银台）
     
-    const printResult = await PrinterService.printOrder({
-      id: order.id,
-      tableNumber: order.tableNumber,
-      items: order.items,
-      totalAmount: order.totalAmount,
-      createdAt: order.createdAt,
-      source: 'LOBBY', // 添加默认值
-      status: OrderStatus.PENDING, // 使用枚举值
-    });
+    // 由于 PrinterService 需要特定的属性，创建一个兼容的对象
+    const printOrder: PrintOrder = {
+      ...order,
+      tableNumber: order.tableId, // 映射 tableId 到 tableNumber
+      totalAmount: order.total,   // 映射 total 到 totalAmount
+      source: 'LOBBY',
+      status: OrderStatus.PENDING,
+    };
+    
+    const printResult = await PrinterService.printOrder(printOrder as Order);
 
     if (printResult) {
       return new Response(

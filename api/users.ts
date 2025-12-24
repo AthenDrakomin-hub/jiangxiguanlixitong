@@ -1,8 +1,8 @@
 // api/users.ts
 // 用户管理 API（Edge Runtime）
 
-import { DatabaseManager } from '../lib/database';
-import { User } from '../types';
+import { DatabaseManager } from '../lib/database.js';
+import { User } from '../types.js';
 
 export const config = {
   runtime: 'edge',

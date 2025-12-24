@@ -1,4 +1,4 @@
-import { Database, DatabaseConfig } from '../types';
+import { Database, DatabaseConfig } from '../types.js';
 
 /**
  * 内存数据库实现（用于开发和测试）

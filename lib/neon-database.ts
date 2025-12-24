@@ -1,4 +1,4 @@
-import { Database, DatabaseConfig, NeonConfig } from '../types';
+import { Database, DatabaseConfig, NeonConfig } from '../types.js';
 
 /**
  * Neon数据库实现
