@@ -1,42 +1,36 @@
 // kv-client.ts
 /**
- * KV Client for Upstash Redis integration
+ * KV Client with support for multiple database backends
  * 
- * Edge Runtime 兼容配置，使用优化后的 Redis 客户端
- * 支持 Vercel KV 自动注入的环境变量
+ * Edge Runtime 兼容配置，支持多种数据库后端
  */
+
+import { dbManager } from './database.js';
+import { DatabaseConfig, StorageType } from '../types.js';
 
 // 定义连接状态类型
 interface ConnectionStatus {
   connected: boolean;
-  hasUrl: boolean;
-  hasToken: boolean;
-  urlPreview: string;
-  isRealConnection: boolean; // 区分真实连接和模拟连接
+  type: StorageType | null;
+  isRealConnection: boolean;
+  message: string;
 }
 
-import { getRedisClient, getConnectionStatus as getRedisConnectionStatus } from './redis.js';
-
-// 获取环境变量（Vercel KV 自动注入）
-const getEnvVar = (key: string): string | undefined => {
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env[key];
-  }
-  return undefined;
+// 默认配置 - 使用内存数据库作为后备
+const defaultConfig: DatabaseConfig = {
+  type: 'memory',
+  settings: null
 };
 
-const redisUrl = getEnvVar('KV_REST_API_URL') || getEnvVar('KV_URL');
-const redisToken = getEnvVar('KV_REST_API_TOKEN');
+// 初始化数据库管理器
+let initialized = false;
 
-// 环境变量检查（不阻塞，仅记录）
-if (!redisUrl || !redisToken) {
-  console.warn('⚠️ KV environment variables not found');
-  console.warn('Expected: KV_REST_API_URL and KV_REST_API_TOKEN');
-  console.warn('Please link Vercel KV in dashboard or redeploy');
+async function ensureInitialized() {
+  if (!initialized) {
+    await dbManager.initialize(defaultConfig);
+    initialized = true;
+  }
 }
-
-// 检查是否为真实连接（而非模拟连接）
-const isRealConnection = !!(redisUrl && redisToken);
 
 /**
  * KV Client with helper methods for the hotel management system
@@ -47,19 +41,17 @@ export const kvClient = {
    * @returns 连接状态和配置详情
    */
   getConnectionStatus(): ConnectionStatus {
-    const redisStatus = getRedisConnectionStatus();
+    const isInitialized = dbManager.isInitialized();
     return {
-      connected: redisStatus.ready,
-      hasUrl: !!redisUrl,
-      hasToken: !!redisToken,
-      urlPreview: redisUrl ? `${redisUrl.substring(0, 30)}...` : 'NOT_SET',
-      isRealConnection: isRealConnection,
-    } as ConnectionStatus;
+      connected: isInitialized,
+      type: isInitialized && (globalThis as any).dbConfig ? (globalThis as any).dbConfig.type : null,
+      isRealConnection: isInitialized,
+      message: isInitialized ? 'Database connected' : 'Database not initialized'
+    };
   },
 
   isConnected(): boolean {
-    const redisStatus = getRedisConnectionStatus();
-    return redisStatus.ready;
+    return dbManager.isInitialized();
   },
 
   /**
@@ -97,30 +89,34 @@ export const kvClient = {
   },
 
   /**
+   * 初始化数据库连接
+   * @param config 数据库配置
+   */
+  async initialize(config: DatabaseConfig): Promise<void> {
+    try {
+      await dbManager.reconfigure(config);
+      (globalThis as any).dbConfig = config;
+      console.log(`Database initialized with type: ${config.type}`);
+    } catch (error) {
+      console.error('Error initializing database:', error);
+      // 如果初始化失败，使用内存数据库作为后备
+      await dbManager.initialize(defaultConfig);
+      console.warn('Falling back to memory database');
+    }
+  },
+
+  /**
    * Get a single item by key
    * @param key The key to retrieve
    * @returns The parsed JSON data or null if not found
    */
   async get(key: string) {
-    // If no redis client, return null
-    if (!this.isConnected()) {
-      console.warn(`No Redis connection, returning null for key: ${key}`);
-      return null;
-    }
-
+    await ensureInitialized();
     try {
-      const client = getRedisClient();
-      const data = await client.get(key);
-      let parsedData;
-      
-      if (typeof data === 'string') {
-        parsedData = JSON.parse(data);
-      } else {
-        parsedData = data;
-      }
-      
+      const db = dbManager.getDatabase();
+      const data = await db.get<any>(key);
       // 深度序列化处理（BigInt 等）
-      return parsedData ? this.serializeData(parsedData) : null;
+      return data ? this.serializeData(data) : null;
     } catch (error) {
       console.error(`Error getting key ${key}:`, error);
       return null;
@@ -131,115 +127,29 @@ export const kvClient = {
    * Set a single item by key
    * @param key The key to set
    * @param value The value to store (will be JSON serialized)
-   * @returns The result of the set operation
    */
   async set(key: string, value: unknown) {
-    // If no redis client, return null
-    if (!this.isConnected()) {
-      console.warn(`No Redis connection, skipping set for key: ${key}`);
-      return null;
-    }
-
+    await ensureInitialized();
     try {
-      const client = getRedisClient();
-      return await client.set(key, JSON.stringify(value));
+      const db = dbManager.getDatabase();
+      await db.set(key, value);
     } catch (error) {
       console.error(`Error setting key ${key}:`, error);
-      return null;
     }
   },
 
   /**
    * Delete a single item by key
    * @param key The key to delete
-   * @returns The number of keys deleted
    */
   async del(key: string) {
-    // If no redis client, return 0
-    if (!this.isConnected()) {
-      console.warn(`No Redis connection, skipping delete for key: ${key}`);
-      return 0;
-    }
-
+    await ensureInitialized();
     try {
-      const client = getRedisClient();
-      return await client.del(key);
+      const db = dbManager.getDatabase();
+      return await db.delete(key);
     } catch (error) {
       console.error(`Error deleting key ${key}:`, error);
-      return 0;
-    }
-  },
-
-  /**
-   * Get all IDs for a specific entity type
-   * @param entityType The type of entity (e.g., 'dishes', 'orders')
-   * @returns Array of IDs
-   */
-  async getIndex(entityType: string) {
-    // If no redis client, return empty array
-    if (!this.isConnected()) {
-      console.warn(
-        `No Redis connection, returning empty array for index: ${entityType}`
-      );
-      return [];
-    }
-
-    try {
-      const client = getRedisClient();
-      const indexKey = `${entityType}:index`;
-      const members = await client.smembers(indexKey);
-      return members;
-    } catch (error) {
-      console.error(`Error getting index for ${entityType}:`, error);
-      return [];
-    }
-  },
-
-  /**
-   * Add an ID to the index for a specific entity type
-   * @param entityType The type of entity (e.g., 'dishes', 'orders')
-   * @param id The ID to add
-   * @returns Number of elements added to the set
-   */
-  async addToIndex(entityType: string, id: string) {
-    // If no redis client, return 0
-    if (!this.isConnected()) {
-      console.warn(`No Redis connection, skipping add to index: ${entityType}`);
-      return 0;
-    }
-
-    try {
-      const client = getRedisClient();
-      const indexKey = `${entityType}:index`;
-      return await client.sadd(indexKey, id);
-    } catch (error) {
-      console.error(`Error adding ${id} to index ${entityType}:`, error);
-      return 0;
-    }
-  },
-
-  /**
-   * Remove an ID from the index for a specific entity type
-   * @param entityType The type of entity (e.g., 'dishes', 'orders')
-   * @param id The ID to remove
-   * @returns Number of elements removed from the set
-   */
-  async removeFromIndex(entityType: string, id: string) {
-    // If no redis client, return 0
-    if (!this.isConnected()) {
-      console.warn(
-        `No Redis connection, skipping remove from index: ${entityType}`
-      );
-      return 0;
-    }
-
-    try {
-      const client = getRedisClient();
-      const indexKey = `${entityType}:index`;
-      return await client.srem(indexKey, id);
-    } catch (error) {
-      console.error(`Error removing ${id} from index ${entityType}:`, error);
-      return 0;
+      return false;
     }
   },
 
@@ -249,34 +159,10 @@ export const kvClient = {
    * @returns Array of all items
    */
   async getAll(entityType: string) {
-    // If no redis client, return empty array
-    if (!this.isConnected()) {
-      console.warn(
-        `No Redis connection, returning empty array for all items: ${entityType}`
-      );
-      return [];
-    }
-
+    await ensureInitialized();
     try {
-      const ids = await this.getIndex(entityType);
-      
-      // 强化检查：确保 ids 是数组
-      if (!Array.isArray(ids) || ids.length === 0) {
-        console.warn(`No items found in index for: ${entityType}`);
-        return [];
-      }
-
-      const items = [];
-      for (const id of ids) {
-        if (!id) continue; // 跳过空值
-        
-        const item = await this.get(`${entityType}:${id}`);
-        if (item) {
-          items.push(item);
-        }
-      }
-
-      return items;
+      const db = dbManager.getDatabase();
+      return await db.getAll<any>(entityType);
     } catch (error) {
       console.error(`Error getting all items for ${entityType}:`, error);
       return [];
@@ -290,34 +176,10 @@ export const kvClient = {
    * @returns The created item with ID
    */
   async create(entityType: string, itemData: Record<string, unknown>) {
-    // If no redis client, throw error
-    if (!this.isConnected()) {
-      console.error(
-        `No Redis connection, cannot create item in: ${entityType}`
-      );
-      throw new Error('Database connection not available');
-    }
-
+    await ensureInitialized();
     try {
-      // Generate a unique ID
-      const id = this.generateId();
-
-      // Add timestamp fields
-      const newItem = {
-        ...itemData,
-        id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Store the item
-      const key = `${entityType}:${id}`;
-      await this.set(key, newItem);
-
-      // Add to index
-      await this.addToIndex(entityType, id);
-
-      return newItem;
+      const db = dbManager.getDatabase();
+      return await db.create<any>(entityType, itemData);
     } catch (error) {
       console.error(`Error creating item in ${entityType}:`, error);
       throw error;
@@ -336,34 +198,10 @@ export const kvClient = {
     id: string,
     itemData: Record<string, unknown>
   ) {
-    // If no redis client, throw error
-    if (!this.isConnected()) {
-      console.error(
-        `No Redis connection, cannot update item in: ${entityType}`
-      );
-      throw new Error('Database connection not available');
-    }
-
+    await ensureInitialized();
     try {
-      const key = `${entityType}:${id}`;
-
-      // Get existing item
-      const existingItem = await this.get(key);
-      if (!existingItem) {
-        return null;
-      }
-
-      // Update the item
-      const updatedItem = {
-        ...existingItem,
-        ...itemData,
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Store the updated item
-      await this.set(key, updatedItem);
-
-      return updatedItem;
+      const db = dbManager.getDatabase();
+      return await db.update<any>(entityType, id, itemData);
     } catch (error) {
       console.error(`Error updating item ${id} in ${entityType}:`, error);
       throw error;
@@ -377,24 +215,10 @@ export const kvClient = {
    * @returns True if deleted, false otherwise
    */
   async delete(entityType: string, id: string) {
-    // If no redis client, throw error
-    if (!this.isConnected()) {
-      console.error(
-        `No Redis connection, cannot delete item in: ${entityType}`
-      );
-      throw new Error('Database connection not available');
-    }
-
+    await ensureInitialized();
     try {
-      const key = `${entityType}:${id}`;
-
-      // Delete the item
-      const deleted = await this.del(key);
-
-      // Remove from index
-      await this.removeFromIndex(entityType, id);
-
-      return deleted > 0;
+      const db = dbManager.getDatabase();
+      return await db.remove(entityType, id);
     } catch (error) {
       console.error(`Error deleting item ${id} from ${entityType}:`, error);
       return false;

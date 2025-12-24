@@ -1,181 +1,138 @@
-
-// Removed hardcoded enum to allow dynamic categories
-export type Category = string;
-
-export enum OrderStatus {
-  PENDING = '待处理', // 刚下单，待接单/打印
-  COOKING = '烹饪中', // 厨房制作中
-  SERVED = '已上菜', // 服务员已送达
-  PAID = '已支付', // 结账完成 (Legacy/Digital)
-  COMPLETED = '已完成', // 订单结束 (Takeout done)
-  CANCELLED = '已取消',
-}
-
-export type OrderSource = 'LOBBY' | 'ROOM_SERVICE' | 'KTV' | 'TAKEOUT';
-
-export type PaymentMethod =
-  | 'CASH'
-  | 'WECHAT'
-  | 'ALIPAY'
-  | 'USDT'
-  | 'GCASH'
-  | 'MAYA'
-  | 'UNIONPAY'
-  | 'CREDIT_CARD'
-  | 'SIGN_BILL';
-
-// Interface Optimization: Recipe Structure
-export interface DishIngredient {
-  ingredientId: string;
-  quantity: number; // Amount required per dish (e.g., 0.5 unit)
-}
-
+// Standard types for the hotel management system
 export interface Dish {
   id: string;
   name: string;
-  description: string;
+  category: string;
   price: number;
-  category: Category;
-  imageUrl: string;
+  cost?: number;
+  description?: string;
+  image?: string;
   available: boolean;
-  spiciness: number; // 0-3
-  ingredients?: DishIngredient[];
+  createdAt: string;
+  updatedAt: string;
+  ingredients?: string[];
 }
 
 export interface OrderItem {
+  id: string;
   dishId: string;
-  dishName: string;
+  name: string;
   quantity: number;
   price: number;
+  specialRequests?: string;
 }
 
 export interface Order {
   id: string;
-  tableNumber: string;
-  source: OrderSource;
+  tableId: string;
   items: OrderItem[];
   status: OrderStatus;
-  totalAmount: number;
-  createdAt: string; // ISO string
-  notes?: string;
-  paymentMethod?: PaymentMethod;
-}
-
-// Inventory Types
-export interface Ingredient {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  threshold: number; // Low stock alert threshold
+  total: number;
+  discount?: number;
+  tax?: number;
+  serviceCharge?: number;
+  paid: boolean;
+  timestamp: string;
+  completedAt?: string;
+  customerName?: string;
+  customerPhone?: string;
+  roomNumber?: string;
+  paymentMethod?: string;
+  paymentStatus?: 'pending' | 'completed' | 'failed';
+  createdAt: string;
   updatedAt: string;
+  specialRequests?: string;
 }
 
-// Finance Types
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  COOKING = 'COOKING',
+  READY = 'READY',
+  DELIVERED = 'DELIVERED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
 export enum ExpenseCategory {
-  INGREDIENTS = '食材采购',
-  SALARY = '员工工资',
-  RENT = '店铺租金',
-  UTILITIES = '水电煤气',
-  MAINTENANCE = '维修保养',
-  OTHER = '其他支出',
+  INGREDIENTS = 'Ingredients',
+  RENT = 'Rent',
+  SALARY = 'Salary',
+  UTILITIES = 'Utilities',
+  MAINTENANCE = 'Maintenance',
+  EQUIPMENT = 'Equipment',
+  OTHER = 'Other',
 }
 
 export interface Expense {
   id: string;
-  amount: number;
   category: ExpenseCategory;
+  amount: number;
   description: string;
-  date: string; // ISO string
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+  receiptImage?: string;
 }
 
-// KTV Types
-export type KTVRoomType = 'Small' | 'Medium' | 'Large' | 'VIP';
-export type KTVRoomStatus = 'Available' | 'InUse' | 'Cleaning' | 'Maintenance';
-
-export interface KTVSession {
-  guestName: string;
-  startTime: string; // ISO String
-  orders: OrderItem[]; // Associated food/drink orders
+export interface Ingredient {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  minStock: number;
+  pricePerUnit?: number;
+  supplier?: string;
+  lastRestocked?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface KTVRoom {
   id: string;
   name: string;
-  type: KTVRoomType;
-  status: KTVRoomStatus;
-  hourlyRate: number;
-  currentSession?: KTVSession;
-  currentSong?: string; // Simulation
+  status: 'available' | 'occupied' | 'maintenance';
+  currentSession?: {
+    startTime: string;
+    customerName: string;
+    advancePayment: number;
+    totalCharges?: number;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
-
-// Hotel Room Types (Dining Focused)
-// 注意：此系统专为客房送餐服务设计，房间状态仅用于标识房间是否曾经有过订单
-// Vacant: 房间当前没有未完成的订单
-// Occupied: 房间有未完成的订单
-export type HotelRoomStatus = 'Vacant' | 'Occupied';
-
-export interface HotelRoom {
-  id: string;
-  number: string; // e.g. "8201"
-  floor: number; // 2 or 3
-  status: HotelRoomStatus;
-  guestName?: string;
-  orders: OrderItem[];
-  lastOrderTime?: string;
-}
-
-// Sign Bill System Types
-// Fixed: Export AccountStatus
-export type AccountStatus = 'Active' | 'Inactive';
 
 export interface SignBillAccount {
   id: string;
-  name: string; // 挂帐人/单位
-  cooperationMethod: string; // 合作方式 (e.g. 协议单位, 长期合作, 临时挂帐)
-  settlementMethod: string; // 结算方式 (e.g. 月结, 季结, 单笔结)
-  approver: string; // 批准人
-  phoneNumber: string;
-  creditLimit?: number; // 信用额度
-  currentDebt: number; // 当前欠款
-  status: AccountStatus;
-  lastTransactionDate?: string;
+  accountName: string;
+  creditLimit: number;
+  currentBalance: number;
+  status: 'active' | 'suspended' | 'closed';
+  contactPerson?: string;
+  contactPhone?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Transaction Record for Sign Bill history
-export interface BillTransaction {
+export interface HotelRoom {
   id: string;
-  accountId: string;
-  amount: number;
-  type: 'CHARGE' | 'SETTLEMENT'; // 记账 or 还款
-  paymentMethod?: PaymentMethod; // Only for settlement
-  date: string;
-}
-
-export interface PaymentConfig {
-  enabledMethods: PaymentMethod[]; // Allowed methods
-  aliPayEnabled: boolean;
-  weChatEnabled: boolean;
-  gCashEnabled: boolean;
-  mayaEnabled: boolean;
-}
-
-export interface StoreInfo {
-  name: string;
-  address: string;
-  phone: string;
-  openingHours: string;
-  kitchenPrinterUrl?: string;
-  wifiSsid?: string;
-  wifiPassword?: string;
-  telegram?: string;
-  bannerImageUrl?: string; // 添加横幅图片URL
-  mapUrl?: string; // 添加地图链接URL
-  // H5页面配置
-  h5PageTitle?: string;
-  h5PageDescription?: string;
-  h5PageKeywords?: string;
-  h5CustomCSS?: string;
+  roomNumber: string;
+  roomType: string;
+  status: 'available' | 'occupied' | 'maintenance' | 'cleaning';
+  currentGuest?: {
+    name: string;
+    checkInDate: string;
+    expectedCheckOut: string;
+    advancePayment: number;
+  };
+  rate: number;
+  floor?: number;
+  bedType?: string;
+  amenities?: string[];
+  lastCleaned?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SystemSettings {
@@ -184,9 +141,15 @@ export interface SystemSettings {
     sound: boolean;
     desktop: boolean;
   };
-  payment?: PaymentConfig;
-  exchangeRate?: number; // RMB to PHP
-  serviceChargeRate?: number; // e.g., 0.10 for 10%
+  payment?: {
+    enabledMethods: string[];
+    aliPayEnabled?: boolean;
+    weChatEnabled?: boolean;
+    gCashEnabled?: boolean;
+    mayaEnabled?: boolean;
+  };
+  exchangeRate?: number;
+  serviceChargeRate?: number;
   categories?: string[]; // Dynamic categories
   // H5页面配置
   h5PageSettings?: {
@@ -196,6 +159,22 @@ export interface SystemSettings {
     showStoreInfo?: boolean;
     showWiFiInfo?: boolean;
   };
+}
+
+export interface StoreInfo {
+  name: string;
+  address: string;
+  phone: string;
+  openingHours: string;
+  kitchenPrinterUrl?: string;
+  wifiSsid: string;
+  wifiPassword: string;
+  telegram: string;
+  h5PageTitle?: string;
+  h5PageDescription?: string;
+  h5PageKeywords?: string;
+  bannerImageUrl?: string;
+  mapUrl?: string;
 }
 
 export type Page =
@@ -213,6 +192,8 @@ export type Page =
   | 'customer'
   | 'payment'
   | 'permissions'
+  | 'dataviewer'
+  | 'validationtest'
   | 'autodetect';
 
 // Standardized API Response Wrapper
@@ -224,7 +205,7 @@ export interface ApiResponse<T> {
 }
 
 // Storage Configuration
-export type StorageType = 'blob';
+export type StorageType = 'mongodb' | 'mysql' | 'postgresql' | 'sqlite' | 'file' | 'memory' | 'neon';
 
 export interface S3Config {
   region: string;
@@ -242,38 +223,86 @@ export interface GitHubConfig {
   pathPrefix?: string; // Optional folder path, defaults to 'data/'
 }
 
-export interface TiDBConfig {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-  ssl: boolean;
+
+
+export interface NeonConfig {
+  connectionString: string;
 }
+
+
 
 export interface StorageSettings {
   type: StorageType;
 }
 
 // Car Service Types
-export type CarRecordStatus = 'Scheduled' | 'Completed' | 'Cancelled';
-
-export interface CarRecord {
+export interface CarWashOrder {
   id: string;
-  guestName: string;
-  destination: string;
+  customerName: string;
+  customerPhone: string;
+  licensePlate: string;
+  vehicleType: 'car' | 'suv' | 'truck' | 'motorcycle';
+  serviceType: string;
+  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+  assignedStaff?: string;
+  scheduledTime: string;
+  completedTime?: string;
   price: number;
-  driver: string;
-  status: CarRecordStatus;
-  date: string; // ISO string
+  discount?: number;
+  total: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// 审计日志类型
-export interface AuditLog {
+// Database interface for abstraction
+export interface Database {
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  get<T>(key: string): Promise<T | null>;
+  set<T>(key: string, value: T): Promise<void>;
+  delete(key: string): Promise<boolean>;
+  getAll<T>(prefix: string): Promise<T[]>;
+  create<T>(prefix: string, data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T>;
+  update<T>(prefix: string, id: string, data: Partial<T>): Promise<T | null>;
+  remove(prefix: string, id: string): Promise<boolean>;
+}
+
+// Database configuration type
+export interface DatabaseConfig {
+  type: StorageType;
+  settings?: NeonConfig | null;
+}
+
+// Database factory interface
+export interface DatabaseFactory {
+  create(config: DatabaseConfig): Database;
+}
+
+// 用户管理相关类型
+export interface User {
   id: string;
-  timestamp: string; // ISO string
-  level: 'info' | 'warn' | 'error';
-  action: string;
-  details: string;
-  userId: string;
+  username: string;
+  password: string;
+  role: string;
+  isActive: boolean;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
 }

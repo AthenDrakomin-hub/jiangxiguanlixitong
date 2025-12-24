@@ -6,6 +6,10 @@ node_modules/
 .env.local
 .env*.local
 
+# 日志文件
+*.log
+logs/
+
 # IDE 编辑器
 .vscode/
 .idea/
@@ -18,5 +22,22 @@ Thumbs.db
 .git/
 .gitignore
 
-# 测试脚本目录
+# 测试相关
+coverage/
+test-reports/
 test-scripts/
+
+# 构建产物
+/dist
+/build
+
+# 临时文件
+*.tmp
+*.temp
+
+# 数据库文件
+*.db
+*.sqlite
+
+# TypeScript 缓存
+*.tsbuildinfo

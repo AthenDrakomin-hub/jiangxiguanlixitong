@@ -66,7 +66,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
     () =>
       orders
         .filter((o) => o.status !== OrderStatus.CANCELLED)
-        .reduce((acc, curr) => acc + curr.totalAmount, 0),
+        .reduce((acc, curr) => acc + curr.total, 0),
     [orders]
   );
 
@@ -102,7 +102,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
     orders.forEach((o) => {
       if (o.status !== OrderStatus.CANCELLED) {
         const dateKey = o.createdAt.split('T')[0];
-        if (data[dateKey]) data[dateKey].revenue += o.totalAmount;
+        if (data[dateKey]) data[dateKey].revenue += o.total;
       }
     });
 
@@ -129,8 +129,8 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
         id: o.id,
         type: 'income',
         category: '餐饮收入 Revenue',
-        description: `Order #${o.id} - ${o.tableNumber}`,
-        amount: o.totalAmount,
+        description: `Order #${o.id} - ${o.roomNumber || o.tableId}`,
+        amount: o.total,
         date: o.createdAt,
       }));
 
@@ -152,7 +152,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
   const handoverData = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     const todayOrders = orders.filter(
-      (o) => o.status === OrderStatus.PAID && o.createdAt.startsWith(today)
+      (o) => o.status === OrderStatus.COMPLETED && o.createdAt.startsWith(today)
     );
 
     const byMethod: Record<string, number> = {};
@@ -160,8 +160,8 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
 
     todayOrders.forEach((o) => {
       const method = o.paymentMethod || 'UNKNOWN';
-      byMethod[method] = (byMethod[method] || 0) + o.totalAmount;
-      total += o.totalAmount;
+      byMethod[method] = (byMethod[method] || 0) + o.total;
+      total += o.total;
     });
 
     return { 
@@ -182,6 +182,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
 
     try {
       setError(null);
+      const now = new Date().toISOString();
       const expense: Expense = {
         id: `EXP-${Date.now()}`,
         amount: Number(newExpense.amount),
@@ -189,7 +190,9 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
         description: newExpense.description || '',
         date: newExpense.date
           ? new Date(newExpense.date).toISOString()
-          : new Date().toISOString(),
+          : now,
+        createdAt: now,
+        updatedAt: now,
       };
 
       await apiClient.create('expenses', expense);

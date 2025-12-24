@@ -76,7 +76,7 @@ export default async function handler(req: Request) {
       const roomNumber = `82${String(i).padStart(2, '0')}`;
       hotelRooms.push({
         id: `room-${roomNumber}`,
-        number: roomNumber,
+        roomNumber: roomNumber,
         floor: 82,
         status: 'Vacant',
         orders: [],
@@ -88,7 +88,7 @@ export default async function handler(req: Request) {
       const roomNumber = `83${String(i).padStart(2, '0')}`;
       hotelRooms.push({
         id: `room-${roomNumber}`,
-        number: roomNumber,
+        roomNumber: roomNumber,
         floor: 83,
         status: 'Vacant',
         orders: [],

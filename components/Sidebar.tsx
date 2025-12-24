@@ -14,6 +14,7 @@ import {
   X,
   CreditCard,
   Shield,
+  Database,
 } from 'lucide-react';
 import { Page } from '../types.js';
 import { t } from '../utils/i18n.js';
@@ -78,8 +79,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'signbill', label: t('signbill'), icon: FileSignature },
     { id: 'finance', label: t('finance'), icon: DollarSign },
     { id: 'payment', label: '支付方式', icon: CreditCard },
-    { id: 'permissions', label: '权限管理', icon: Shield },
+    { id: 'permissions', label: '用户管理', icon: Shield },
     { id: 'settings', label: t('settings'), icon: Settings },
+    { id: 'dataviewer', label: '数据查看', icon: Database },
+    { id: 'validationtest', label: '数据验证测试', icon: Database },
   ];
 
   return (

@@ -10,7 +10,7 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 - `npm run preview` - Preview the production build locally
 
 ### Environment Setup
-- The project uses Vercel Edge Runtime with Upstash Redis for data storage
+- The project uses Vercel Edge Runtime with database abstraction layer supporting multiple backends
 - All dependencies are loaded via importmap from CDN (no local node_modules needed for deployment)
 - Vite is used only for TypeScript/JSX transpilation, not for bundling dependencies
 
@@ -19,16 +19,16 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 ### Technology Stack
 - **Frontend**: React 18 + TypeScript + Tailwind CSS (loaded via CDN)
 - **Backend**: Vercel Edge Functions (API routes in `/api/`)
-- **Database**: Upstash Redis (REST API for Edge Runtime compatibility)
+- **Database**: Database abstraction layer with support for multiple backends
 - **Styling**: Tailwind CSS (CDN loaded)
 - **Icons**: Lucide React
 - **Charts**: Recharts
 
 ### Data Storage Architecture
-- Uses Upstash Redis with a custom KV client (`/lib/kv-client.ts`)
+- Uses database abstraction layer with support for multiple backends (`/lib/database.ts`)
+- Supported databases: MySQL, PostgreSQL, SQLite, Memory
 - Data is organized in collections: dishes, orders, expenses, inventory, ktv_rooms, sign_bill_accounts, hotel_rooms, payment_methods, system_settings
 - Each collection stores items with auto-generated IDs
-- Redis sets are used to maintain indexes for each collection
 - Automatic serialization/deserialization with BigInt handling
 
 ### API Structure
@@ -55,8 +55,7 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 - **Printing System**: Cloud printing (Feieyun) and browser printing
 
 ### Environment Variables
-- `KV_REST_API_URL` - Upstash Redis REST API URL (auto-injected by Vercel)
-- `KV_REST_API_TOKEN` - Upstash Redis REST API token (auto-injected by Vercel)
+- `DB_TYPE` - Database type (memory, neon) - defaults to memory
 - `VITE_ADMIN_USER` - Admin username
 - `VITE_ADMIN_PASS` - Admin password
 - `VITE_APP_URL` - App URL for QR code generation (optional)

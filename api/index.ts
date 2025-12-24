@@ -1,26 +1,9 @@
-import { kvClient } from '../lib/kv-client.js';
+import { dbManager } from '../lib/database.js';
 
 export const config = {
   runtime: 'edge',
 };
 
-/**
- * 映射函数：将复数路径映射为 Redis 键前缀
- */
-function getEntityPrefix(entityName: string): string {
-  const mapping: Record<string, string> = {
-    'dishes': 'dish',
-    'hotel_rooms': 'hotel_room',
-    'ktv_rooms': 'ktv_room',
-    'payment_methods': 'payment_method',
-    'system_settings': 'system_setting',
-    'inventory': 'inventory',
-    'orders': 'order',
-    'expenses': 'expense',
-    'sign_bill_accounts': 'sign_bill_account'
-  };
-  return mapping[entityName] || (entityName.endsWith('s') ? entityName.slice(0, -1) : entityName);
-}
 
 /**
  * 泛用型业务处理器：支持简单的 CRUD 操作
@@ -30,7 +13,6 @@ async function genericBusinessHandler(req: Request, entityName: string) {
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
   
-  const prefix = getEntityPrefix(entityName);
 
   // CORS 头设置
   const corsHeaders = {
@@ -41,37 +23,14 @@ async function genericBusinessHandler(req: Request, entityName: string) {
   };
 
   // 检查数据库连接状态
-  const status = kvClient.getConnectionStatus();
-  
-  // 如果没有真实连接，提供更明确的错误信息
-  if (!status.isRealConnection) {
+  if (!dbManager.isInitialized()) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: '未连接到真实的Vercel KV数据库',
-        error: '缺少真实的Redis配置',
+        message: 'Database not initialized',
+        error: '数据库未初始化',
         debug: {
-          ...status,
-          hint: '请在Vercel控制台连接KV数据库后重试',
-        },
-      }),
-      {
-        status: 503,
-        headers: corsHeaders,
-      }
-    );
-  }
-  
-  // 检查连接是否可用
-  if (!kvClient.isConnected()) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Database connection not available',
-        error: 'Redis连接不可用',
-        debug: {
-          ...status,
-          hint: '请检查Vercel KV配置',
+          hint: '请检查数据库配置',
         },
       }),
       {
@@ -85,8 +44,9 @@ async function genericBusinessHandler(req: Request, entityName: string) {
     if (method === 'GET') {
       if (id) {
         // 获取特定项目
+        const database = dbManager.getDatabase();
         const key = `${entityName}:${id}`;
-        const item = await kvClient.get(key);
+        const item = await database.get(key);
         if (item) {
           return new Response(
             JSON.stringify({
@@ -113,7 +73,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
         }
       } else {
         // 获取所有项目
-        const items = await kvClient.getAll(entityName);
+        const database = dbManager.getDatabase();
+        const items = await database.getAll(entityName);
         return new Response(
           JSON.stringify({
             success: true,
@@ -129,8 +90,9 @@ async function genericBusinessHandler(req: Request, entityName: string) {
     }
 
     if (method === 'POST') {
+      const database = dbManager.getDatabase();
       const body = await req.json();
-      const newItem = await kvClient.create(entityName, body);
+      const newItem = await database.create(entityName, body);
       return new Response(
         JSON.stringify({
           success: true,
@@ -145,8 +107,9 @@ async function genericBusinessHandler(req: Request, entityName: string) {
     }
 
     if (method === 'PUT' && id) {
+      const database = dbManager.getDatabase();
       const body = await req.json();
-      const updatedItem = await kvClient.update(entityName, id, body);
+      const updatedItem = await database.update(entityName, id, body);
       if (updatedItem) {
         return new Response(
           JSON.stringify({
@@ -174,7 +137,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
     }
 
     if (method === 'DELETE' && id) {
-      const deleted = await kvClient.delete(entityName, id);
+      const database = dbManager.getDatabase();
+      const deleted = await database.remove(entityName, id);
       if (deleted) {
         return new Response(
           JSON.stringify({

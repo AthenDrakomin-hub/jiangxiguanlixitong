@@ -2,34 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Users, Shield, Edit3, Trash2, Plus, AlertCircle } from 'lucide-react';
 import { apiClient } from '../services/apiClient.js';
-
-// 角色类型定义
-interface Role {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-// 用户类型定义
-interface User {
-  id: string;
-  username: string;
-  role: string;
-  isActive: boolean;
-  lastLogin?: string;
-  createdAt: string;
-}
-
-// 权限类型定义
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
+import { User, Role, Permission } from '../types';
 
 const PermissionManagement: React.FC = () => {
   // 角色状态
@@ -135,76 +108,29 @@ const PermissionManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      // TODO: 从 API 加载真实数据
-      // const rolesResponse = await apiClient.get('/roles');
-      // const usersResponse = await apiClient.get('/users');
+      // 从 API 加载真实数据
+      const [usersResponse] = await Promise.all([
+        apiClient.get('/users'),
+        // TODO: 添加角色API调用
+        // apiClient.get('/roles'),
+      ]);
       
-      // 暂时使用 Mock 数据（等待后端 API 实现）
-      const mockRoles: Role[] = [
-        {
-          id: 'admin',
-          name: '管理员',
-          description: '系统管理员，拥有所有权限',
-          permissions: permissions.map((p) => p.id),
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: 'manager',
-          name: '经理',
-          description: '餐厅经理，拥有大部分管理权限',
-          permissions: permissions
-            .filter((p) => !['user_manage', 'settings_manage'].includes(p.id))
-            .map((p) => p.id),
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: 'staff',
-          name: '员工',
-          description: '普通员工，只能查看和处理订单',
-          permissions: ['order_view', 'order_edit'],
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T00:00:00Z',
-        },
-      ];
-
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          username: 'admin',
-          role: 'admin',
-          isActive: true,
-          lastLogin: '2025-12-10T10:30:00Z',
-          createdAt: '2025-01-01T00:00:00Z',
-        },
-        {
-          id: '2',
-          username: 'manager',
-          role: 'manager',
-          isActive: true,
-          lastLogin: '2025-12-10T09:15:00Z',
-          createdAt: '2025-01-02T00:00:00Z',
-        },
-        {
-          id: '3',
-          username: 'staff1',
-          role: 'staff',
-          isActive: true,
-          lastLogin: '2025-12-10T08:45:00Z',
-          createdAt: '2025-01-03T00:00:00Z',
-        },
-      ];
-
-      setRoles(mockRoles);
-      setUsers(mockUsers);
+      if (usersResponse.success) {
+        setUsers(usersResponse.data || []);
+      } else {
+        console.error('获取用户数据失败:', usersResponse.message);
+        // 如果API失败，使用默认数据
+        setUsers([]);
+      }
     } catch (error) {
       console.error('加载权限数据失败:', error);
       alert('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      // 错误时使用空数组
+      setUsers([]);
     } finally {
       setLoading(false);
     }
-  }, [permissions]);
+  }, []);
 
   // 加载数据
   useEffect(() => {
@@ -261,25 +187,38 @@ const PermissionManagement: React.FC = () => {
   };
 
   // 用户表单处理
-  const handleUserFormSubmit = (e: React.FormEvent) => {
+  const handleUserFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (editingUser) {
-      // 更新用户
-      const updatedUsers = users.map((user) =>
-        user.id === editingUser.id ? { ...user, ...userFormData } : user
-      );
-      setUsers(updatedUsers);
-    } else {
-      // 创建新用户
-      const newUser: User = {
-        id: `user_${Date.now()}`,
-        username: userFormData.username,
-        role: userFormData.role,
-        isActive: userFormData.isActive,
-        createdAt: new Date().toISOString(),
-      };
-      setUsers([...users, newUser]);
+    
+    try {
+      if (editingUser) {
+        // 更新用户
+        await apiClient.update('users', editingUser.id, {
+          username: editingUser.username, // 保持用户名不变
+          password: userFormData.password || undefined, // 只有在提供了新密码时才更新
+          role: userFormData.role,
+          isActive: userFormData.isActive,
+        });
+        
+        // 重新加载数据以获取更新后的用户列表
+        await loadData();
+        alert('用户更新成功');
+      } else {
+        // 创建新用户
+        await apiClient.create('users', {
+          username: userFormData.username,
+          password: userFormData.password,
+          role: userFormData.role,
+          isActive: userFormData.isActive,
+        });
+        
+        // 重新加载数据以获取新的用户列表
+        await loadData();
+        alert('用户创建成功');
+      }
+    } catch (error) {
+      console.error('用户操作失败:', error);
+      alert('用户操作失败: ' + (error instanceof Error ? error.message : 'API请求失败'));
     }
 
     // 重置表单
@@ -295,7 +234,6 @@ const PermissionManagement: React.FC = () => {
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
-    // Fixed: Include password in userFormData to match state action type
     setUserFormData({
       username: user.username,
       password: '', // Password is reset or not editable here
@@ -305,9 +243,17 @@ const PermissionManagement: React.FC = () => {
     setShowUserForm(true);
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (window.confirm('确定要删除这个用户吗？')) {
-      setUsers(users.filter((user) => user.id !== userId));
+      try {
+        await apiClient.remove('users', userId);
+        // 重新加载数据以获取更新后的用户列表
+        await loadData();
+        alert('用户删除成功');
+      } catch (error) {
+        console.error('删除用户失败:', error);
+        alert('删除用户失败: ' + (error instanceof Error ? error.message : 'API请求失败'));
+      }
     }
   };
 
@@ -341,16 +287,16 @@ const PermissionManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* 功能说明提示 */}
-      <div className="rounded-lg border-l-4 border-yellow-500 bg-yellow-50 p-4">
+      <div className="rounded-lg border-l-4 border-blue-500 bg-blue-50 p-4">
         <div className="flex items-start">
-          <AlertCircle className="mt-0.5 h-5 w-5 text-yellow-500" />
+          <AlertCircle className="mt-0.5 h-5 w-5 text-blue-500" />
           <div className="ml-3 flex-1">
-            <h3 className="text-sm font-medium text-yellow-800">
-              模拟模式运行中
+            <h3 className="text-sm font-medium text-blue-800">
+              用户管理
             </h3>
-            <div className="mt-1 text-sm text-yellow-700">
-              <p>当前权限管理使用本地 Mock 数据，所有修改仅在前端生效。</p>
-              <p className="mt-1">完整功能需要后端 API 支持，包括：用户认证、角色授权、权限验证等。</p>
+            <div className="mt-1 text-sm text-blue-700">
+              <p>当前用户管理功能已连接到后端API，所有修改将保存到数据库中。</p>
+              <p className="mt-1">注意：角色和权限管理功能正在开发中，目前仅支持用户基础信息管理。</p>
             </div>
           </div>
         </div>

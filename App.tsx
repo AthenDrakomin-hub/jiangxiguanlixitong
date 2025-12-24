@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import './index.css';
-import { APP_CONFIG } from './src/config.js';
+import { APP_CONFIG, initializeDatabase } from './src/config.js';
 import {
   Order,
   Dish,
@@ -28,7 +28,7 @@ const FinanceSystem = React.lazy(() => import('./components/FinanceSystem'));
 const InventoryManagement = React.lazy(
   () => import('./components/InventoryManagement')
 );
-const Settings = React.lazy(() => import('./components/Settings'));
+const Settings = React.lazy(() => import('./components/ModernSettings'));
 const KTVSystem = React.lazy(() => import('./components/KTVSystem'));
 const SignBillSystem = React.lazy(() => import('./components/SignBillSystem'));
 const HotelSystem = React.lazy(() => import('./components/HotelSystem'));
@@ -41,6 +41,8 @@ const PaymentManagement = React.lazy(
 const PermissionManagement = React.lazy(
   () => import('./components/PermissionManagement')
 );
+const DataViewer = React.lazy(() => import('./components/DataViewer'));
+const ValidationTest = React.lazy(() => import('./components/ValidationTest'));
 
 const App = () => {
   // Page Routing State
@@ -111,6 +113,20 @@ const App = () => {
     serviceChargeRate: APP_CONFIG.DEFAULT_FINANCIAL.serviceChargeRate,
     categories: [],
   });
+
+  // --- Database Initialization ---
+  useEffect(() => {
+    const initDatabase = async () => {
+      try {
+        await initializeDatabase();
+        console.log('Database initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize database:', error);
+      }
+    };
+    
+    initDatabase();
+  }, []);
 
   // --- Data Initialization ---
   const { data, loading, error, refresh } = useAppData();
@@ -534,8 +550,6 @@ const App = () => {
               }
             >
               <HotelSystem
-                rooms={hotelRooms}
-                setRooms={setHotelRooms}
                 dishes={dishes}
                 onPlaceOrder={handlePlaceOrder}
                 systemSettings={{
@@ -611,6 +625,30 @@ const App = () => {
               }
             >
               <PermissionManagement />
+            </Suspense>
+          );
+        case 'dataviewer':
+          return (
+            <Suspense
+              fallback={
+                <div className="p-8 text-center text-slate-500">
+                  Loading Data Viewer...
+                </div>
+              }
+            >
+              <DataViewer />
+            </Suspense>
+          );
+        case 'validationtest':
+          return (
+            <Suspense
+              fallback={
+                <div className="p-8 text-center text-slate-500">
+                  Loading Validation Test...
+                </div>
+              }
+            >
+              <ValidationTest />
             </Suspense>
           );
         default:

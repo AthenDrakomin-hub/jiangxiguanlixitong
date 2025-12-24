@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migrate": "tsx migrate-neon.ts",
+    "test:neon": "tsx tests/test-neon-connection.ts"
   },
   "dependencies": {
-    "@upstash/redis": "^1.35.8",
+    "@neondatabase/serverless": "^0.10.3",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.562.0",
     "react-dom": "^19.2.3",

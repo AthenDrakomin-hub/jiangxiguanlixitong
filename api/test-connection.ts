@@ -1,11 +1,11 @@
 /**
  * 数据库连接测试端点
  * 
- * 用于测试 Upstash Redis 连接状态
+ * 用于测试数据库连接状态
  * 使用 Edge Runtime 运行
  */
 
-import { getRedisClient, testRedisConnection } from '../lib/redis.js';
+import { dbManager } from '../lib/database.js';
 
 export const config = {
   runtime: 'edge',
@@ -34,40 +34,37 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // 测试连接
-    const connectionTest = await testRedisConnection();
-    
-    if (!connectionTest.connected) {
+    // 检查数据库初始化状态
+    if (!dbManager.isInitialized()) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Database connection failed',
-          details: connectionTest.error,
+          error: 'Database not initialized',
+          details: 'Database manager not initialized',
         }),
         { status: 503, headers: corsHeaders }
       );
     }
 
-    // 获取 Redis 客户端
-    const redis = getRedisClient();
+    // 获取数据库实例
+    const database = dbManager.getDatabase();
     
     // 设置测试数据
     const testKey = `test:connection:${Date.now()}`;
     const testValue = {
       timestamp: new Date().toISOString(),
       message: 'Connection test successful',
-      endpoint: process.env.KV_REST_API_URL || 'unknown',
       testId: testKey
     };
     
-    // 写入测试数据，5分钟过期
-    await redis.set(testKey, testValue, { ex: 300 }); // 5分钟过期
+    // 写入测试数据
+    await database.set(testKey, testValue);
     
     // 读取测试数据
-    const retrievedValue = await redis.get(testKey);
+    const retrievedValue = await database.get(testKey);
     
-    // 清理测试数据
-    await redis.del(testKey);
+    // 删除测试数据
+    await database.delete(testKey);
     
     const dataMatches = JSON.stringify(retrievedValue) === JSON.stringify(testValue);
 
@@ -75,7 +72,7 @@ export default async function handler(req: Request) {
       JSON.stringify({
         success: true,
         message: 'Database connection and operations successful',
-        connection: connectionTest,
+        connection: { connected: true, type: 'database' },
         testData: retrievedValue,
         dataMatches,
         testWrite: !!retrievedValue,
