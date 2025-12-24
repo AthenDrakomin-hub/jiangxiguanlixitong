@@ -228,6 +228,101 @@ async function genericBusinessHandler(req: Request, entityName: string) {
   }
 }
 
+/**
+ * 认证处理函数
+ */
+async function authHandler(req: Request) {
+  const method = req.method;
+  
+  // CORS 头设置
+  const corsHeaders = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  // Handle preflight requests
+  if (method === 'OPTIONS') {
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }
+
+  if (method !== 'POST') {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Method not allowed',
+      }),
+      {
+        status: 405,
+        headers: corsHeaders,
+      }
+    );
+  }
+
+  try {
+    // 检查环境变量是否配置
+    const ADMIN_USER = process.env.VITE_ADMIN_USER;
+    const ADMIN_PASS = process.env.VITE_ADMIN_PASS;
+    
+    if (!ADMIN_USER || !ADMIN_PASS) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: '服务器配置错误：管理员凭据未设置',
+        }),
+        {
+          status: 500,
+          headers: corsHeaders,
+        }
+      );
+    }
+    
+    const { username, password } = await req.json();
+
+    // 验证凭据
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Login successful',
+          token: 'fake-jwt-token-for-demo',
+        }),
+        {
+          status: 200,
+          headers: corsHeaders,
+        }
+      );
+    } else {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Invalid credentials',
+        }),
+        {
+          status: 401,
+          headers: corsHeaders,
+        }
+      );
+    }
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: 'Internal server error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: corsHeaders,
+      }
+    );
+  }
+}
+
 export default async function handler(req: Request) {
   const url = new URL(req.url);
   const path = url.pathname.replace(/\/$/, "").toLowerCase();
@@ -246,7 +341,12 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // 业务实体路由匹配
+    // 1. 固定功能路由
+    if (path === '/api/auth/login') {
+      return await authHandler(req);
+    }
+
+    // 2. 业务实体路由匹配
     const businessEntities = [
       'dishes', 
       'hotel_rooms', 
@@ -287,7 +387,7 @@ export default async function handler(req: Request) {
         error: 'API_ROUTE_NOT_FOUND', 
         requested_path: path,
         hint: 'API 路径未注册，请检查后端网关 businessEntities 配置。',
-        available_routes: businessEntities.map(e => `/api/${e}`)
+        available_routes: ['/api/auth/login', ...businessEntities.map(e => `/api/${e}`)]
       }), 
       { 
         status: 404,
