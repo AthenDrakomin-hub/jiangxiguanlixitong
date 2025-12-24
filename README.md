@@ -102,9 +102,7 @@ jiangxiguanlixitong/
 │   ├── cache.ts              # 缓存工具（localStorage）
 │   ├── i18n.ts               # 国际化（中文/菲律宾语）
 │   └── validation.ts         # 数据验证
-├── scripts/
-│   ├── init-hotel-rooms.ts   # 房间数据生成脚本
-│   └── init-all-data.mjs     # 一键初始化脚本
+├── scripts/                  # 构建脚本（无初始化脚本）
 ├── types.ts                  # TypeScript 类型定义
 ├── App.tsx                   # 主应用组件
 ├── index.tsx                 # React 入口
@@ -255,9 +253,6 @@ npm run build
 # 预览
 npm run preview
 
-# 初始化房间数据（64间房 + 1间KTV + 大厅）
-npm run init:rooms
-
 ```
 
 ---
@@ -311,12 +306,7 @@ https://your-app.vercel.app
 在浏览器控制台运行：
 ```bash
 # 调用初始化 API
-fetch('/api/init-rooms', { method: 'POST' })
-```
-
-或使用本地脚本（需先配置 API URL）：
-```bash
-VITE_API_URL=https://your-app.vercel.app npm run init:rooms
+fetch('/api/seed', { method: 'POST' })
 ```
 
 ### 5. 验证部署
@@ -345,11 +335,8 @@ VITE_API_URL=https://your-app.vercel.app npm run init:rooms
 
 **解决：**
 ```bash
-# 运行初始化脚本
-npm run init:rooms
-
-# 或手动调用 API
-fetch('/api/init-rooms', { method: 'POST' })
+# 手动调用 API 初始化数据
+fetch('/api/seed', { method: 'POST' })
 ```
 
 ---
