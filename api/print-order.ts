@@ -2,7 +2,7 @@
 // 后台自动打印订单接口（用于H5客户点餐后自动打印到收银台/厨房）
 
 import { PrinterService } from '../services/printer.js';
-import { Order } from '../types.js';
+import { Order, OrderStatus } from '../types.js';
 
 export const config = {
   runtime: 'edge',
@@ -43,7 +43,7 @@ export default async function handler(req: Request) {
       totalAmount: order.totalAmount,
       createdAt: order.createdAt,
       source: 'LOBBY', // 添加默认值
-      status: 'PENDING', // 添加默认值
+      status: OrderStatus.PENDING, // 使用枚举值
     });
 
     if (printResult) {
