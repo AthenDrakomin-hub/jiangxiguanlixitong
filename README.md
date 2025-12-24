@@ -24,10 +24,42 @@ fetch('/api/seed', { method: 'POST' }).then(res => res.json()).then(console.log)
 ---
 
 ## 🛠️ 技术架构
-- **前端**: React 18 + Lucide Icons + Recharts
+
+### 框架配置
+- **前端框架**: React 18 + TypeScript
+- **构建工具**: Vite 7.3.0
+- **UI组件**: Lucide Icons + Recharts
+- **状态管理**: React Hooks + 自定义Hooks
+- **模块解析**: Node16 (支持ES模块)
+- **运行时**: Vercel Edge Runtime
+
+### 技术栈
+- **前端**: React 18 + TypeScript + Vite + Lucide Icons + Recharts
 - **后端**: Vercel Edge Functions (API Gateway 模式)
 - **数据库**: Upstash Redis (Vercel KV)
 - **架构特点**: No-Build 极简部署，依赖通过 CDN (esm.sh) 加载
+
+### 数据库集成
+- **数据存储**: Upstash Redis (Vercel KV)
+- **客户端**: 自定义KV Client封装
+- **连接管理**: 支持真实连接与模拟连接检测
+- **数据序列化**: 自动处理BigInt等特殊类型
+- **索引系统**: 基于Redis Set的实体索引管理
+- **CRUD操作**: 统一封装的增删改查功能
+
+### 路由与状态管理
+- **路由管理**: 
+  - 前端路由基于currentPage状态
+  - 支持多种页面类型（dashboard, menu, orders, finance, inventory等）
+  - URL参数支持（?page=customer或?page=kitchen）
+  - Sidebar组件提供导航菜单
+- **状态管理**:
+  - 全局状态定义在App.tsx中
+  - useAppData Hook统一管理数据获取和缓存
+  - 基于localStorage的客户端缓存系统
+  - 认证状态管理（开发环境自动认证）
+
+---
 
 ## 📁 环境变量配置
 在 Vercel 项目的 `Settings -> Environment Variables` 中添加：
