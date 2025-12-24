@@ -2,25 +2,11 @@
 // 后台自动打印订单接口（用于H5客户点餐后自动打印到收银台/厨房）
 
 import { PrinterService } from '../services/printer.js';
+import { Order } from '../types.js';
 
 export const config = {
   runtime: 'edge',
 };
-
-interface Order {
-  id: string;
-  tableNumber: string;
-  items: Array<{
-    dishId: string;
-    dishName: string;
-    quantity: number;
-    price: number;
-  }>;
-  totalAmount: number;
-  paymentMethod?: string;
-  notes?: string;
-  createdAt: string;
-}
 
 interface PrintOrderRequest {
   order: Order;
@@ -52,15 +38,12 @@ export default async function handler(req: Request) {
     
     const printResult = await PrinterService.printOrder({
       id: order.id,
-      items: order.items.map(item => ({
-        id: item.dishId,
-        name: item.dishName,
-        quantity: item.quantity,
-        price: item.price,
-      })),
-      total: order.totalAmount,
-      tableId: order.tableNumber,
-      timestamp: order.createdAt,
+      tableNumber: order.tableNumber,
+      items: order.items,
+      totalAmount: order.totalAmount,
+      createdAt: order.createdAt,
+      source: 'LOBBY', // 添加默认值
+      status: 'PENDING', // 添加默认值
     });
 
     if (printResult) {
