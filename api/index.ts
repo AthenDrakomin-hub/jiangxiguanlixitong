@@ -75,16 +75,37 @@ export default async function handler(req: Request) {
   }
 
   // Check if database is connected
+  const status = kvClient.getConnectionStatus();
+  
+  // 如果没有真实连接，提供更明确的错误信息
+  if (!status.isRealConnection) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: '未连接到真实的Vercel KV数据库',
+        error: '缺少真实的Redis配置',
+        debug: {
+          ...status,
+          hint: '请在Vercel控制台连接KV数据库后重试',
+        },
+      }),
+      {
+        status: 503,
+        headers: corsHeaders,
+      }
+    );
+  }
+  
+  // 检查连接是否可用
   if (!kvClient.isConnected()) {
-    const status = kvClient.getConnectionStatus();
     return new Response(
       JSON.stringify({
         success: false,
         message: 'Database connection not available',
-        error: 'Missing Redis configuration',
+        error: 'Redis连接不可用',
         debug: {
           ...status,
-          hint: 'Please link Vercel KV in dashboard and redeploy',
+          hint: '请检查Vercel KV配置',
         },
       }),
       {

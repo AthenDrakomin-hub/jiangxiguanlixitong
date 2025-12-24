@@ -12,6 +12,7 @@ interface ConnectionStatus {
   hasUrl: boolean;
   hasToken: boolean;
   urlPreview: string;
+  isRealConnection: boolean; // 区分真实连接和模拟连接
 }
 
 import { getRedisClient, getConnectionStatus as getRedisConnectionStatus } from './redis.js';
@@ -34,6 +35,9 @@ if (!redisUrl || !redisToken) {
   console.warn('Please link Vercel KV in dashboard or redeploy');
 }
 
+// 检查是否为真实连接（而非模拟连接）
+const isRealConnection = !!(redisUrl && redisToken);
+
 /**
  * KV Client with helper methods for the hotel management system
  */
@@ -49,6 +53,7 @@ export const kvClient = {
       hasUrl: !!redisUrl,
       hasToken: !!redisToken,
       urlPreview: redisUrl ? `${redisUrl.substring(0, 30)}...` : 'NOT_SET',
+      isRealConnection: isRealConnection,
     } as ConnectionStatus;
   },
 

@@ -73,6 +73,7 @@
 jiangxiguanlixitong/
 ├── api/
 │   ├── index.ts              # 主 API 端点（REST 接口，支持动态路由）
+│   ├── seed.ts               # 数据初始化端点
 │   ├── test-connection.ts    # 数据库连接测试端点
 │   ├── db-status.ts          # 数据库状态诊断端点
 │   ├── print.ts              # 云打印 API（飞鹅云集成）
