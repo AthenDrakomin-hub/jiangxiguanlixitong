@@ -3,7 +3,7 @@
 // Printer service for handling print operations
 // 已集成到 OrderManagement、FinanceSystem、Settings 等组件
 
-import { Order, OrderItem } from '../types';
+import { Order, OrderItem } from '../types.js';
 
 // Fixed: ShiftReport now reflects the data provided by FinanceSystem
 interface ShiftReport {

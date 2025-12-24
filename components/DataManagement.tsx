@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Upload, Download, Zap, X } from 'lucide-react';
-import { apiClient } from '../services/apiClient';
+import { apiClient } from '../services/apiClient.js';
 
 interface DataManagementProps {
   onDataUpdate?: () => void;

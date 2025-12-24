@@ -15,10 +15,10 @@ import {
   Order,
   OrderStatus,
   HotelRoomStatus,
-} from '../types';
+} from '../types.js';
 import ImageLazyLoad from './ImageLazyLoad';
-import { apiClient } from '../services/apiClient';
-import { auditLogger } from '../services/auditLogger';
+import { apiClient } from '../services/apiClient.js';
+import { auditLogger } from '../services/auditLogger.js';
 
 interface HotelSystemProps {
   rooms: HotelRoom[];

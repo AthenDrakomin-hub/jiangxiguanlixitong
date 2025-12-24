@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getCache, setCache } from '../utils/cache';
-import { apiClient } from '../services/apiClient';
+import { getCache, setCache } from '../utils/cache.js';
+import { apiClient } from '../services/apiClient.js';
 
 /**
  * Custom hook for fetching and caching data

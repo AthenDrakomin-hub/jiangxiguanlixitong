@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Users, Shield, Edit3, Trash2, Plus, AlertCircle } from 'lucide-react';
-import { apiClient } from '../services/apiClient';
+import { apiClient } from '../services/apiClient.js';
 
 // 角色类型定义
 interface Role {

@@ -16,9 +16,9 @@ import {
   Utensils,
   AlertCircle,
 } from 'lucide-react';
-import { Dish, Category, Ingredient, DishIngredient } from '../types';
-import { auditLogger } from '../services/auditLogger';
-import { apiClient } from '../services/apiClient';
+import { Dish, Category, Ingredient, DishIngredient } from '../types.js';
+import { auditLogger } from '../services/auditLogger.js';
+import { apiClient } from '../services/apiClient.js';
 
 // dnd-kit imports (commented out as not currently used)
 /*

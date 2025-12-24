@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { Printer, AlertCircle, HelpCircle, X, Check } from 'lucide-react';
-import { PrinterService } from '../services/printer';
+import { PrinterService } from '../services/printer.js';
 
 const PrinterConfig: React.FC = () => {
   const [printerMode, setPrinterMode] = useState<'browser' | 'cloud'>('browser');

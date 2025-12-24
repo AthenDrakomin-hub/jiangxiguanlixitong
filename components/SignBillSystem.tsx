@@ -12,8 +12,8 @@ import {
   X,
   ArrowDownRight,
 } from 'lucide-react';
-import { SignBillAccount, PaymentMethod, AccountStatus, ApiResponse } from '../types';
-import { apiClient } from '../services/apiClient';
+import { SignBillAccount, PaymentMethod, AccountStatus, ApiResponse } from '../types.js';
+import { apiClient } from '../services/apiClient.js';
 
 interface SignBillSystemProps {
   accounts: SignBillAccount[];

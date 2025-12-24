@@ -25,10 +25,10 @@ import {
   ClipboardCheck,
   X,
 } from 'lucide-react';
-import { Order, OrderStatus, Expense, ExpenseCategory } from '../types';
-import { PrinterService } from '../services/printer';
-import { apiClient } from '../services/apiClient';
-import { auditLogger } from '../services/auditLogger';
+import { Order, OrderStatus, Expense, ExpenseCategory } from '../types.js';
+import { PrinterService } from '../services/printer.js';
+import { apiClient } from '../services/apiClient.js';
+import { auditLogger } from '../services/auditLogger.js';
 
 interface FinanceSystemProps {
   orders: Order[];

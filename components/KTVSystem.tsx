@@ -21,9 +21,9 @@ import {
   Wallet,
   ClipboardList,
 } from 'lucide-react';
-import { KTVRoom, Dish, OrderItem, PaymentMethod } from '../types';
-import { apiClient } from '../services/apiClient';
-import { auditLogger } from '../services/auditLogger';
+import { KTVRoom, Dish, OrderItem, PaymentMethod } from '../types.js';
+import { apiClient } from '../services/apiClient.js';
+import { auditLogger } from '../services/auditLogger.js';
 
 interface KTVSystemProps {
   rooms: KTVRoom[];

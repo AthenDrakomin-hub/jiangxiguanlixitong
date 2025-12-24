@@ -21,7 +21,7 @@ import {
   KTVRoom,
   SignBillAccount,
   HotelRoom,
-} from '../types';
+} from '../types.js';
 
 interface DashboardProps {
   orders: Order[];

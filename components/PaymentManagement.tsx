@@ -10,8 +10,8 @@ import {
   Edit3,
   AlertCircle,
 } from 'lucide-react';
-import { apiClient } from '../services/apiClient';
-import { PaymentMethod as PaymentMethodCode } from '../types';
+import { apiClient } from '../services/apiClient.js';
+import { PaymentMethod as PaymentMethodCode } from '../types.js';
 
 // 支付方式完整数据接口
 interface PaymentMethodData {

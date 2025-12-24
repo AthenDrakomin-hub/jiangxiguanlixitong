@@ -28,13 +28,13 @@ import {
   OrderStatus,
   PaymentMethod,
   SystemSettings,
-} from '../types';
-import { setLanguage, t, LANGUAGE_COOKIE_NAME } from '../utils/i18n';
-import { getCookie, setCookie } from '../utils/cookie';
+} from '../types.js';
+import { setLanguage, t, LANGUAGE_COOKIE_NAME } from '../utils/i18n.js';
+import { getCookie, setCookie } from '../utils/cookie.js';
 import ImageLazyLoad from './ImageLazyLoad';
 import OrderDetail from './OrderDetail';
-import { apiClient } from '../services/apiClient';
-import { auditLogger } from '../services/auditLogger';
+import { apiClient } from '../services/apiClient.js';
+import { auditLogger } from '../services/auditLogger.js';
 
 interface CustomerOrderProps {
   dishes: Dish[];

@@ -20,10 +20,10 @@ import {
   Receipt,
   AlertCircle,
 } from 'lucide-react';
-import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types';
-import { PrinterService } from '../services/printer';
-import { auditLogger } from '../services/auditLogger';
-import { apiClient } from '../services/apiClient';
+import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types.js';
+import { PrinterService } from '../services/printer.js';
+import { auditLogger } from '../services/auditLogger.js';
+import { apiClient } from '../services/apiClient.js';
 
 interface OrderManagementProps {
   orders: Order[];

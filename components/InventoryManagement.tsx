@@ -9,9 +9,9 @@ import {
   PackageX,
   X,
 } from 'lucide-react';
-import { Ingredient } from '../types';
-import { apiClient } from '../services/apiClient';
-import { auditLogger } from '../services/auditLogger';
+import { Ingredient } from '../types.js';
+import { apiClient } from '../services/apiClient.js';
+import { auditLogger } from '../services/auditLogger.js';
 
 interface InventoryManagementProps {
   inventory: Ingredient[];

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Order, OrderStatus, OrderSource } from '../types';
-import { t } from '../utils/i18n';
+import { Order, OrderStatus, OrderSource } from '../types.js';
+import { t } from '../utils/i18n.js';
 import {
   X,
   MapPin,

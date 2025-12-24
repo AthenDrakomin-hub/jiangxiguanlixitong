@@ -7,9 +7,9 @@ import {
   LogOut,
   X,
 } from 'lucide-react';
-import { Order, OrderStatus } from '../types';
-import { apiClient } from '../services/apiClient';
-import { auditLogger } from '../services/auditLogger';
+import { Order, OrderStatus } from '../types.js';
+import { apiClient } from '../services/apiClient.js';
+import { auditLogger } from '../services/auditLogger.js';
 
 interface KitchenDisplayProps {
   orders: Order[];

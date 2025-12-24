@@ -1,7 +1,7 @@
 // services/storage.ts
 // Storage service for handling localStorage operations
 
-import { StorageSettings } from '../types';
+import { StorageSettings } from '../types.js';
 
 
 export const getStorageSettings = (): StorageSettings | null => {

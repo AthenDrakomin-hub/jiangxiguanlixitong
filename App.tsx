@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import './index.css';
-import { APP_CONFIG } from './src/config';
+import { APP_CONFIG } from './src/config.js';
 import {
   Order,
   Dish,
@@ -13,7 +13,7 @@ import {
   SystemSettings,
   Page,
   OrderStatus,
-} from './types';
+} from './types.js';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
 import ErrorBoundary from './components/ErrorBoundary';

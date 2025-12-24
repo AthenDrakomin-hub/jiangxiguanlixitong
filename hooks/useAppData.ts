@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { getCache, setCache, clearCache } from '../utils/cache';
-import { apiClient } from '../services/apiClient';
+import { getCache, setCache, clearCache } from '../utils/cache.js';
+import { apiClient } from '../services/apiClient.js';
 import {
   Dish,
   Order,
@@ -12,7 +12,7 @@ import {
   HotelRoom,
   PaymentMethod,
   SystemSettings,
-} from '../types';
+} from '../types.js';
 
 /**
  * App data structure

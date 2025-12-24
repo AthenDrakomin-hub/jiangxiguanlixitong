@@ -9,7 +9,7 @@ import {
   ExternalLink,
   AlertCircle,
 } from 'lucide-react';
-import { HotelRoom, KTVRoom } from '../types';
+import { HotelRoom, KTVRoom } from '../types.js';
 
 // 产品备注: 定义TabButton组件的props类型
 interface TabButtonProps {

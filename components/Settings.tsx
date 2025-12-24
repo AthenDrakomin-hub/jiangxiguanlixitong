@@ -13,8 +13,8 @@ import {
   QrCode,
   BedDouble,
 } from 'lucide-react';
-import { getStorageSettings as getLocalSettings, saveStorageSettings as saveLocalSettings } from '../services/storage';
-import { apiClient } from '../services/apiClient';
+import { getStorageSettings as getLocalSettings, saveStorageSettings as saveLocalSettings } from '../services/storage.js';
+import { apiClient } from '../services/apiClient.js';
 import {
   StorageSettings,
   StoreInfo,
@@ -26,12 +26,12 @@ import {
   SignBillAccount,
   HotelRoom,
   SystemSettings,
-} from '../types';
-import { PrinterService } from '../services/printer';
+} from '../types.js';
+import { PrinterService } from '../services/printer.js';
 import DataManagement from './DataManagement';
 import PrinterConfig from './PrinterConfig';
 
-import { auditLogger } from '../services/auditLogger';
+import { auditLogger } from '../services/auditLogger.js';
 
 interface SettingsProps {
   onSettingsChange?: (settings: SystemSettings) => void;

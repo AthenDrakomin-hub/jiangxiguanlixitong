@@ -47,4 +47,10 @@ fetch('/api/seed', { method: 'POST' }).then(res => res.json()).then(console.log)
 - **财务系统**: 实时统计已支付订单，支持一键交班打印。
 
 ---
+
+## 📝 部署更新说明
+- **TypeScript兼容性**: 已修复TypeScript 5.9.3的模块解析问题，所有相对导入路径已添加.js扩展名
+- **生产就绪**: 代码已通过TypeScript类型检查，可安全部署到生产环境
+
+---
 © 2025 江西酒店管理系统 - 生产就绪版

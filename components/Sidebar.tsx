@@ -15,8 +15,8 @@ import {
   CreditCard,
   Shield,
 } from 'lucide-react';
-import { Page } from '../types';
-import { t } from '../utils/i18n';
+import { Page } from '../types.js';
+import { t } from '../utils/i18n.js';
 
 interface SidebarProps {
   currentPage: Page;
