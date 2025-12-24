@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   ClipboardList,
@@ -128,7 +129,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
       const isTakeout = order.source === 'TAKEOUT';
       const nextStatus = isTakeout ? OrderStatus.COMPLETED : OrderStatus.SERVED;
 
-      const paidOrder = { ...order, status: nextStatus, paymentMethod: method };
+      const paidOrder: Order = { ...order, status: nextStatus, paymentMethod: method };
 
       // 更新后端数据
       await apiClient.update('orders', activeOrderId, {
@@ -137,6 +138,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
       });
 
       // 支付时自动打印小票
+      // Fixed: PrinterService.printOrder now accepts global Order type
       PrinterService.printOrder(paidOrder);
 
       // 更新前端状态
@@ -154,6 +156,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
   };
 
   const handlePrintBill = (order: Order) => {
+    // Fixed: PrinterService.printOrder now accepts global Order type
     PrinterService.printOrder(order);
   };
 

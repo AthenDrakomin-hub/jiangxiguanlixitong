@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import {
   XAxis,
@@ -147,6 +148,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
     );
   }, [orders, expenses]);
 
+  // Fixed: Update handoverData structure to match ShiftReport expected by printer
   const handoverData = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     const todayOrders = orders.filter(
@@ -162,7 +164,16 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
       total += o.totalAmount;
     });
 
-    return { total, byMethod, count: todayOrders.length };
+    return { 
+      id: `SHIFT-${Date.now()}`,
+      startTime: today + ' 00:00:00',
+      endTime: new Date().toLocaleString(),
+      orders: todayOrders,
+      totalRevenue: total,
+      total, // UI compatibility
+      byMethod, 
+      count: todayOrders.length 
+    };
   }, [orders]);
 
   const handleAddExpense = async (e: React.FormEvent) => {
@@ -660,7 +671,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
                   Total Revenue 营收总额
                 </span>
                 <span className="text-2xl font-bold text-emerald-600">
-                  ₱{handoverData.total.toLocaleString()}
+                  ₱{handoverData.totalRevenue.toLocaleString()}
                 </span>
               </div>
 
@@ -693,7 +704,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
               </div>
 
               <div className="mb-6 rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-                <p>• Range: Today 00:00 - Now</p>
+                <p>• Range: {handoverData.startTime} - {handoverData.endTime}</p>
                 <p>• Includes: Dining, Room, KTV, Takeout</p>
                 <p>• Orders: {handoverData.count}</p>
               </div>

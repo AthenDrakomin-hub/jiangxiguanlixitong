@@ -1,3 +1,4 @@
+
 // services/apiClient.ts
 // API client for handling HTTP requests
 
@@ -45,7 +46,7 @@ export const apiClient = {
     return await response.json();
   },
 
-  async post<T>(endpoint: string, data: T): Promise<T> {
+  async post<T>(endpoint: string, data: any): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
@@ -93,7 +94,8 @@ export const apiClient = {
       const results = await Promise.allSettled(
         COLLECTIONS.map(async (collection) => {
           try {
-            const response = await this.get<{
+            // Fixed: Avoid untyped function calls by using dot notation
+            const response = await apiClient.get<{
               success: boolean;
               data: unknown[];
             }>(`/${collection}`);
@@ -139,7 +141,8 @@ export const apiClient = {
    */
   async fetchCollection<T>(collection: CollectionName): Promise<T[]> {
     try {
-      const response = await this.get<{ success: boolean; data: T[] }>(
+      // Fixed: Use apiClient instead of this to preserve types
+      const response = await apiClient.get<{ success: boolean; data: T[] }>(
         `/${collection}`
       );
       return response.success ? response.data : [];
@@ -157,7 +160,8 @@ export const apiClient = {
   async saveSystemSettings(settings: unknown) {
     try {
       // We'll store system settings as a single item with a fixed ID
-      const response = await this.put<any>(
+      // Fixed: Use apiClient instead of this to preserve types
+      const response = await apiClient.put<any>(
         `/system_settings?id=settings`,
         settings
       );
@@ -175,7 +179,8 @@ export const apiClient = {
   async fetchSystemSettings(): Promise<any> {
     try {
       // We'll fetch the single system settings item with the fixed ID
-      const response = await this.get<any>(
+      // Fixed: Use apiClient instead of this to preserve types
+      const response = await apiClient.get<any>(
         `/system_settings?id=settings`
       );
       return response.success ? response.data : null;
@@ -193,7 +198,8 @@ export const apiClient = {
    */
   async create<T>(collection: CollectionName, data: T): Promise<T> {
     try {
-      const response = await this.post<T>(
+      // Fixed: Use apiClient instead of this to preserve types
+      const response = await apiClient.post<T>(
         `/${collection}`,
         data
       );
@@ -213,13 +219,14 @@ export const apiClient = {
    */
   async update<T>(collection: CollectionName, id: string, data: T): Promise<T> {
     try {
-      const response = await this.put<T>(
+      // Fixed: Use apiClient instead of this to preserve types
+      const response = await apiClient.put<T>(
         `/${collection}?id=${id}`,
         data
       );
       return response;
     } catch (error) {
-      console.error(`Error updating item ${id} in collection ${collection}:`, error);
+      console.error(`Error updating item id ${id} in collection ${collection}:`, error);
       throw error;
     }
   },
@@ -232,12 +239,13 @@ export const apiClient = {
    */
   async remove<T = any>(collection: CollectionName, id: string): Promise<T> {
     try {
-      const response = await this['delete']<any>(
+      // Fixed: Avoid untyped function calls by using dot notation
+      const response = await apiClient.delete<any>(
         `/${collection}?id=${id}`
       );
       return response;
     } catch (error) {
-      console.error(`Error deleting item ${id} from collection ${collection}:`, error);
+      console.error(`Error deleting item id ${id} from collection ${collection}:`, error);
       throw error;
     }
   },
@@ -248,7 +256,8 @@ export const apiClient = {
    */
   async seed(): Promise<any> {
     try {
-      const response = await this.post<Record<string, unknown>>(
+      // Fixed: Use apiClient instead of this to preserve types
+      const response = await apiClient.post<Record<string, unknown>>(
         `/seed`,
         {}
       );

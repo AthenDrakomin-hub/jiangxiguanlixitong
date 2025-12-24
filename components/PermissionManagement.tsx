@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Save, Users, Shield, Edit3, Trash2, Plus, AlertCircle } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
@@ -294,8 +295,10 @@ const PermissionManagement: React.FC = () => {
 
   const handleEditUser = (user: User) => {
     setEditingUser(user);
+    // Fixed: Include password in userFormData to match state action type
     setUserFormData({
       username: user.username,
+      password: '', // Password is reset or not editable here
       role: user.role,
       isActive: user.isActive,
     });

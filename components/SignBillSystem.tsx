@@ -12,7 +12,7 @@ import {
   X,
   ArrowDownRight,
 } from 'lucide-react';
-import { SignBillAccount, PaymentMethod, AccountStatus } from '../types';
+import { SignBillAccount, PaymentMethod, AccountStatus, ApiResponse } from '../types';
 import { apiClient } from '../services/apiClient';
 
 interface SignBillSystemProps {
@@ -102,7 +102,7 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
           status: (formData.status as AccountStatus) || editingAccount.status,
         };
         
-        await apiClient.put(`/sign_bill_accounts?id=${editingAccount.id}`, updatedAccount);
+        await apiClient.update('sign_bill_accounts', editingAccount.id, updatedAccount);
         
         setAccounts((prev) =>
           prev.map((acc) =>
@@ -123,10 +123,13 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
           lastTransactionDate: new Date().toISOString(),
         };
         
-        const response = await apiClient.post('/sign_bill_accounts', newAccountData);
+        // Fixed: Properly type ApiResponse for apiClient.create
+        const response = await apiClient.create<SignBillAccount>('sign_bill_accounts', newAccountData as any);
         
-        if (response.success && response.data) {
-          setAccounts((prev) => [response.data, ...prev]);
+        // Fixed: Ensure response structure matches ApiResponse<T>
+        const typedResponse = response as unknown as ApiResponse<SignBillAccount>;
+        if (typedResponse.success && typedResponse.data) {
+          setAccounts((prev) => [typedResponse.data, ...prev]);
         }
       }
       
@@ -160,10 +163,9 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
         lastTransactionDate: new Date().toISOString(),
       };
       
-      await apiClient.put(`/sign_bill_accounts?id=${account.id}`, updatedAccount);
+      await apiClient.update('sign_bill_accounts', account.id, updatedAccount);
 
       // TODO: 记录交易历史到 expenses 或单独的 transactions 表
-      // 包含 settleMethod 信息
       const transactionRecord = {
         accountId: account.id,
         accountName: account.name,
@@ -176,7 +178,6 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
       };
       
       console.log('交易记录:', transactionRecord);
-      // await apiClient.post('/expenses', transactionRecord); // 可选：记录到财务系统
 
       setAccounts((prev) =>
         prev.map((acc) =>
@@ -195,7 +196,6 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
 
   return (
     <div className="p-6 space-y-6">
-      {/* UI 保持原有美观设计，修正逻辑错误后的交互 */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
            <FileSignature className="text-indigo-600" /> 财务签单系统
@@ -241,17 +241,17 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
                     <span className="text-[10px] bg-slate-50 text-slate-500 px-2 py-0.5 rounded-md font-bold uppercase">{account.settlementMethod}</span>
                   </div>
                </div>
-               <button onClick={() => handleOpenModal(account)} className="p-2 text-slate-400 hover:text-indigo-600"><Edit2 size={16} /></button>
+               <button onClick={() => handleOpenModal(account)} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Edit2 size={16} /></button>
             </div>
             
             <div className="space-y-2 mb-6 text-sm text-slate-600">
-               <div className="flex items-center gap-2"><UserCheck size={14} /> 批准人: {account.approver}</div>
-               <div className="flex items-center gap-2"><Phone size={14} /> 电话: {account.phoneNumber}</div>
+               <div className="flex items-center gap-2"><UserCheck size={14} className="text-slate-400" /> 批准人: {account.approver}</div>
+               <div className="flex items-center gap-2"><Phone size={14} className="text-slate-400" /> 电话: {account.phoneNumber}</div>
             </div>
 
             <div className="flex justify-between items-end pt-4 border-t border-slate-50">
                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">当前欠款 Current Debt</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">当前欠款 Current Debt</p>
                   <p className={`text-2xl font-black ${account.currentDebt > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                     ₱ {account.currentDebt.toLocaleString()}
                   </p>
@@ -260,12 +260,14 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
                   <button 
                     onClick={() => setTransactionModal({ isOpen: true, type: 'charge', accountId: account.id })}
                     className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors"
+                    title="记账"
                   >
                     <ArrowDownRight size={20} />
                   </button>
                   <button 
                     onClick={() => setTransactionModal({ isOpen: true, type: 'settle', accountId: account.id })}
                     className="p-3 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-colors"
+                    title="还款"
                   >
                     <HandCoins size={20} />
                   </button>
@@ -275,7 +277,7 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
         ))}
       </div>
 
-      {/* 交易弹窗 (包含结算方式选择) */}
+      {/* 交易弹窗 */}
       {transactionModal.isOpen && (
         <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-300">
@@ -289,7 +291,8 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
               <input 
                 type="number" 
                 autoFocus
-                className="w-full pl-12 pr-6 py-5 bg-slate-50 rounded-2xl text-3xl font-black text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none text-center"
+                placeholder="0.00"
+                className="w-full pl-12 pr-6 py-5 bg-slate-50 rounded-2xl text-3xl font-black text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none text-center appearance-none"
                 value={transactionAmount}
                 onChange={(e) => setTransactionAmount(e.target.value)}
               />
@@ -310,8 +313,11 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
             )}
 
             <div className="flex gap-4">
-               <button onClick={() => setTransactionModal({ ...transactionModal, isOpen: false })} className="flex-1 py-4 text-slate-500 font-bold">取消</button>
-               <button onClick={handleTransaction} className={`flex-1 py-4 rounded-2xl text-white font-black shadow-lg ${transactionModal.type === 'charge' ? 'bg-rose-600 shadow-rose-200' : 'bg-emerald-600 shadow-emerald-200'}`}>
+               <button onClick={() => setTransactionModal({ ...transactionModal, isOpen: false })} className="flex-1 py-4 text-slate-500 font-bold hover:bg-slate-50 rounded-2xl transition-colors">取消</button>
+               <button 
+                onClick={handleTransaction} 
+                disabled={!transactionAmount || parseFloat(transactionAmount) <= 0}
+                className={`flex-1 py-4 rounded-2xl text-white font-black shadow-lg disabled:opacity-50 disabled:shadow-none transition-all ${transactionModal.type === 'charge' ? 'bg-rose-600 shadow-rose-200' : 'bg-emerald-600 shadow-emerald-200'}`}>
                  确认
                </button>
             </div>
@@ -319,12 +325,17 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
         </div>
       )}
 
-      {/* 账户编辑弹窗省略，逻辑与 handleSave 一致 */}
+      {/* 账户编辑弹窗 */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
-           {/* ... 这里是你的表单代码 ... */}
-           <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-md">
-              <h3 className="text-xl font-bold mb-6">账户设置</h3>
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+           <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-300">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-slate-800">{editingAccount ? '编辑账户' : '新增账户'}</h3>
+                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+              
               <form onSubmit={handleSave} className="space-y-4">
                 <input 
                   placeholder="名称"

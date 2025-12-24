@@ -1,23 +1,11 @@
+
 // services/printer.ts
 // Printer service for handling print operations
 // 已集成到 OrderManagement、FinanceSystem、Settings 等组件
 
-// TODO: 统一使用 types.ts 中的类型定义，避免重复定义
-interface OrderItem {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
+import { Order, OrderItem } from '../types';
 
-interface Order {
-  id: string;
-  items: OrderItem[];
-  total: number;
-  tableId?: string;
-  timestamp: string;
-}
-
+// Fixed: ShiftReport now reflects the data provided by FinanceSystem
 interface ShiftReport {
   id: string;
   startTime: string;
@@ -207,7 +195,7 @@ export class PrinterService {
       .map(
         (item) => `
         <tr>
-          <td>${item.name}</td>
+          <td>${item.dishName}</td>
           <td style="text-align: center;">${item.quantity}</td>
           <td style="text-align: right;">₱${item.price.toFixed(2)}</td>
           <td style="text-align: right;">₱${(item.price * item.quantity).toFixed(2)}</td>
@@ -217,11 +205,11 @@ export class PrinterService {
       .join('');
 
     // 判断是否为房间订单（以 82xx/83xx 开头为房间号）
-    const isRoomService = /^8[23]\d{2}$/.test(order.tableId || '');
+    const isRoomService = /^8[23]\d{2}$/.test(order.tableNumber || '');
     const locationLabel = isRoomService 
       ? `🚪 房间号 Room No.` 
       : `🍽️ 桌号 Table`;
-    const locationValue = order.tableId || 'N/A';
+    const locationValue = order.tableNumber || 'N/A';
 
     return `
       <!DOCTYPE html>
@@ -283,7 +271,7 @@ export class PrinterService {
         
         <p style="text-align: center; margin: 5px 0; border-bottom: 1px dashed #000; padding-bottom: 5px;">
           订单号 Order No: ${order.id}<br>
-          时间 Time: ${new Date(order.timestamp).toLocaleString('zh-CN')}
+          时间 Time: ${new Date(order.createdAt).toLocaleString('zh-CN')}
         </p>
         <table>
           <thead>
@@ -300,7 +288,7 @@ export class PrinterService {
           <tfoot>
             <tr class="total">
               <td colspan="3" style="text-align: right;">总计:</td>
-              <td style="text-align: right;">₱${order.total.toFixed(2)}</td>
+              <td style="text-align: right;">₱${order.totalAmount.toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
@@ -320,9 +308,9 @@ export class PrinterService {
         <tr>
           <td>${index + 1}</td>
           <td>${order.id}</td>
-          <td>${order.tableId || 'N/A'}</td>
-          <td style="text-align: right;">₱${order.total.toFixed(2)}</td>
-          <td>${new Date(order.timestamp).toLocaleTimeString('zh-CN')}</td>
+          <td>${order.tableNumber || 'N/A'}</td>
+          <td style="text-align: right;">₱${order.totalAmount.toFixed(2)}</td>
+          <td>${new Date(order.createdAt).toLocaleTimeString('zh-CN')}</td>
         </tr>
       `
       )
@@ -374,7 +362,7 @@ export class PrinterService {
   private static generateOrderESCPOS(order: Order): string {
     // ESC/POS 指令格式（飞鹅云支持）
     // 判断是否为房间订单（82xx/83xx）
-    const isRoomService = /^8[23]\d{2}$/.test(order.tableId || '');
+    const isRoomService = /^8[23]\d{2}$/.test(order.tableNumber || '');
     
     let content = '';
     content += '<CB>江西酒店 Jiangxi Hotel</CB><BR>';
@@ -384,23 +372,23 @@ export class PrinterService {
     // 如果是房间订单，醒目显示房间号
     if (isRoomService) {
       content += '<CB><BOLD>🚪 送至房间 DELIVER TO ROOM</BOLD></CB><BR>';
-      content += '<CB><BOLD><font size="tall">${order.tableId}</font></BOLD></CB><BR>';
+      content += `<CB><BOLD><font size="tall">${order.tableNumber}</font></BOLD></CB><BR>`;
       content += '--------------------------------<BR>';
     } else {
-      content += `<B>🍽️ 桌号 Table: ${order.tableId || 'N/A'}</B><BR>`;
+      content += `<B>🍽️ 桌号 Table: ${order.tableNumber || 'N/A'}</B><BR>`;
     }
     
     content += `订单号 Order: ${order.id}<BR>`;
-    content += `时间 Time: ${new Date(order.timestamp).toLocaleString('zh-CN')}<BR>`;
+    content += `时间 Time: ${new Date(order.createdAt).toLocaleString('zh-CN')}<BR>`;
     content += '--------------------------------<BR>';
 
     order.items.forEach((item) => {
-      content += `${item.name}<BR>`;
+      content += `${item.dishName}<BR>`;
       content += `  ${item.quantity} x ₱${item.price.toFixed(2)} = ₱${(item.price * item.quantity).toFixed(2)}<BR>`;
     });
 
     content += '--------------------------------<BR>';
-    content += `<B>总计: ₱${order.total.toFixed(2)}</B><BR>`;
+    content += `<B>总计: ₱${order.totalAmount.toFixed(2)}</B><BR>`;
     content += '--------------------------------<BR>';
     content += '<C>谢谢惠顾 Thank You!</C><BR>';
     content += '<C>欢迎再次光临!</C><BR><BR><BR>';
@@ -417,7 +405,7 @@ export class PrinterService {
     content += '================================<BR>';
 
     report.orders.forEach((order, index) => {
-      content += `${index + 1}. ${order.id} - ₱${order.total.toFixed(2)}<BR>`;
+      content += `${index + 1}. ${order.id} - ₱${order.totalAmount.toFixed(2)}<BR>`;
     });
 
     content += '================================<BR>';

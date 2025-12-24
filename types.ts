@@ -1,3 +1,4 @@
+
 // Removed hardcoded enum to allow dynamic categories
 export type Category = string;
 
@@ -125,6 +126,9 @@ export interface HotelRoom {
 }
 
 // Sign Bill System Types
+// Fixed: Export AccountStatus
+export type AccountStatus = 'Active' | 'Inactive';
+
 export interface SignBillAccount {
   id: string;
   name: string; // 挂帐人/单位
@@ -134,7 +138,7 @@ export interface SignBillAccount {
   phoneNumber: string;
   creditLimit?: number; // 信用额度
   currentDebt: number; // 当前欠款
-  status: 'Active' | 'Inactive';
+  status: AccountStatus;
   lastTransactionDate?: string;
 }
 
