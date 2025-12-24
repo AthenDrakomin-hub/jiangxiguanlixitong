@@ -74,26 +74,48 @@ export default async function handler(req: Request) {
     );
   }
 
-  // Check if database is connected
+  // 检查数据库连接状态
   const status = kvClient.getConnectionStatus();
   
   // 如果没有真实连接，提供更明确的错误信息
   if (!status.isRealConnection) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: '未连接到真实的Vercel KV数据库',
-        error: '缺少真实的Redis配置',
-        debug: {
-          ...status,
-          hint: '请在Vercel控制台连接KV数据库后重试',
-        },
-      }),
-      {
-        status: 503,
-        headers: corsHeaders,
-      }
-    );
+    // 对于根路径(/api)，仍可返回API信息，但标记连接状态
+    if (!collectionName) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Jiangxi Hotel Management System API (KV Storage Version)',
+          kvStatus: {
+            ...status,
+            message: '未连接到真实的Vercel KV数据库'
+          },
+          dataSummary: {},
+          collections: ALLOWED_COLLECTIONS,
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: corsHeaders,
+        }
+      );
+    } else {
+      // 对于具体集合操作，返回错误
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: '未连接到真实的Vercel KV数据库',
+          error: '缺少真实的Redis配置',
+          debug: {
+            ...status,
+            hint: '请在Vercel控制台连接KV数据库后重试',
+          },
+        }),
+        {
+          status: 503,
+          headers: corsHeaders,
+        }
+      );
+    }
   }
   
   // 检查连接是否可用
