@@ -18,6 +18,8 @@ import Sidebar from './components/Sidebar';
 import Login from './components/Login';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useAppData } from './hooks/useAppData';
+import { setLanguage, getCurrentLanguage } from './utils/i18n.js';
+import { dictionaryService } from './services/dictService.js';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const MenuManagement = React.lazy(() => import('./components/MenuManagement'));
@@ -42,7 +44,8 @@ const PermissionManagement = React.lazy(
   () => import('./components/PermissionManagement')
 );
 const DataViewer = React.lazy(() => import('./components/DataViewer'));
-const ValidationTest = React.lazy(() => import('./components/ValidationTest'));
+const PartnerAccountManagement = React.lazy(() => import('./components/PartnerAccountManagement'));
+const DictionaryManagement = React.lazy(() => import('./components/DictionaryManagement'));
 
 const App = () => {
   // Page Routing State
@@ -54,7 +57,7 @@ const App = () => {
       if (pageParam === 'customer') return 'customer';
       if (pageParam === 'kitchen') return 'kitchen';
     }
-    return 'dashboard';
+    return 'cashier';
   });
 
   // Auth State - 在开发环境中自动认证
@@ -77,6 +80,27 @@ const App = () => {
     }
     return false;
   });
+  
+  // User Role State - 跟踪用户角色
+  const [userRole, setUserRole] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      // 从sessionStorage获取用户角色，如果没有则默认为'admin'
+      return sessionStorage.getItem('jx_user_role') || 'admin';
+    }
+    return 'staff';
+  });
+  
+  // User Language State - 跟踪用户界面语言
+  const [userLanguage, setUserLanguage] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      // 从sessionStorage获取用户语言，如果没有则根据角色设置默认语言
+      const storedLang = sessionStorage.getItem('jx_user_language');
+      if (storedLang) return storedLang;
+      // 根据角色设置默认语言：admin/manager为中文，其他为菲律宾语
+      return (sessionStorage.getItem('jx_user_role') === 'admin' || sessionStorage.getItem('jx_user_role') === 'manager') ? 'zh' : 'tl';
+    }
+    return 'zh'; // 默认中文
+  });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -90,9 +114,6 @@ const App = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [inventory, setInventory] = useState<Ingredient[]>([]);
   const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
-  const [signBillAccounts, setSignBillAccounts] = useState<SignBillAccount[]>(
-    []
-  );
   const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
 
   // Global Settings State
@@ -114,18 +135,42 @@ const App = () => {
     categories: [],
   });
 
-  // --- Database Initialization ---
+  // --- Database, Dictionary and Menu Initialization ---
   useEffect(() => {
     const initDatabase = async () => {
       try {
         await initializeDatabase();
         console.log('Database initialized successfully');
+        
+        // Initialize dictionary after database is ready
+        await dictionaryService.initialize();
+        console.log('Dictionary initialized successfully');
+        
+        // Initialize default menu data
+        const { menuAPI } = await import('./api/menu.js');
+        await menuAPI.initializeDefaultMenu();
+        console.log('Default menu initialized successfully');
       } catch (error) {
-        console.error('Failed to initialize database:', error);
+        console.error('Failed to initialize database, dictionary or menu:', error);
+        // Could add user-facing error notification here
       }
     };
     
     initDatabase();
+  }, []);
+
+  // --- Language Initialization ---
+  useEffect(() => {
+    // Set language based on stored preference when app loads
+    if (typeof window !== 'undefined') {
+      const storedLanguage = sessionStorage.getItem('jx_user_language');
+      if (storedLanguage) {
+        setLanguage(storedLanguage);
+      } else {
+        // Default to Chinese if no language is stored
+        setLanguage('zh-CN');
+      }
+    }
   }, []);
 
   // --- Data Initialization ---
@@ -139,7 +184,6 @@ const App = () => {
       setExpenses(data.expenses);
       setInventory(data.inventory);
       setKtvRooms(data.ktvRooms);
-      setSignBillAccounts(data.signBillAccounts);
       setHotelRooms(data.hotelRooms);
     }
   }, [data]);
@@ -248,58 +292,62 @@ const App = () => {
   }, [orders, isLoading]);
 
   const triggerNotification = (title: string, body: string) => {
-    const savedSettings = localStorage.getItem('jx_settings');
-    const settings = savedSettings
-      ? JSON.parse(savedSettings)
-      : { notifications: { sound: true, desktop: true } };
-    const { sound, desktop } = settings.notifications || {
-      sound: true,
-      desktop: true,
-    };
+    try {
+      const savedSettings = localStorage.getItem('jx_settings');
+      const settings = savedSettings
+        ? JSON.parse(savedSettings)
+        : { notifications: { sound: true, desktop: true } };
+      const { sound, desktop } = settings.notifications || {
+        sound: true,
+        desktop: true,
+      };
 
-    if (sound) {
-      try {
-        // 检查音频文件是否存在
-        fetch(APP_CONFIG.NOTIFICATION.soundUrl)
-          .then((response) => {
-            if (response.ok) {
-              const audio = new Audio(APP_CONFIG.NOTIFICATION.soundUrl);
-              audio
-                .play()
-                .catch((err) => console.error('Audio playback failed:', err));
-            } else {
-              // 如果通知音效文件不存在，使用系统默认通知音
-              console.log('通知音效文件不存在，使用系统默认通知音');
-              if (
-                'Notification' in window &&
-                Notification.permission === 'granted'
-              ) {
-                new Notification(title, {
-                  body: body,
-                  icon: '/favicon.ico',
-                  silent: false, // 允许系统播放默认通知音
-                });
+      if (sound) {
+        try {
+          // 检查音频文件是否存在
+          fetch(APP_CONFIG.NOTIFICATION.soundUrl)
+            .then((response) => {
+              if (response.ok) {
+                const audio = new Audio(APP_CONFIG.NOTIFICATION.soundUrl);
+                audio
+                  .play()
+                  .catch((err) => console.error('Audio playback failed:', err));
+              } else {
+                // 如果通知音效文件不存在，使用系统默认通知音
+                console.log('通知音效文件不存在，使用系统默认通知音');
+                if (
+                  'Notification' in window &&
+                  Notification.permission === 'granted'
+                ) {
+                  new Notification(title, {
+                    body: body,
+                    icon: '/favicon.ico',
+                    silent: false, // 允许系统播放默认通知音
+                  });
+                }
               }
-            }
-          })
-          .catch((err) => {
-            console.error('检查音频文件失败:', err);
-          });
-      } catch (e) {
-        console.error('播放通知音效失败:', e);
+            })
+            .catch((err) => {
+              console.error('检查音频文件失败:', err);
+            });
+        } catch (e) {
+          console.error('播放通知音效失败:', e);
+        }
       }
-    }
 
-    if (
-      desktop &&
-      'Notification' in window &&
-      Notification.permission === 'granted'
-    ) {
-      new Notification(title, {
-        body: body,
-        icon: '/favicon.ico',
-        silent: !sound, // 如果已经播放了音效，就不重复播放系统通知音
-      });
+      if (
+        desktop &&
+        'Notification' in window &&
+        Notification.permission === 'granted'
+      ) {
+        new Notification(title, {
+          body: body,
+          icon: '/favicon.ico',
+          silent: !sound, // 如果已经播放了音效，就不重复播放系统通知音
+        });
+      }
+    } catch (error) {
+      console.error('Notification error:', error);
     }
   };
 
@@ -325,44 +373,60 @@ const App = () => {
     orderId: string,
     newStatus: OrderStatus
   ) => {
-    console.log(`Updating order ${orderId} status to ${newStatus}`);
+    try {
+      console.log(`Updating order ${orderId} status to ${newStatus}`);
 
-    // 1. Deduct inventory if moving to COOKING
-    if (newStatus === OrderStatus.COOKING) {
-      const order = orders ? orders.find((o) => o.id === orderId) : undefined;
-      if (order) {
-        // Deduct ingredients from inventory
-        setInventory((prev) =>
-          (prev || []).map((invItem) => {
-            // Find if this item is used in the order
-            const orderItem = order.items?.find(
-              (item) => item.dishId === invItem.id
-            );
-            if (orderItem) {
-              const amountToDeduct = orderItem.quantity;
-              return {
-                ...invItem,
-                quantity: Math.max(0, invItem.quantity - amountToDeduct),
-              };
-            }
-            return invItem;
-          })
-        );
-        console.log('Inventory deducted for Order', orderId);
+      // 1. Deduct inventory if moving to COOKING
+      if (newStatus === OrderStatus.COOKING) {
+        const order = orders ? orders.find((o) => o.id === orderId) : undefined;
+        if (order) {
+          // Deduct ingredients from inventory
+          setInventory((prev) =>
+            (prev || []).map((invItem) => {
+              // Find if this item is used in the order
+              const orderItem = order.items?.find(
+                (item) => item.dishId === invItem.id
+              );
+              if (orderItem) {
+                const amountToDeduct = orderItem.quantity;
+                return {
+                  ...invItem,
+                  quantity: Math.max(0, invItem.quantity - amountToDeduct),
+                };
+              }
+              return invItem;
+            })
+          );
+          console.log('Inventory deducted for Order', orderId);
+        }
       }
-    }
 
-    // 2. Update Order Status
-    setOrders((prev) =>
-      (prev || []).map((o) =>
-        o.id === orderId ? { ...o, status: newStatus } : o
-      )
-    );
+      // 2. Update Order Status
+      setOrders((prev) =>
+        (prev || []).map((o) =>
+          o.id === orderId ? { ...o, status: newStatus } : o
+        )
+      );
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      // Could add user-facing error notification here
+    }
   };
 
-  const handleLoginSuccess = () => {
-    sessionStorage.setItem('jx_auth', 'true');
-    setIsAuthenticated(true);
+  const handleLoginSuccess = (role: string = 'admin', language: string = 'zh-CN') => {
+    try {
+      sessionStorage.setItem('jx_auth', 'true');
+      sessionStorage.setItem('jx_user_role', role);
+      sessionStorage.setItem('jx_user_language', language);
+      setUserRole(role);
+      setUserLanguage(language);
+      // Set the language for the i18n system
+      setLanguage(language);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Login error:', error);
+      // Could add user-facing error notification here
+    }
   };
 
 
@@ -391,23 +455,7 @@ const App = () => {
 
       // Page routing
       switch (currentPage) {
-        case 'dashboard':
-          return (
-            <Suspense
-              fallback={
-                <div className="p-8 text-center text-slate-500">
-                  Loading Dashboard...
-                </div>
-              }
-            >
-              <Dashboard
-                orders={orders}
-                ktvRooms={ktvRooms}
-                signBillAccounts={signBillAccounts}
-                hotelRooms={hotelRooms}
-              />
-            </Suspense>
-          );
+
         case 'menu':
           return (
             <Suspense
@@ -446,16 +494,16 @@ const App = () => {
               <OrderManagement orders={orders} setOrders={setOrders} systemSettings={systemSettings} />
             </Suspense>
           );
-        case 'finance':
+        case 'cashier':
           return (
             <Suspense
               fallback={
                 <div className="p-8 text-center text-slate-500">
-                  Loading Finance System...
+                  Loading Front Desk Cashier...
                 </div>
               }
             >
-              <FinanceSystem
+              <FrontDeskCashier
                 expenses={expenses}
                 setExpenses={setExpenses}
                 orders={orders}
@@ -499,8 +547,7 @@ const App = () => {
                 setInventory={setInventory}
                 ktvRooms={ktvRooms}
                 setKtvRooms={setKtvRooms}
-                signBillAccounts={signBillAccounts}
-                setSignBillAccounts={setSignBillAccounts}
+
                 hotelRooms={hotelRooms}
                 setHotelRooms={setHotelRooms}
                 onSettingsChange={(newSettings) => {
@@ -526,21 +573,7 @@ const App = () => {
               />
             </Suspense>
           );
-        case 'signbill':
-          return (
-            <Suspense
-              fallback={
-                <div className="p-8 text-center text-slate-500">
-                  Loading Sign Bill System...
-                </div>
-              }
-            >
-              <SignBillSystem
-                accounts={signBillAccounts}
-                setAccounts={setSignBillAccounts}
-              />
-            </Suspense>
-          );
+
         case 'hotel':
           return (
             <Suspense
@@ -583,7 +616,7 @@ const App = () => {
               <KitchenDisplay
                 orders={orders}
                 onStatusChange={handleOrderStatusChange}
-                onBack={() => setCurrentPage('dashboard')}
+                onBack={() => setCurrentPage('cashier')}
               />
             </Suspense>
           );
@@ -640,18 +673,31 @@ const App = () => {
               <DataViewer />
             </Suspense>
           );
-        case 'validationtest':
+        case 'partner_accounts':
           return (
             <Suspense
               fallback={
                 <div className="p-8 text-center text-slate-500">
-                  Loading Validation Test...
+                  Loading Partner Account Management...
                 </div>
               }
             >
-              <ValidationTest />
+              <PartnerAccountManagement />
             </Suspense>
           );
+        case 'dictionary':
+          return (
+            <Suspense
+              fallback={
+                <div className="p-8 text-center text-slate-500">
+                  Loading Dictionary Management...
+                </div>
+              }
+            >
+              <DictionaryManagement />
+            </Suspense>
+          );
+
         default:
           return (
             <div className="p-8 text-center text-red-500">
@@ -728,6 +774,7 @@ const App = () => {
               onNavigate={handleNavigate}
               isOpen={true}
               onClose={() => {}}
+              userRole={userRole}
             />
           </Suspense>
         </div>
@@ -750,6 +797,7 @@ const App = () => {
                   onNavigate={handleNavigate}
                   isOpen={true}
                   onClose={() => setIsMobileMenuOpen(false)}
+                  userRole={userRole}
                 />
               </Suspense>
             </div>

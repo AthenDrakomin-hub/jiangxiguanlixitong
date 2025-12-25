@@ -72,6 +72,16 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
   // Language State
   const [currentLang, setCurrentLang] = useState<'zh-CN' | 'fil'>('zh-CN');
 
+  // Helper function to get dish name based on current language
+  const getDishDisplayName = (dish: Dish): string => {
+    // If name_en exists and current language is not Chinese, show English name
+    if (dish.name_en && currentLang !== 'zh-CN') {
+      return `${dish.name} / ${dish.name_en}`;
+    }
+    // Otherwise, show Chinese name
+    return dish.name;
+  };
+
   // Order Detail State
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -309,6 +319,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
         activeCategory === 'All' || dish.category === activeCategory;
       const matchesSearch =
         dish.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (dish.name_en && dish.name_en.toLowerCase().includes(searchTerm.toLowerCase())) ||
         dish.description.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
@@ -485,7 +496,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
         source: /^8[23]\d{2}$/.test(tableId) ? 'ROOM_SERVICE' : 'LOBBY',
         items: cart.map((item) => ({
           dishId: item.dish.id,
-          dishName: item.dish.name,
+          dishName: getDishDisplayName(item.dish),
           quantity: item.quantity,
           price: item.dish.price,
         })),
@@ -787,7 +798,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                       >
                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100">
                           <span className="truncate px-1 text-xs font-bold text-slate-600">
-                            {dish.name.substring(0, 8)}
+                            {getDishDisplayName(dish).substring(0, 8)}
                           </span>
                         </div>
                         <span className="w-16 truncate text-xs text-slate-500">
@@ -850,7 +861,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                             id={`dish-name-${dish.id}`}
                             className="truncate text-sm font-bold text-slate-800"
                           >
-                            {dish.name}
+                            {getDishDisplayName(dish)}
                           </h3>
                           <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-400">
                             {dish.description}
@@ -1137,7 +1148,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                 >
                   <div className="flex-1">
                     <div className="font-bold text-slate-800">
-                      {item.dish.name}
+                      {getDishDisplayName(item.dish)}
                     </div>
                     <div className="text-xs text-slate-400">
                       ₱{item.dish.price}

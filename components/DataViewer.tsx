@@ -1,325 +1,517 @@
-import React, { useState, useEffect } from 'react';
-import { dbManager } from '../lib/database.js';
-import { Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom } from '../types.js';
+import React, { useState, useMemo } from 'react';
+import {
+  Search,
+  Calendar,
+  Download,
+  Eye,
+  User,
+  Clock,
+  FileText,
+  Wallet,
+  X,
+  Filter,
+  ChevronDown,
+} from 'lucide-react';
+import { Order, Expense, ExpenseCategory, PaymentMethod, User as UserType } from '../types.js';
+import { t } from '../utils/i18n.js';
 
-const DataViewer: React.FC = () => {
-  const [dishes, setDishes] = useState<Dish[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [inventory, setInventory] = useState<Ingredient[]>([]);
-  const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
-  const [signBillAccounts, setSignBillAccounts] = useState<SignBillAccount[]>([]);
-  const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedTable, setSelectedTable] = useState<string>('dishes');
-  const [snapshots, setSnapshots] = useState<any[]>([]);
+interface DataViewerProps {
+  orders: Order[];
+  expenses: Expense[];
+  users: UserType[];
+}
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+interface AuditLog {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  details: string;
+  severity: 'info' | 'warning' | 'error';
+}
 
-  const fetchData = async () => {
-    if (!dbManager.isInitialized()) {
-      console.error('Database not initialized');
-      setLoading(false);
-      return;
-    }
+const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
+  const [activeTab, setActiveTab] = useState<'orders' | 'finance' | 'audit'>('orders');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
+  const [showOrderDetail, setShowOrderDetail] = useState<Order | null>(null);
 
-    try {
-      const database = dbManager.getDatabase();
-      
-      // Fetch all data
-      const [
-        dishesData,
-        ordersData,
-        expensesData,
-        inventoryData,
-        ktvRoomsData,
-        signBillAccountsData,
-        hotelRoomsData
-      ] = await Promise.all([
-        database.getAll<Dish>('dishes'),
-        database.getAll<Order>('orders'),
-        database.getAll<Expense>('expenses'),
-        database.getAll<Ingredient>('inventory'),
-        database.getAll<KTVRoom>('ktv_rooms'),
-        database.getAll<SignBillAccount>('sign_bill_accounts'),
-        database.getAll<HotelRoom>('hotel_rooms')
-      ]);
-
-      setDishes(dishesData);
-      setOrders(ordersData);
-      setExpenses(expensesData);
-      setInventory(inventoryData);
-      setKtvRooms(ktvRoomsData);
-      setSignBillAccounts(signBillAccountsData);
-      setHotelRooms(hotelRoomsData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshData = () => {
-    setLoading(true);
-    fetchData();
-  };
-
-  const createSnapshot = () => {
-    if (!dbManager.isInitialized()) {
-      console.error('Database not initialized');
-      return;
-    }
-
-    // Get the underlying MemoryDatabase instance to access its store
-    
-    // We'll create a snapshot by getting all data from the database
-    const snapshot = {
+  // Mock audit logs - in a real implementation, these would come from an API
+  const mockAuditLogs: AuditLog[] = [
+    {
+      id: 'audit_1',
       timestamp: new Date().toISOString(),
-      dishes: dishes.length,
-      orders: orders.length,
-      expenses: expenses.length,
-      inventory: inventory.length,
-      ktv_rooms: ktvRooms.length,
-      sign_bill_accounts: signBillAccounts.length,
-      hotel_rooms: hotelRooms.length,
-      // Store a representation of the entire database state
-      fullState: {
-        dishes: dishes,
-        orders: orders,
-        expenses: expenses,
-        inventory: inventory,
-        ktv_rooms: ktvRooms,
-        sign_bill_accounts: signBillAccounts,
-        hotel_rooms: hotelRooms
-      }
-    };
-
-    setSnapshots(prev => [...prev.slice(-4), snapshot]); // Keep only last 5 snapshots
-  };
-
-  const exportSnapshot = (snapshot: any) => {
-    const dataStr = JSON.stringify(snapshot, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `db-snapshot-${snapshot.timestamp.replace(/[:.]/g, '-')}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const renderTable = () => {
-    switch (selectedTable) {
-      case 'dishes':
-        return (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Available</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {dishes.map((dish) => (
-                  <tr key={dish.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{dish.id.substring(0, 8)}...</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{dish.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{dish.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">¥{dish.price}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${dish.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {dish.available ? 'Yes' : 'No'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      case 'orders':
-        return (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Table</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.id.substring(0, 8)}...</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.tableId}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">¥{order.total}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(order.timestamp).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      case 'expenses':
-        return (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {expenses.map((expense) => (
-                  <tr key={expense.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{expense.id.substring(0, 8)}...</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{expense.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">¥{expense.amount}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{expense.description}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(expense.date).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      case 'inventory':
-        return (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {inventory.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.id.substring(0, 8)}...</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity} {item.unit}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.unit}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      default:
-        return <div>Select a table to view data</div>;
+      user: 'admin',
+      action: 'order_modified',
+      details: 'Modified order #1001 amount from ₱800 to ₱500',
+      severity: 'warning'
+    },
+    {
+      id: 'audit_2',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      user: 'staff_01',
+      action: 'order_voided',
+      details: 'Voided H5 order #1024',
+      severity: 'info'
+    },
+    {
+      id: 'audit_3',
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      user: 'manager',
+      action: 'expense_added',
+      details: 'Added expense: ₱500 for ice procurement',
+      severity: 'info'
     }
+  ];
+
+  // Filter orders based on search term and date range
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      const matchesSearch = searchTerm === '' || 
+        order.id.includes(searchTerm) ||
+        (order.roomNumber && order.roomNumber.includes(searchTerm)) ||
+        (order.table && order.table.includes(searchTerm)) ||
+        order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesDate = !dateRange || 
+        (new Date(order.createdAt) >= new Date(dateRange.start) && 
+         new Date(order.createdAt) <= new Date(dateRange.end));
+      
+      return matchesSearch && matchesDate;
+    });
+  }, [orders, searchTerm, dateRange]);
+
+  // Filter expenses based on search term and date range
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter(expense => {
+      const matchesSearch = searchTerm === '' || 
+        expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        expense.category.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesDate = !dateRange || 
+        (new Date(expense.date) >= new Date(dateRange.start) && 
+         new Date(expense.date) <= new Date(dateRange.end));
+      
+      return matchesSearch && matchesDate;
+    });
+  }, [expenses, searchTerm, dateRange]);
+
+  // Filter audit logs based on search term and date range
+  const filteredAuditLogs = useMemo(() => {
+    return mockAuditLogs.filter(log => {
+      const matchesSearch = searchTerm === '' || 
+        log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.details.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesDate = !dateRange || 
+        (new Date(log.timestamp) >= new Date(dateRange.start) && 
+         new Date(log.timestamp) <= new Date(dateRange.end));
+      
+      return matchesSearch && matchesDate;
+    });
+  }, [mockAuditLogs, searchTerm, dateRange]);
+
+  // Calculate order total
+  const getOrderTotal = (order: Order) => {
+    return order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
-  const tableCounts = {
-    dishes: dishes.length,
-    orders: orders.length,
-    expenses: expenses.length,
-    inventory: inventory.length,
-    ktv_rooms: ktvRooms.length,
-    sign_bill_accounts: signBillAccounts.length,
-    hotel_rooms: hotelRooms.length,
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return `₱${amount.toLocaleString()}`;
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Get user name by ID
+  const getUserName = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    return user ? user.username : userId;
+  };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">Data Viewer</h2>
-        <div className="flex space-x-2">
-          <button
-            onClick={refreshData}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            Refresh Data
-          </button>
-          <button
-            onClick={createSnapshot}
-            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-          >
-            Create Snapshot
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{t('data_viewer')}</h1>
+          <p className="text-slate-600">{t('data_viewer_desc')}</p>
+        </div>
+        <div className="mt-4 flex items-center gap-2 md:mt-0">
+          <button className="flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700">
+            <Download size={18} />
+            {t('export_data')}
           </button>
         </div>
       </div>
 
-      {/* Snapshots Section */}
-      {snapshots.length > 0 && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-lg font-semibold mb-3">Snapshots</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-            {snapshots.map((snapshot, index) => (
-              <div key={index} className="p-3 bg-white border rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">
-                      {new Date(snapshot.timestamp).toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Orders: {snapshot.orders} | Inventory: {snapshot.inventory}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => exportSnapshot(snapshot)}
-                    className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded"
-                  >
-                    Export
-                  </button>
+      {/* Search and Filters */}
+      <div className="rounded-lg bg-white p-4 shadow">
+        <div className="flex flex-col gap-4 md:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder={t('search_placeholder')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-slate-300 pl-10 pr-4 py-2"
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <button className="flex items-center gap-2 rounded border border-slate-300 px-3 py-2 hover:bg-slate-50">
+              <Calendar size={16} />
+              <span>{t('filter_date')}</span>
+              <ChevronDown size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex border-b border-slate-200">
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === 'orders'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+          onClick={() => setActiveTab('orders')}
+        >
+          {t('order_logs')}
+        </button>
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === 'finance'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+          onClick={() => setActiveTab('finance')}
+        >
+          {t('finance_logs')}
+        </button>
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeTab === 'audit'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+          onClick={() => setActiveTab('audit')}
+        >
+          {t('audit_trails')}
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="rounded-lg bg-white p-6 shadow">
+        {/* Orders Tab */}
+        {activeTab === 'orders' && (
+          <div>
+            <h2 className="mb-4 text-xl font-bold text-slate-900">{t('order_logs')}</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('order_id')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('time')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('location')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('source')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('amount')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('payment_status')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('staff')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.length > 0 ? (
+                    filteredOrders.map(order => {
+                      const orderTotal = getOrderTotal(order);
+                      const statusClass = 
+                        order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                        order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800';
+                      
+                      return (
+                        <tr key={order.id} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium">{order.id}</td>
+                          <td className="px-4 py-3">
+                            {formatDate(order.createdAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.roomNumber || order.table || 'N/A'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.source === 'h5' ? t('h5_order') : t('manual_order')}
+                          </td>
+                          <td className="px-4 py-3 font-semibold">
+                            {formatCurrency(orderTotal)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded px-2 py-1 text-xs ${statusClass}`}>
+                              {t(order.status.toLowerCase() as any)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.staffId ? getUserName(order.staffId) : 'N/A'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => setShowOrderDetail(order)}
+                              className="flex items-center gap-1 rounded bg-blue-100 px-2 py-1 text-blue-700 hover:bg-blue-200"
+                            >
+                              <Eye size={14} />
+                              {t('view_details')}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-6 text-center text-slate-500">
+                        {t('no_orders_found')}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Finance Tab */}
+        {activeTab === 'finance' && (
+          <div>
+            <h2 className="mb-4 text-xl font-bold text-slate-900">{t('finance_logs')}</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('transaction_id')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('type')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('amount')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('payment_method')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('location')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('time')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('staff')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Income records */}
+                  {filteredOrders
+                    .filter(order => order.status === 'COMPLETED')
+                    .map(order => {
+                      const orderTotal = getOrderTotal(order);
+                      return (
+                        <tr key={`income_${order.id}`} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium">{order.id}</td>
+                          <td className="px-4 py-3">
+                            <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800">
+                              {t('income')}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-green-700">
+                            +{formatCurrency(orderTotal)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.paymentMethod || t('cash')}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.roomNumber || order.table || 'N/A'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {formatDate(order.createdAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {order.staffId ? getUserName(order.staffId) : 'N/A'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  
+                  {/* Expense records */}
+                  {filteredExpenses.map(expense => (
+                    <tr key={`expense_${expense.id}`} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="px-4 py-3 font-medium">{expense.id}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded bg-red-100 px-2 py-1 text-xs text-red-800">
+                          {t('expense')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-red-700">
+                        -{formatCurrency(expense.amount)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {t('expense')}
+                      </td>
+                      <td className="px-4 py-3">
+                        {expense.category}
+                      </td>
+                      <td className="px-4 py-3">
+                        {formatDate(expense.createdAt)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {expense.id} {/* In a real implementation, this would be the user who added the expense */}
+                      </td>
+                    </tr>
+                  ))}
+                  
+                  {filteredOrders.filter(order => order.status === 'COMPLETED').length === 0 && 
+                   filteredExpenses.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
+                        {t('no_finance_records')}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Audit Tab */}
+        {activeTab === 'audit' && (
+          <div>
+            <h2 className="mb-4 text-xl font-bold text-slate-900">{t('audit_trails')}</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('timestamp')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('user')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('action')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('details')}</th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-slate-700">{t('severity')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAuditLogs.length > 0 ? (
+                    filteredAuditLogs.map(log => {
+                      const severityClass = 
+                        log.severity === 'error' ? 'bg-red-100 text-red-800' :
+                        log.severity === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800';
+                      
+                      return (
+                        <tr key={log.id} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3">{formatDate(log.timestamp)}</td>
+                          <td className="px-4 py-3 font-medium">{log.user}</td>
+                          <td className="px-4 py-3">
+                            <span className="rounded bg-slate-100 px-2 py-1 text-xs">
+                              {t(log.action as any) || log.action}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">{log.details}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded px-2 py-1 text-xs ${severityClass}`}>
+                              {t(log.severity)}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                        {t('no_audit_logs')}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Order Detail Modal */}
+      {showOrderDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-lg bg-white p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900">
+                {t('order_details')} - {showOrderDetail.id}
+              </h3>
+              <button
+                onClick={() => setShowOrderDetail(null)}
+                className="rounded-full p-1 hover:bg-slate-100"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-600">{t('location')}</p>
+                  <p className="font-medium">
+                    {showOrderDetail.roomNumber || showOrderDetail.table || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">{t('source')}</p>
+                  <p className="font-medium">
+                    {showOrderDetail.source === 'h5' ? t('h5_order') : t('manual_order')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">{t('time')}</p>
+                  <p className="font-medium">
+                    {formatDate(showOrderDetail.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">{t('payment_method')}</p>
+                  <p className="font-medium">
+                    {showOrderDetail.paymentMethod || t('cash')}
+                  </p>
                 </div>
               </div>
-            ))}
+              
+              <div>
+                <h4 className="mb-2 font-semibold">{t('order_items')}</h4>
+                <div className="space-y-2">
+                  {showOrderDetail.items.map((item, index) => (
+                    <div key={index} className="flex justify-between border-b pb-2">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-slate-600">
+                          {item.quantity} x ₱{item.price.toLocaleString()}
+                        </p>
+                      </div>
+                      <p className="font-semibold">
+                        ₱{(item.price * item.quantity).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <div className="w-1/3">
+                    <div className="flex justify-between border-t pt-2">
+                      <p className="font-semibold">{t('total')}</p>
+                      <p className="font-semibold">
+                        {formatCurrency(getOrderTotal(showOrderDetail))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-2 mb-6">
-        {Object.entries(tableCounts).map(([table, count]) => (
-          <button
-            key={table}
-            onClick={() => setSelectedTable(table)}
-            className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-              selectedTable === table
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {table.replace('_', ' ')} ({count})
-          </button>
-        ))}
-      </div>
-
-      <div className="max-h-96 overflow-y-auto">
-        {renderTable()}
-      </div>
     </div>
   );
 };

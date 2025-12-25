@@ -10,7 +10,7 @@ export default async function handler(req: Request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',
   };
 
@@ -34,6 +34,39 @@ export default async function handler(req: Request) {
       }),
       {
         status: 405,
+        headers: corsHeaders,
+      }
+    );
+  }
+
+  // 添加权限校验
+  const authHeader = req.headers.get('Authorization');
+  const adminKey = process.env.ADMIN_KEY || process.env.VITE_ADMIN_KEY;
+  
+  // 验证Bearer认证头
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: '认证失败：缺少 Bearer Token',
+      }),
+      {
+        status: 401,
+        headers: corsHeaders,
+      }
+    );
+  }
+  
+  const providedKey = authHeader.substring(7); // 移除 "Bearer " 前缀
+  
+  if (!adminKey || providedKey !== adminKey) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: '认证失败：密钥不匹配',
+      }),
+      {
+        status: 401,
         headers: corsHeaders,
       }
     );

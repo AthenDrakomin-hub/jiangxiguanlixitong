@@ -10,7 +10,6 @@ const SettingsNavigation: React.FC<SettingsNavigationProps> = ({ activeSection, 
     { id: '常规', label: '常规', icon: '⚙️' },
     { id: '数据库', label: '数据库', icon: '🗄️' },
     { id: '云运维', label: '云运维', icon: '☁️' },
-    { id: '安全', label: '安全', icon: '🔒' },
   ];
 
   return (

@@ -64,7 +64,7 @@ export const apiClient = {
     return result;
   },
 
-  async post<T>(endpoint: string, data: any): Promise<T> {
+  async post<T>(endpoint: string, data: any, authHeader?: string): Promise<T> {
     // 在生产环境中，避免在日志中记录可能包含敏感信息的数据
     const isProduction = process.env.NODE_ENV === 'production';
     if (!isProduction) {
@@ -74,20 +74,28 @@ export const apiClient = {
       console.log(`API POST request to ${endpoint}`);
     }
     
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    // 如果提供了认证头，添加到请求头中
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: headers,
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
     return await response.json();
   },
 
-  async put<T>(endpoint: string, data: T): Promise<T> {
+  async put<T>(endpoint: string, data: T, authHeader?: string): Promise<T> {
     // 在生产环境中，避免在日志中记录可能包含敏感信息的数据
     const isProduction = process.env.NODE_ENV === 'production';
     if (!isProduction) {
@@ -97,20 +105,28 @@ export const apiClient = {
       console.log(`API PUT request to ${endpoint}`);
     }
     
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    // 如果提供了认证头，添加到请求头中
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: headers,
       body: JSON.stringify(data),
     });
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
     return await response.json();
   },
 
-  async delete<T = any>(endpoint: string): Promise<T> {
+  async delete<T = any>(endpoint: string, authHeader?: string): Promise<T> {
     // 在生产环境中，避免在日志中记录可能包含敏感信息的数据
     const isProduction = process.env.NODE_ENV === 'production';
     if (!isProduction) {
@@ -120,11 +136,20 @@ export const apiClient = {
       console.log(`API DELETE: ${endpoint}`);
     }
     
+    const headers: Record<string, string> = {};
+    
+    // 如果提供了认证头，添加到请求头中
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
+      headers: headers,
     });
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
     const result = await response.json();
     

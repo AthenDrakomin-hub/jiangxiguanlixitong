@@ -24,6 +24,7 @@ import { Order, OrderStatus, OrderSource, PaymentMethod } from '../types.js';
 import { PrinterService } from '../services/printer.js';
 import { auditLogger } from '../services/auditLogger.js';
 import { apiClient } from '../services/apiClient.js';
+import { formatCurrency } from '../utils/i18n.js';
 
 interface OrderManagementProps {
   orders: Order[];
@@ -466,7 +467,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
                             </span>
                           </div>
                           <span className="text-slate-500">
-                            ₱{item.price * item.quantity}
+                            {formatCurrency(item.price * item.quantity, 'PHP')}
                           </span>
                         </div>
                       ))}
@@ -488,7 +489,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
                       <div
                         className={`text-3xl font-bold ${order.paymentMethod ? 'text-emerald-600' : 'text-slate-800'}`}
                       >
-                        ₱{order.totalAmount}
+                        {formatCurrency(order.totalAmount, 'PHP')}
                         {order.paymentMethod && (
                           <span className="ml-1 text-xs font-medium text-emerald-500">
                             (PAID)
@@ -710,7 +711,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
                   Total Due / Kabuuang Bayarín
                 </p>
                 <div className="text-4xl font-bold text-slate-800">
-                  ₱{orders.find((o) => o.id === activeOrderId)?.totalAmount}
+                  {formatCurrency(orders.find((o) => o.id === activeOrderId)?.totalAmount || 0, 'PHP')}
                 </div>
               </div>
 

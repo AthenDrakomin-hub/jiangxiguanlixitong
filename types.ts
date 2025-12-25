@@ -102,6 +102,20 @@ export interface KTVRoom {
   updatedAt: string;
 }
 
+export interface PartnerAccount {
+  id: string;
+  name_cn: string;        // 单位中文名
+  name_en: string;        // 单位英文名（用于员工界面）
+  contact_person: string; // 对方的财务或负责人姓名
+  phone: string;          // 联系电话
+  credit_limit: number;   // 信用额度（允许挂账的最大金额）
+  current_balance: number;// 当前欠款（实时累计的消费金额）
+  status: 'active' | 'suspended' | 'closed';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SignBillAccount {
   id: string;
   accountName: string;
@@ -111,6 +125,27 @@ export interface SignBillAccount {
   contactPerson?: string;
   contactPhone?: string;
   notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DishCategory {
+  id: string;
+  name: string;        // 中文名称
+  name_en: string;     // 英文名称
+  description?: string; // 分类描述
+  sortOrder: number;   // 排序
+  active: boolean;     // 是否启用
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SystemDictionary {
+  key_code: string;           // 代码中调用的唯一键
+  category: string;           // 词条分类：UI, STATUS, PAYMENT, CATEGORY
+  zh_cn: string;              // 中文显示 (老板看)
+  en_ph: string;              // 英文/菲律宾文显示 (员工/客人看)
+  description?: string;       // 词条用途备注
   createdAt: string;
   updatedAt: string;
 }
@@ -178,14 +213,12 @@ export interface StoreInfo {
 }
 
 export type Page =
-  | 'dashboard'
   | 'menu'
   | 'orders'
-  | 'finance'
   | 'inventory'
   | 'settings'
   | 'ktv'
-  | 'signbill'
+
   | 'hotel'
   | 'qrcode'
   | 'kitchen'
@@ -193,7 +226,9 @@ export type Page =
   | 'payment'
   | 'permissions'
   | 'dataviewer'
-  | 'validationtest'
+  | 'partner_accounts'
+  | 'dictionary'
+  | 'cashier'
   | 'autodetect';
 
 // Standardized API Response Wrapper
@@ -235,25 +270,7 @@ export interface StorageSettings {
   type: StorageType;
 }
 
-// Car Service Types
-export interface CarWashOrder {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  licensePlate: string;
-  vehicleType: 'car' | 'suv' | 'truck' | 'motorcycle';
-  serviceType: string;
-  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
-  assignedStaff?: string;
-  scheduledTime: string;
-  completedTime?: string;
-  price: number;
-  discount?: number;
-  total: number;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+
 
 // Database interface for abstraction
 export interface Database {
@@ -285,6 +302,7 @@ export interface User {
   username: string;
   password: string;
   role: string;
+  language?: string; // 默认语言设置
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;

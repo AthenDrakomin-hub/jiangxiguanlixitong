@@ -38,15 +38,14 @@ export default async function handler(req: Request) {
 
   // 添加权限校验
   const authHeader = req.headers.get('Authorization');
-  const adminUser = process.env.VITE_ADMIN_USER || 'admin';
-  const adminPass = process.env.VITE_ADMIN_PASS || 'admin123';
+  const adminKey = process.env.ADMIN_KEY || process.env.VITE_ADMIN_KEY;
   
-  // 验证Basic认证头
-  if (!authHeader || !authHeader.startsWith('Basic ')) {
+  // 验证Bearer认证头
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: '认证失败',
+        message: '认证失败：缺少 Bearer Token',
       }),
       {
         status: 401,
@@ -55,29 +54,13 @@ export default async function handler(req: Request) {
     );
   }
   
-  // 解码Base64认证信息
-  try {
-    const base64Credentials = authHeader.split(' ')[1];
-    const credentials = atob(base64Credentials);
-    const [username, password] = credentials.split(':');
-    
-    if (username !== adminUser || password !== adminPass) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: '认证失败',
-        }),
-        {
-          status: 401,
-          headers: corsHeaders,
-        }
-      );
-    }
-  } catch (error) {
+  const providedKey = authHeader.substring(7); // 移除 "Bearer " 前缀
+  
+  if (!adminKey || providedKey !== adminKey) {
     return new Response(
       JSON.stringify({
         success: false,
-        message: '认证失败',
+        message: '认证失败：密钥不匹配',
       }),
       {
         status: 401,

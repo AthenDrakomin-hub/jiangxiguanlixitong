@@ -1,18 +1,13 @@
 // api/auth/login.ts
 // 登录认证 API（Edge Runtime）
 
+import { dbManager } from '../../lib/database.js';
+import { User } from '../../types.js';
+import { createHash } from 'crypto';
+
 export const config = {
   runtime: 'edge',
 };
-
-// 定义认证凭证
-const ADMIN_USER = process.env.VITE_ADMIN_USER;
-const ADMIN_PASS = process.env.VITE_ADMIN_PASS;
-
-// 检查环境变量是否配置
-if (!ADMIN_USER || !ADMIN_PASS) {
-  console.error('❌ 管理员凭据未配置，请设置 VITE_ADMIN_USER 和 VITE_ADMIN_PASS 环境变量');
-}
 
 export default async function handler(req: Request) {
   // CORS 头设置
@@ -45,40 +40,39 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // 检查环境变量是否配置
-    if (!ADMIN_USER || !ADMIN_PASS) {
+    // 检查数据库连接状态
+    if (!dbManager.isInitialized()) {
+      const dbType = process.env.DB_TYPE || 'memory';
+      await dbManager.initialize({ type: dbType as any });
+    }
+
+    const { username, password } = await req.json();
+
+    if (!username || !password) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: '服务器配置错误：管理员凭据未设置',
+          message: '用户名和密码不能为空',
         }),
         {
-          status: 500,
+          status: 400,
           headers: corsHeaders,
         }
       );
     }
-    
-    const { username, password } = await req.json();
 
-    // 验证凭据
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Login successful',
-          token: 'fake-jwt-token-for-demo',
-        }),
-        {
-          status: 200,
-          headers: corsHeaders,
-        }
-      );
-    } else {
+    // 从数据库获取用户
+    const db = dbManager.getDatabase();
+    const allUsers = await db.getAll<User>('users');
+    
+    // 查找匹配的用户
+    const user = allUsers.find((u: User) => u.username === username && u.isActive);
+    
+    if (!user) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Invalid credentials',
+          message: '用户名或密码错误',
         }),
         {
           status: 401,
@@ -86,7 +80,40 @@ export default async function handler(req: Request) {
         }
       );
     }
+
+    // 验证密码（使用简单的哈希比较，生产环境应使用更安全的密码哈希算法）
+    const passwordHash = createHash('sha256').update(password).digest('hex');
+    if (user.password !== passwordHash && user.password !== password) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: '用户名或密码错误',
+        }),
+        {
+          status: 401,
+          headers: corsHeaders,
+        }
+      );
+    }
+
+    // 登录成功，返回用户信息
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Login successful',
+        user: {
+          username: user.username,
+          role: user.role || 'staff',
+          language: user.language || (user.role === 'admin' || user.role === 'manager' ? 'zh' : 'tl'),
+        },
+      }),
+      {
+        status: 200,
+        headers: corsHeaders,
+      }
+    );
   } catch (error) {
+    console.error('Login error:', error);
     return new Response(
       JSON.stringify({
         success: false,

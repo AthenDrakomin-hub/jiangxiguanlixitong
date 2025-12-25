@@ -97,3 +97,11 @@ Thumbs.db
 # Importmap and Vite related
 .vite/
 importmap.json
+
+# Test related
+test-results/
+*.log
+
+# Generated files
+*.generated.ts
+*.generated.js

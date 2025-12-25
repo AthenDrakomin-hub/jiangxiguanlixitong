@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Lock, User, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (userRole?: string, language?: string) => void; // 添加用户角色和语言参数
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -35,7 +35,19 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       if (result.success) {
         // 登录成功，保存认证状态到 sessionStorage
         sessionStorage.setItem('jx_auth', 'true');
-        onLogin();
+        
+        // 保存用户角色到 sessionStorage（如果存在）
+        if (result.user && result.user.role) {
+          sessionStorage.setItem('jx_user_role', result.user.role);
+        }
+        
+        // 保存用户语言到 sessionStorage（如果存在）
+        if (result.user && result.user.language) {
+          sessionStorage.setItem('jx_user_language', result.user.language);
+        }
+        
+        // 调用 onLogin 回调函数并传递用户角色和语言
+        onLogin(result.user?.role || 'staff', result.user?.language || 'zh');
       } else {
         setError(result.message || '登录失败 / Login failed');
       }

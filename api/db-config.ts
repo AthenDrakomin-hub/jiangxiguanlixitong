@@ -27,6 +27,42 @@ export default async function handler(req: Request) {
   }
 
   try {
+    // 对于敏感操作（POST, PUT）添加认证保护
+    if (req.method === 'POST' || req.method === 'PUT') {
+      const authHeader = req.headers.get('Authorization');
+      const adminUser = process.env.VITE_ADMIN_USER || 'admin';
+      const adminPass = process.env.VITE_ADMIN_PASS || 'admin123';
+      
+      // 验证Bearer认证头
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: '认证失败：缺少 Bearer Token',
+          }),
+          {
+            status: 401,
+            headers: corsHeaders,
+          }
+        );
+      }
+      
+      const providedKey = authHeader.substring(7); // 移除 "Bearer " 前缀
+      
+      if (!adminKey || providedKey !== adminKey) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: '认证失败：密钥不匹配',
+          }),
+          {
+            status: 401,
+            headers: corsHeaders,
+          }
+        );
+      }
+    }
+
     if (req.method === 'POST') {
       const body = await req.json();
       const { type, connectionString } = body;

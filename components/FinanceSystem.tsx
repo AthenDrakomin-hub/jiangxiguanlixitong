@@ -28,6 +28,7 @@ import {
 import { Order, OrderStatus, Expense, ExpenseCategory } from '../types.js';
 import { PrinterService } from '../services/printer.js';
 import { apiClient } from '../services/apiClient.js';
+import { formatCurrency } from '../utils/i18n.js';
 import { auditLogger } from '../services/auditLogger.js';
 
 interface FinanceSystemProps {
@@ -311,7 +312,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
                 Revenue 总收入
               </p>
               <h3 className="mt-1 text-2xl font-bold text-slate-800">
-                ₱{totalRevenue.toLocaleString()}
+                {formatCurrency(totalRevenue, 'PHP')}
               </h3>
             </div>
             <div className="rounded-lg bg-emerald-100 p-3 text-emerald-600">
@@ -328,7 +329,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
                 Expenses 总支出
               </p>
               <h3 className="mt-1 text-2xl font-bold text-slate-800">
-                ₱{totalExpenses.toLocaleString()}
+                {formatCurrency(totalExpenses, 'PHP')}
               </h3>
             </div>
             <div className="rounded-lg bg-red-100 p-3 text-red-600">
@@ -540,7 +541,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
                       t.type === 'income' ? 'text-emerald-600' : 'text-red-600'
                     }`}
                   >
-                    {t.type === 'income' ? '+' : '-'}₱{t.amount}
+                    {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount, 'PHP')}
                   </td>
                 </tr>
               ))}
@@ -674,7 +675,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
                   Total Revenue 营收总额
                 </span>
                 <span className="text-2xl font-bold text-emerald-600">
-                  ₱{handoverData.totalRevenue.toLocaleString()}
+                  {formatCurrency(handoverData.totalRevenue, 'PHP')}
                 </span>
               </div>
 
@@ -694,7 +695,7 @@ const FinanceSystem: React.FC<FinanceSystemProps> = ({
                         </span>
                       </div>
                       <span className="font-bold text-slate-800">
-                        ₱{amount.toLocaleString()}
+                        {formatCurrency(amount, 'PHP')}
                       </span>
                     </div>
                   )

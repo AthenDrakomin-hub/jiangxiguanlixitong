@@ -24,6 +24,7 @@ interface SidebarProps {
   onNavigate: (page: Page) => void;
   isOpen: boolean;
   onClose: () => void;
+  userRole?: string; // 添加用户角色属性
 }
 
 // 定义图标组件的类型
@@ -36,6 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onNavigate,
   isOpen,
   onClose,
+  userRole = 'staff', // 默认为普通员工角色
 }) => {
   interface MenuItem {
     id: Page;
@@ -65,25 +67,28 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Define menu items with translations
   const frontDeskItems: MenuItem[] = [
-    { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'cashier', label: t('cashier'), icon: DollarSign },
     { id: 'orders', label: t('orders'), icon: ClipboardList },
-    { id: 'hotel', label: t('hotel'), icon: BedDouble },
+    { id: 'hotel', label: '客房点餐', icon: BedDouble },
     { id: 'ktv', label: t('ktv'), icon: Mic2 },
     { id: 'kitchen', label: t('kitchen'), icon: ChefHat },
   ];
 
+  // 后台管理菜单项 - 仅对管理员或经理开放
   const backOfficeItems: MenuItem[] = [
     { id: 'qrcode', label: t('qrcode'), icon: QrCode },
     { id: 'menu', label: t('menu'), icon: Utensils },
     { id: 'inventory', label: t('inventory'), icon: Package },
-    { id: 'signbill', label: t('signbill'), icon: FileSignature },
-    { id: 'finance', label: t('finance'), icon: DollarSign },
+    { id: 'partner_accounts', label: t('signbill'), icon: FileSignature },
     { id: 'payment', label: '支付方式', icon: CreditCard },
     { id: 'permissions', label: '用户管理', icon: Shield },
     { id: 'settings', label: t('settings'), icon: Settings },
-    { id: 'dataviewer', label: '数据查看', icon: Database },
-    { id: 'validationtest', label: '数据验证测试', icon: Database },
+    { id: 'dataviewer', label: t('dataviewer'), icon: Database },
+    { id: 'dictionary', label: t('dictionary'), icon: Database },
   ];
+
+  // 根据用户角色决定是否显示后台管理菜单
+  const shouldShowBackOffice = userRole === 'admin' || userRole === 'manager';
 
   return (
     <>
@@ -122,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4">
-        {/* Group 1: Front Desk Operations */}
+        {/* Group 1: Front Desk Operations - Always visible */}
         <div className="mb-6">
           <div className="mb-3 px-4 text-xs font-bold uppercase text-slate-500">
             前台营业 Front Desk
@@ -132,15 +137,17 @@ const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </div>
 
-        {/* Group 2: Back Office Management */}
-        <div>
-          <div className="mb-3 border-t border-slate-800 px-4 pt-4 text-xs font-bold uppercase text-slate-500">
-            后台管理 Admin
+        {/* Group 2: Back Office Management - Only for admin/manager */}
+        {shouldShowBackOffice && (
+          <div>
+            <div className="mb-3 border-t border-slate-800 px-4 pt-4 text-xs font-bold uppercase text-slate-500">
+              后台管理 Admin
+            </div>
+            {backOfficeItems.map((item) => (
+              <MenuButton key={item.id} {...item} />
+            ))}
           </div>
-          {backOfficeItems.map((item) => (
-            <MenuButton key={item.id} {...item} />
-          ))}
-        </div>
+        )}
       </nav>
 
       <div className="border-t border-slate-800 p-4 text-xs text-slate-500">

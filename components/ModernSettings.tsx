@@ -57,6 +57,23 @@ const ModernSettings: React.FC = () => {
     loading: cloudLoading,
     status: cloudStatus 
   } = useCloudSync();
+  
+  // 辅助函数：安全的Base64编码
+  const safeBtoa = (str: string): string => {
+    if (typeof btoa !== 'undefined') {
+      return btoa(str);
+    } else {
+      // 在服务端或不支持btoa的环境中使用替代方案
+      if (typeof Buffer !== 'undefined') {
+        return Buffer.from(str, 'utf-8').toString('base64');
+      } else {
+        // 简单的替代实现（仅用于非关键场景）
+        return str.split('').map(char => 
+          String.fromCharCode(char.charCodeAt(0) & 0xFF)
+        ).join('');
+      }
+    }
+  };
 
   // 初始化数据库配置
   const initDbConfig = async () => {
@@ -264,68 +281,49 @@ const ModernSettings: React.FC = () => {
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">支付设置</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-800">H5页面设置</h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">启用支付方式</label>
-            {['CASH', 'GCASH', 'MAYA', 'ALIPAY', 'WECHAT'].map(method => (
-              <label key={method} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={systemSettings?.payment.enabledMethods.includes(method) || false}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSystemSettings(prev => ({
-                        ...prev!,
-                        payment: {
-                          ...prev!.payment,
-                          enabledMethods: [...prev!.payment.enabledMethods, method]
-                        }
-                      }));
-                    } else {
-                      setSystemSettings(prev => ({
-                        ...prev!,
-                        payment: {
-                          ...prev!.payment,
-                          enabledMethods: prev!.payment.enabledMethods.filter(m => m !== method)
-                        }
-                      }));
-                    }
-                  }}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">{method}</span>
-              </label>
-            ))}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">页面标题</label>
+            <input
+              type="text"
+              value={systemSettings?.h5PageTitle || ''}
+              onChange={(e) => setSystemSettings(prev => ({
+                ...prev!,
+                h5PageSettings: { ...prev!.h5PageSettings, h5PageTitle: e.target.value }
+              }))}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+            />
           </div>
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="gCashEnabled"
-                checked={systemSettings?.payment.gCashEnabled || false}
-                onChange={(e) => setSystemSettings(prev => ({
-                  ...prev!,
-                  payment: { ...prev!.payment, gCashEnabled: e.target.checked }
-                }))}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="gCashEnabled" className="ml-2 text-sm text-gray-700">启用GCash</label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="mayaEnabled"
-                checked={systemSettings?.payment.mayaEnabled || false}
-                onChange={(e) => setSystemSettings(prev => ({
-                  ...prev!,
-                  payment: { ...prev!.payment, mayaEnabled: e.target.checked }
-                }))}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label htmlFor="mayaEnabled" className="ml-2 text-sm text-gray-700">启用Maya</label>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">页面描述</label>
+            <input
+              type="text"
+              value={systemSettings?.h5PageDescription || ''}
+              onChange={(e) => setSystemSettings(prev => ({
+                ...prev!,
+                h5PageSettings: { ...prev!.h5PageSettings, h5PageDescription: e.target.value }
+              }))}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+            />
           </div>
+        </div>
+        <div className="mt-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="enableCustomStyling"
+              checked={systemSettings?.h5PageSettings.enableCustomStyling || false}
+              onChange={(e) => setSystemSettings(prev => ({
+                ...prev!,
+                h5PageSettings: { ...prev!.h5PageSettings, enableCustomStyling: e.target.checked }
+              }))}
+              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="enableCustomStyling" className="ml-2 text-sm text-gray-700">启用自定义样式</label>
+          </div>
+        </div>
+      </div>
         </div>
       </div>
 
@@ -344,7 +342,7 @@ const ModernSettings: React.FC = () => {
   const renderDatabaseSettings = () => (
     <div className="space-y-6">
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">数据库配置</h3>
+        <h3 className="mb-4 text-lg font-semibold text-gray-800">数据库状态</h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-gray-700">数据库类型</label>
@@ -377,12 +375,6 @@ const ModernSettings: React.FC = () => {
           >
             测试连接
           </button>
-          <button
-            onClick={handleInitSystem}
-            className="ml-4 rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-          >
-            初始化系统数据
-          </button>
         </div>
       </div>
     </div>
@@ -394,13 +386,28 @@ const ModernSettings: React.FC = () => {
       <div className="rounded-lg border border-emerald-200 bg-white p-6">
         <h3 className="mb-4 text-lg font-semibold text-emerald-800">云运维控制台</h3>
         
+        <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>操作提示:</strong> 执行敏感操作将使用系统配置的密钥进行认证
+          </p>
+        </div>
+        
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-emerald-200 bg-white p-4">
             <h4 className="mb-2 font-semibold text-emerald-800">数据同步</h4>
             <p className="mb-3 text-sm text-slate-600">将本地数据同步到云端</p>
             <button
               onClick={async () => {
-                const result = await performSecureSync();
+                // 直接使用环境变量中的密钥
+                const adminKey = import.meta.env.VITE_ADMIN_KEY;
+                if (!adminKey) {
+                  alert('系统配置错误：缺少管理员密钥');
+                  return;
+                }
+                
+                // 使用Bearer Token认证格式
+                const authHeader = `Bearer ${adminKey}`;
+                const result = await performSecureSync(authHeader);
                 if (result.success) {
                   alert(result.message);
                 } else {
@@ -419,7 +426,16 @@ const ModernSettings: React.FC = () => {
             <p className="mb-3 text-sm text-slate-600">创建云端数据快照</p>
             <button
               onClick={async () => {
-                const result = await performBackup();
+                // 直接使用环境变量中的密钥
+                const adminKey = import.meta.env.VITE_ADMIN_KEY;
+                if (!adminKey) {
+                  alert('系统配置错误：缺少管理员密钥');
+                  return;
+                }
+                
+                // 使用Bearer Token认证格式
+                const authHeader = `Bearer ${adminKey}`;
+                const result = await performBackup(authHeader);
                 if (result.success) {
                   alert(result.message);
                 } else {
@@ -449,8 +465,18 @@ const ModernSettings: React.FC = () => {
                   alert('请输入快照ID');
                   return;
                 }
+                
+                // 直接使用环境变量中的密钥
+                const adminKey = import.meta.env.VITE_ADMIN_KEY;
+                if (!adminKey) {
+                  alert('系统配置错误：缺少管理员密钥');
+                  return;
+                }
+                
                 if (window.confirm(`确定要从快照 ${snapshotId} 恢复数据吗？此操作不可逆！`)) {
-                  const result = await performRestore(snapshotId);
+                  // 使用Bearer Token认证格式
+                  const authHeader = `Bearer ${adminKey}`;
+                  const result = await performRestore(snapshotId, authHeader);
                   if (result.success) {
                     alert(result.message);
                   } else {
@@ -490,106 +516,7 @@ const ModernSettings: React.FC = () => {
     </div>
   );
 
-  // 渲染安全设置
-  const renderSecuritySettings = () => (
-    <div className="space-y-6">
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">审计日志</h3>
-        <div className="text-sm text-gray-600">
-          <p>系统将自动记录所有敏感操作，包括数据同步、备份、恢复等操作。</p>
-          <p className="mt-2">审计日志包含操作人、操作时间、操作类型和相关快照ID。</p>
-        </div>
-        <div className="mt-4">
-          <button
-            onClick={async () => {
-              try {
-                const response = await apiClient.get('/audit-log');
-                alert(`审计日志: ${JSON.stringify(response, null, 2)}`);
-              } catch (error) {
-                alert(`获取审计日志失败: ${error.message}`);
-              }
-            }}
-            className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            查看审计日志
-          </button>
-        </div>
-      </div>
-      
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">权限管理</h3>
-        <div className="text-sm text-gray-600">
-          <p>敏感操作（如数据恢复、系统初始化）需要管理员权限。</p>
-          <p className="mt-2">用户和角色管理功能已通过API提供支持。</p>
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <button
-            onClick={async () => {
-              try {
-                const response = await apiClient.get('/roles');
-                alert(`角色列表: ${JSON.stringify(response, null, 2)}`);
-              } catch (error) {
-                alert(`获取角色失败: ${error.message}`);
-              }
-            }}
-            className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            查看角色列表
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                const response = await apiClient.get('/users');
-                alert(`用户列表: ${JSON.stringify(response, null, 2)}`);
-              } catch (error) {
-                alert(`获取用户失败: ${error.message}`);
-              }
-            }}
-            className="rounded-md bg-purple-600 px-4 py-2 text-white hover:bg-purple-700"
-          >
-            查看用户列表
-          </button>
-        </div>
-      </div>
-      
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="mb-4 text-lg font-semibold text-gray-800">系统运维</h3>
-        <div className="text-sm text-gray-600">
-          <p>数据库迁移和其他运维功能。</p>
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <button
-            onClick={async () => {
-              if (window.confirm('确定要执行数据库迁移吗？此操作将把数据从当前数据库迁移到目标数据库。')) {
-                try {
-                  const response = await apiClient.post('/migrate', {});
-                  alert(`数据库迁移结果: ${JSON.stringify(response, null, 2)}`);
-                } catch (error) {
-                  alert(`数据库迁移失败: ${error.message}`);
-                }
-              }
-            }}
-            className="rounded-md bg-amber-600 px-4 py-2 text-white hover:bg-amber-700"
-          >
-            执行数据库迁移
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                const response = await apiClient.get('/test-connection');
-                alert(`连接测试结果: ${JSON.stringify(response, null, 2)}`);
-              } catch (error) {
-                alert(`连接测试失败: ${error.message}`);
-              }
-            }}
-            className="rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
-          >
-            测试数据库连接
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+
 
   if (loading) {
     return (
@@ -619,7 +546,6 @@ const ModernSettings: React.FC = () => {
           {activeSection === '常规' && renderGeneralSettings()}
           {activeSection === '数据库' && renderDatabaseSettings()}
           {activeSection === '云运维' && renderCloudOpsSettings()}
-          {activeSection === '安全' && renderSecuritySettings()}
         </div>
       </div>
     </div>

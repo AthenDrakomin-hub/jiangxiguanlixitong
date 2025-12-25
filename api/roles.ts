@@ -363,6 +363,42 @@ export default async function handler(req: Request) {
     const pathParts = url.pathname.split('/').filter(p => p);
     const roleId = pathParts[pathParts.length - 1]; // 獲取路徑中的角色ID（如果存在）
     
+    // 對於敏感操作（POST, PUT, DELETE）添加認證保護
+    if (req.method !== 'GET') {
+      const authHeader = req.headers.get('Authorization');
+      const adminUser = process.env.VITE_ADMIN_USER || 'admin';
+      const adminPass = process.env.VITE_ADMIN_PASS || 'admin123';
+      
+      // 驗證Bearer認證頭
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: '認證失敗：缺少 Bearer Token',
+          }),
+          {
+            status: 401,
+            headers: corsHeaders,
+          }
+        );
+      }
+      
+      const providedKey = authHeader.substring(7); // 移除 "Bearer " 前綴
+      
+      if (!adminKey || providedKey !== adminKey) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: '認證失敗：密鑰不匹配',
+          }),
+          {
+            status: 401,
+            headers: corsHeaders,
+          }
+        );
+      }
+    }
+    
     // 檢查是否是獲取特定角色信息的請求
     const isSpecificRole = req.method === 'GET' && roleId && (/^[0-9]+$/.test(roleId) || /^[a-zA-Z0-9]+$/.test(roleId));
     

@@ -13,7 +13,7 @@ export const useCloudSync = () => {
   const [status, setStatus] = useState<string>('');
 
   // 执行安全同步（同步前自动创建快照）
-  const performSecureSync = async (): Promise<CloudSyncResult> => {
+  const performSecureSync = async (authHeader?: string): Promise<CloudSyncResult> => {
     setLoading(true);
     setStatus('开始同步...');
     
@@ -29,7 +29,7 @@ export const useCloudSync = () => {
           backupType: 'pre-sync',
           gitCommitHash: process.env.VERCEL_GIT_COMMIT_SHA || 'unknown'
         }
-      });
+      }, authHeader);
 
       if (!snapshotResult.success) {
         console.error('创建备份快照失败:', snapshotResult.message);
@@ -128,7 +128,7 @@ export const useCloudSync = () => {
   };
 
   // 执行数据恢复
-  const performRestore = async (snapshotId: string): Promise<CloudSyncResult> => {
+  const performRestore = async (snapshotId: string, authHeader?: string): Promise<CloudSyncResult> => {
     setLoading(true);
     setStatus('开始恢复...');
     
@@ -146,7 +146,7 @@ export const useCloudSync = () => {
       const result = await apiClient.post('/snapshot', {
         action: 'restore',
         snapshotId: snapshotId
-      });
+      }, authHeader);
 
       if (!result.success) {
         return {
@@ -166,7 +166,7 @@ export const useCloudSync = () => {
             restoredAt: new Date().toISOString(),
             restoredBy: 'cloud_restore_hook'
           }
-        });
+        }, authHeader);
       } catch (auditError) {
         console.error('记录审计日志失败:', auditError);
       }
@@ -200,7 +200,7 @@ export const useCloudSync = () => {
   };
 
   // 执行数据备份
-  const performBackup = async (): Promise<CloudSyncResult> => {
+  const performBackup = async (authHeader?: string): Promise<CloudSyncResult> => {
     setLoading(true);
     setStatus('开始备份...');
     
@@ -239,7 +239,7 @@ export const useCloudSync = () => {
       const result = await apiClient.post('/snapshot', {
         action: 'create',
         snapshot: snapshotData
-      });
+      }, authHeader);
 
       if (result.success) {
         // 记录审计日志
@@ -253,7 +253,7 @@ export const useCloudSync = () => {
               backupSize: Object.keys(snapshotData.data).length,
               createdAt: new Date().toISOString()
             }
-          });
+          }, authHeader);
         } catch (auditError) {
           console.error('记录审计日志失败:', auditError);
         }

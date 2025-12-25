@@ -164,6 +164,26 @@ export class MemoryDatabase implements Database {
           throw new Error('签单账户逻辑错误：信用额度(creditLimit)必须为非负数');
         }
         break;
+      case 'partner_accounts':
+        if (value.name_cn === undefined || value.name_cn === '') {
+          throw new Error('合作伙伴账户逻辑错误：单位中文名(name_cn)不能为空');
+        }
+        if (value.name_en === undefined || value.name_en === '') {
+          throw new Error('合作伙伴账户逻辑错误：单位英文名(name_en)不能为空');
+        }
+        if (value.contact_person === undefined || value.contact_person === '') {
+          throw new Error('合作伙伴账户逻辑错误：联系人(contact_person)不能为空');
+        }
+        if (value.phone === undefined || value.phone === '') {
+          throw new Error('合作伙伴账户逻辑错误：联系电话(phone)不能为空');
+        }
+        if (typeof value.credit_limit !== 'number' || value.credit_limit < 0) {
+          throw new Error('合作伙伴账户逻辑错误：信用额度(credit_limit)必须为非负数');
+        }
+        if (typeof value.current_balance !== 'number' || value.current_balance < 0) {
+          throw new Error('合作伙伴账户逻辑错误：当前余额(current_balance)必须为非负数');
+        }
+        break;
     }
   }
 }
