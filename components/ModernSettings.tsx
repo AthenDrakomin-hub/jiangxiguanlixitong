@@ -324,9 +324,7 @@ const ModernSettings: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-6">
         <button
           onClick={handleSave}
           className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
