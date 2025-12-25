@@ -505,20 +505,14 @@ ${t('房号')}: ${selectedRoom.roomNumber}`
           let roomClass = '';
           let icon = null;
           
-          if (room.type === 'ktv') {
-            // KTV rooms get special styling with microphone icon
-            roomClass = hasPendingOrders 
-              ? 'bg-purple-200 border-purple-500 text-purple-900' 
-              : 'bg-purple-100 border-purple-400 text-purple-900';
-            icon = <Mic2 size={16} className="text-purple-600" />;
-          } else if (room.type === 'dining-vip') {
+          if (room.type === 'dining-vip') {
             // VIP dining rooms get special styling with utensils icon
             roomClass = hasPendingOrders 
               ? 'bg-rose-200 border-rose-500 text-rose-900' 
               : 'bg-rose-100 border-rose-400 text-rose-900';
             icon = <Utensils size={16} className="text-rose-600" />;
           } else {
-            // Regular rooms
+            // Regular rooms (including former KTV rooms)
             roomClass = hasPendingOrders
               ? 'border-orange-500 bg-orange-50 text-orange-900 shadow-md'
               : 'border-slate-200 bg-white text-slate-400 hover:border-orange-300';
@@ -533,7 +527,7 @@ ${t('房号')}: ${selectedRoom.roomNumber}`
                 ${roomClass}
               `}
             >
-              {(room.type === 'ktv' || room.type === 'dining-vip') && icon}
+              {(room.type === 'dining-vip') && icon}
               <span className="text-lg font-bold">{room.type === 'standard' ? `${t('Kuwarto')} ${room.roomNumber}` : room.roomNumber}</span>
               {hasPendingOrders && (
                 <div className="mt-1 flex items-center gap-1 rounded-full bg-white/50 px-2 py-0.5 text-xs font-bold">

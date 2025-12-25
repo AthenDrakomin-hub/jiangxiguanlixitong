@@ -148,14 +148,7 @@ export class MemoryDatabase implements Database {
           throw new Error('酒店房间逻辑错误：房间状态(status)必须为有效值');
         }
         break;
-      case 'ktv_rooms':
-        if (value.name === undefined || value.name === '') {
-          throw new Error('KTV房间逻辑错误：房间名称(name)不能为空');
-        }
-        if (value.status === undefined || !['available', 'occupied', 'maintenance'].includes(value.status)) {
-          throw new Error('KTV房间逻辑错误：房间状态(status)必须为有效值');
-        }
-        break;
+
       case 'sign_bill_accounts':
         if (value.accountName === undefined || value.accountName === '') {
           throw new Error('签单账户逻辑错误：账户名称(accountName)不能为空');

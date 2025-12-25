@@ -7,7 +7,6 @@ import {
   Dish,
   Expense,
   Ingredient,
-  KTVRoom,
   SignBillAccount,
   HotelRoom,
   SystemSettings,
@@ -31,7 +30,7 @@ const InventoryManagement = React.lazy(
   () => import('./components/InventoryManagement')
 );
 const Settings = React.lazy(() => import('./components/ModernSettings'));
-const KTVSystem = React.lazy(() => import('./components/KTVSystem'));
+
 const SignBillSystem = React.lazy(() => import('./components/SignBillSystem'));
 const HotelSystem = React.lazy(() => import('./components/HotelSystem'));
 const QRCodeManager = React.lazy(() => import('./components/QRCodeManager'));
@@ -113,7 +112,7 @@ const App = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [inventory, setInventory] = useState<Ingredient[]>([]);
-  const [ktvRooms, setKtvRooms] = useState<KTVRoom[]>([]);
+
   const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
 
   // Global Settings State
@@ -183,7 +182,7 @@ const App = () => {
       setOrders(data.orders);
       setExpenses(data.expenses);
       setInventory(data.inventory);
-      setKtvRooms(data.ktvRooms);
+
       setHotelRooms(data.hotelRooms);
     }
   }, [data]);
@@ -545,7 +544,7 @@ const App = () => {
                 setExpenses={setExpenses}
                 inventory={inventory}
                 setInventory={setInventory}
-                ktvRooms={ktvRooms}
+
                 setKtvRooms={setKtvRooms}
 
                 hotelRooms={hotelRooms}
@@ -556,22 +555,7 @@ const App = () => {
               />
             </Suspense>
           );
-        case 'ktv':
-          return (
-            <Suspense
-              fallback={
-                <div className="p-8 text-center text-slate-500">
-                  Loading KTV System...
-                </div>
-              }
-            >
-              <KTVSystem
-                rooms={ktvRooms}
-                setRooms={setKtvRooms}
-                dishes={dishes}
-                systemSettings={systemSettings}
-              />
-            </Suspense>
+
           );
 
         case 'hotel':
@@ -601,7 +585,7 @@ const App = () => {
                 </div>
               }
             >
-              <QRCodeManager hotelRooms={hotelRooms} ktvRooms={ktvRooms} />
+              <QRCodeManager hotelRooms={hotelRooms} />
             </Suspense>
           );
         case 'kitchen':

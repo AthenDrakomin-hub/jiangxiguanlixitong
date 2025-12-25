@@ -350,7 +350,6 @@ export default async function handler(req: Request) {
     const businessEntities = [
       'dishes', 
       'hotel_rooms', 
-      'ktv_rooms', 
       'inventory', 
       'payment_methods', 
       'system_settings',

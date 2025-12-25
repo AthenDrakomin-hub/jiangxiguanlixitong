@@ -128,16 +128,6 @@ export default async function handler(req: Request) {
       });
     }
 
-    // 初始化KTV房间
-    const ktvRooms = [
-      {
-        name: 'KTV01',
-        status: 'available',
-        currentSession: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-    ];
 
     // 初始化系统设置
     const systemSettings = {
@@ -291,11 +281,7 @@ export default async function handler(req: Request) {
       pipeline.push(db.create('hotel_rooms', room));
     }
     
-    // 创建KTV房间
-    for (const ktv of ktvRooms) {
-      pipeline.push(db.create('ktv_rooms', ktv));
-    }
-    
+
     // 创建支付方式
     for (const method of paymentMethods) {
       pipeline.push(db.create('payment_methods', method));
@@ -328,7 +314,6 @@ export default async function handler(req: Request) {
         message: '数据初始化成功',
         stats: {
           hotelRooms: hotelRooms.length,
-          ktvRooms: ktvRooms.length,
           systemSettings: 1,
         },
       }),

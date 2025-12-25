@@ -28,7 +28,6 @@ const COLLECTIONS = [
   'orders',
   'expenses',
   'inventory',
-  'ktv_rooms',
   'sign_bill_accounts',
   'hotel_rooms',
   'payment_methods',

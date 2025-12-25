@@ -70,7 +70,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'cashier', label: t('cashier'), icon: DollarSign },
     { id: 'orders', label: t('orders'), icon: ClipboardList },
     { id: 'hotel', label: '客房点餐', icon: BedDouble },
-    { id: 'ktv', label: t('ktv'), icon: Mic2 },
     { id: 'kitchen', label: t('kitchen'), icon: ChefHat },
   ];
 

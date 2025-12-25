@@ -88,19 +88,6 @@ export interface Ingredient {
   updatedAt: string;
 }
 
-export interface KTVRoom {
-  id: string;
-  name: string;
-  status: 'available' | 'occupied' | 'maintenance';
-  currentSession?: {
-    startTime: string;
-    customerName: string;
-    advancePayment: number;
-    totalCharges?: number;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface PartnerAccount {
   id: string;
