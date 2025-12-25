@@ -60,16 +60,16 @@ export function createDatabaseConfigFromEnv(): DatabaseConfig {
  * 初始化数据库配置
  */
 export async function initializeDatabase() {
-  const { kvClient } = await import('../lib/kv-client.js');
+  const { dbManager } = await import('../lib/database.js');
   const dbConfig = createDatabaseConfigFromEnv();
   
   try {
-    await kvClient.initialize(dbConfig);
+    await dbManager.initialize(dbConfig);
     console.log(`数据库初始化成功，类型: ${dbConfig.type}`);
   } catch (error) {
     console.error('数据库初始化失败，使用默认内存数据库:', error);
     // 如果初始化失败，使用内存数据库作为后备
-    await kvClient.initialize({
+    await dbManager.initialize({
       type: 'memory',
       settings: null
     });

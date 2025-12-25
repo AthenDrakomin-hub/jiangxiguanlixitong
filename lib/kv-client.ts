@@ -1,8 +1,9 @@
 // kv-client.ts
 /**
- * KV Client with support for multiple database backends
+ * Database Client unified for the hotel management system
  * 
- * Edge Runtime 兼容配置，支持多种数据库后端
+ * This client now uses only the dbManager (Neon/Memory database) 
+ * instead of Vercel KV to ensure consistency
  */
 
 import { dbManager } from './database.js';
@@ -33,7 +34,8 @@ async function ensureInitialized() {
 }
 
 /**
- * KV Client with helper methods for the hotel management system
+ * Database Client with helper methods for the hotel management system
+ * This client now uses only dbManager (Neon/Memory) for consistency
  */
 export const kvClient = {
   /**

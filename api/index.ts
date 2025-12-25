@@ -356,7 +356,8 @@ export default async function handler(req: Request) {
       'system_settings',
       'orders',
       'expenses',
-      'sign_bill_accounts'
+      'sign_bill_accounts',
+      'users'
     ];
 
     for (const entity of businessEntities) {

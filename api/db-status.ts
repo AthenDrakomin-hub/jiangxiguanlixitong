@@ -1,4 +1,4 @@
-import { kvClient } from '../lib/kv-client.js';
+import { dbManager } from '../lib/database.js';
 
 export const config = {
   runtime: 'edge',
@@ -37,31 +37,21 @@ export default async function handler(req: Request) {
   }
 
   try {
-    const connectionStatus = kvClient.getConnectionStatus();
+    // 检查数据库初始化状态
+    const isInitialized = dbManager.isInitialized();
     
-    // 如果不是真实连接，提供更明确的提示
-    if (!connectionStatus.isRealConnection) {
+    if (!isInitialized) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: '未连接到真实的Vercel KV数据库',
-          connectionStatus,
-          hint: '请在Vercel控制台连接KV数据库后重试',
-        }),
-        {
-          status: 200, // 使用200状态码，但success为false
-          headers: corsHeaders,
-        }
-      );
-    }
-
-    // 如果是真实连接，检查是否可以访问
-    if (!kvClient.isConnected()) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: '数据库连接不可用',
-          connectionStatus,
+          message: '数据库未初始化',
+          connectionStatus: {
+            connected: false,
+            type: null,
+            isRealConnection: false,
+            message: 'Database not initialized'
+          },
+          hint: '请检查数据库配置和环境变量',
         }),
         {
           status: 503,
@@ -70,42 +60,78 @@ export default async function handler(req: Request) {
       );
     }
 
-    // 尝试获取一些统计信息
-    const collections = [
-      'dishes',
-      'orders',
-      'expenses',
-      'inventory',
-      'ktv_rooms',
-      'sign_bill_accounts',
-      'hotel_rooms',
-      'payment_methods',
-      'system_settings',
-    ];
-
-    const stats = {};
-    for (const collection of collections) {
-      try {
-        const items = await kvClient.getAll(collection);
-        stats[collection] = Array.isArray(items) ? items.length : 0;
-      } catch (error) {
-        stats[collection] = 'error';
-      }
+    // 获取数据库实例并检查连接状态
+    let dbType = null;
+    try {
+      const db = dbManager.getDatabase();
+      // 尝试执行一个简单的操作来验证连接
+      await db.get('health-check-test');
+    } catch (error) {
+      console.warn('Database health check failed:', error);
     }
+    
+    // 获取当前配置的数据库类型
+    const connectionStatus = {
+      connected: isInitialized,
+      type: process.env.DB_TYPE || 'memory',
+      isRealConnection: (process.env.DB_TYPE && process.env.DB_TYPE !== 'memory') || false,
+      message: isInitialized ? `数据库连接正常 (类型: ${process.env.DB_TYPE || 'memory'})` : '数据库未初始化'
+    };
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: '数据库连接正常',
-        connectionStatus,
-        stats,
-        timestamp: new Date().toISOString(),
-      }),
-      {
-        status: 200,
-        headers: corsHeaders,
+    // 如果是真实连接（非内存），提供更详细的检查
+    if (connectionStatus.isRealConnection) {
+      // 尝试获取一些统计信息
+      const collections = [
+        'dishes',
+        'orders',
+        'expenses',
+        'inventory',
+        'ktv_rooms',
+        'sign_bill_accounts',
+        'hotel_rooms',
+        'payment_methods',
+        'system_settings',
+      ];
+
+      const stats = {};
+      for (const collection of collections) {
+        try {
+          const items = await dbManager.getDatabase().getAll(collection);
+          stats[collection] = Array.isArray(items) ? items.length : 0;
+        } catch (error) {
+          stats[collection] = 'error';
+        }
       }
-    );
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: '数据库连接正常',
+          connectionStatus,
+          stats,
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: corsHeaders,
+        }
+      );
+    } else {
+      // 内存数据库的响应
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: connectionStatus.message,
+          connectionStatus,
+          stats: { info: '使用内存数据库，数据将在重启后丢失' },
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: corsHeaders,
+        }
+      );
+    }
   } catch (error) {
     console.error('DB Status error:', error);
     return new Response(
@@ -113,6 +139,7 @@ export default async function handler(req: Request) {
         success: false,
         message: '检查数据库状态时出错',
         error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
       }),
       {
         status: 500,

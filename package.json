@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "db:migrate": "tsx migrate-neon.ts",
-    "test:neon": "tsx tests/test-neon-connection.ts"
+    "test:neon": "tsx tests/test-neon-connection.ts",
+    "init:system": "tsx initialize-system.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
