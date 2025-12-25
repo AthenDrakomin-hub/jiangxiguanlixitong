@@ -2,15 +2,18 @@
 export interface Dish {
   id: string;
   name: string;
+  name_en?: string;        // 英文名称
   category: string;
   price: number;
   cost?: number;
   description?: string;
   image?: string;
   available: boolean;
+  active?: boolean;        // 活跃状态
   createdAt: string;
   updatedAt: string;
   ingredients?: string[];
+  tags?: string[];         // 标签
 }
 
 export interface OrderItem {

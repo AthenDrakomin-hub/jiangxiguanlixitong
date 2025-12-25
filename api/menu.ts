@@ -74,13 +74,12 @@ export const menuAPI = {
         const searchTerm = query.search.toLowerCase();
         dishes = dishes.filter(dish => 
           dish.name.toLowerCase().includes(searchTerm) ||
-          dish.name_en.toLowerCase().includes(searchTerm) ||
           (dish.description && dish.description.toLowerCase().includes(searchTerm))
         );
       }
       
       if (query.active !== undefined) {
-        dishes = dishes.filter(dish => dish.active === query.active);
+        dishes = dishes.filter(dish => dish.available === query.active);
       }
     }
     

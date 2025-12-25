@@ -366,8 +366,7 @@ export default async function handler(req: Request) {
     // 對於敏感操作（POST, PUT, DELETE）添加認證保護
     if (req.method !== 'GET') {
       const authHeader = req.headers.get('Authorization');
-      const adminUser = process.env.VITE_ADMIN_USER || 'admin';
-      const adminPass = process.env.VITE_ADMIN_PASS || 'admin123';
+      const adminKey = process.env.ADMIN_KEY || process.env.VITE_ADMIN_KEY;
       
       // 驗證Bearer認證頭
       if (!authHeader || !authHeader.startsWith('Bearer ')) {

@@ -3,7 +3,6 @@
 
 import { dbManager } from '../../lib/database.js';
 import { User } from '../../types.js';
-import { createHash } from 'crypto';
 
 export const config = {
   runtime: 'edge',
@@ -82,7 +81,14 @@ export default async function handler(req: Request) {
     }
 
     // 验证密码（使用简单的哈希比较，生产环境应使用更安全的密码哈希算法）
-    const passwordHash = createHash('sha256').update(password).digest('hex');
+    // 使用Web标准的SubtleCrypto API进行SHA-256哈希
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const passwordHash = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
     if (user.password !== passwordHash && user.password !== password) {
       return new Response(
         JSON.stringify({
