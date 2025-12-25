@@ -11,7 +11,7 @@
     "test:neon": "tsx tests/test-neon-connection.ts"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^0.10.3",
+    "@neondatabase/serverless": "^0.10.4",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.562.0",
     "react-dom": "^19.2.3",

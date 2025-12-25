@@ -38,7 +38,7 @@ async function testConnection() {
 }
 
 // 如果直接运行此脚本
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   testConnection().then(success => {
     if (success) {
       console.log('\n🎉 连接测试完成！现在可以运行迁移脚本来创建表结构。');

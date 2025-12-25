@@ -11,6 +11,7 @@ interface PrintOrder extends Order {
   source?: string;
 }
 
+
 export const config = {
   runtime: 'edge',
 };
@@ -43,11 +44,12 @@ export default async function handler(req: Request) {
     // 对于云打印，订单会自动发送到飞鹅云打印机
     // 对于浏览器打印，需要服务器端触发（或者后续优化为Webhook通知收银台）
     
-    // 由于 PrinterService 需要特定的属性，创建一个兼容的对象
+    // 直接使用原始订单对象，因为PrinterService内部会访问特定属性
+    // 这里我们创建一个包含所需属性的扩展对象
     const printOrder: PrintOrder = {
       ...order,
-      tableNumber: order.tableId, // 映射 tableId 到 tableNumber
-      totalAmount: order.total,   // 映射 total 到 totalAmount
+      tableNumber: order.tableId, // 为兼容性添加的映射
+      totalAmount: order.total,   // 为兼容性添加的映射
       source: 'LOBBY',
       status: OrderStatus.PENDING,
     };

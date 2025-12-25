@@ -22,22 +22,28 @@ async function genericBusinessHandler(req: Request, entityName: string) {
     'Content-Type': 'application/json',
   };
 
-  // 检查数据库连接状态
+  // 初始化数据库（如果尚未初始化）
   if (!dbManager.isInitialized()) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Database not initialized',
-        error: '数据库未初始化',
-        debug: {
-          hint: '请检查数据库配置',
-        },
-      }),
-      {
-        status: 503,
-        headers: corsHeaders,
-      }
-    );
+    const dbType = process.env.DB_TYPE || 'memory';
+    try {
+      await dbManager.initialize({ type: dbType as any });
+    } catch (error) {
+      console.error('Database initialization failed:', error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Database initialization failed',
+          error: '数据库初始化失败',
+          debug: {
+            hint: '请检查数据库配置',
+          },
+        }),
+        {
+          status: 503,
+          headers: corsHeaders,
+        }
+      );
+    }
   }
 
   try {
@@ -302,6 +308,36 @@ export default async function handler(req: Request) {
         'Access-Control-Allow-Headers': 'Content-Type',
       }
     });
+  }
+
+  // 初始化数据库（如果尚未初始化）
+  if (!dbManager.isInitialized()) {
+    const dbType = process.env.DB_TYPE || 'memory';
+    try {
+      await dbManager.initialize({ type: dbType as any });
+    } catch (error) {
+      console.error('Database initialization failed in main handler:', error);
+      const corsHeaders = {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      };
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Database initialization failed',
+          error: '数据库初始化失败',
+          debug: {
+            hint: '请检查数据库配置',
+          },
+        }),
+        {
+          status: 503,
+          headers: corsHeaders,
+        }
+      );
+    }
   }
 
   try {
