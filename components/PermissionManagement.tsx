@@ -109,14 +109,17 @@ const PermissionManagement: React.FC = () => {
       setLoading(true);
       
       // 从 API 加载真实数据
-      const [usersResponse] = await Promise.all([
+      const [usersResponse, rolesResponse] = await Promise.all([
         apiClient.get('/users'),
-        // TODO: 添加角色API调用
-        // apiClient.get('/roles'),
+        apiClient.get('/roles'),
       ]);
       
       if (usersResponse.success) {
         setUsers(usersResponse.data || []);
+      }
+      
+      if (rolesResponse.success) {
+        setRoles(rolesResponse.data || []);
       } else {
         console.error('获取用户数据失败:', usersResponse.message);
         // 如果API失败，使用默认数据

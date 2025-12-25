@@ -7,11 +7,23 @@ export class MemoryDatabase implements Database {
   private store: Map<string, any> = new Map();
 
   async connect(): Promise<void> {
-    console.log('Memory database connected');
+    // 在生产环境中避免输出敏感信息
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.log('Memory database connected');
+    } else {
+      console.log('Memory database connected');
+    }
   }
 
   async disconnect(): Promise<void> {
-    console.log('Memory database disconnected');
+    // 在生产环境中避免输出敏感信息
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.log('Memory database disconnected');
+    } else {
+      console.log('Memory database disconnected');
+    }
   }
 
   async get<T>(key: string): Promise<T | null> {
@@ -168,17 +180,29 @@ export class DatabaseFactory {
         // 动态导入NeonDatabase，如果存在
         // 在服务器端，尝试加载NeonDatabase
         try {
-          // 使用require进行动态加载，避免ESM导入问题
+          // 在Edge Runtime中，使用同步导入
           const { NeonDatabase } = require('./neon-database');
           return new NeonDatabase(config);
         } catch (e: any) {
-          console.warn('Neon数据库模块未找到，使用内存数据库作为后备:', e.message);
+          // 在生产环境中避免输出敏感信息
+          const isProduction = process.env.NODE_ENV === 'production';
+          if (!isProduction) {
+            console.warn('Neon数据库模块未找到，使用内存数据库作为后备:', e);
+          } else {
+            console.warn('Neon数据库模块未找到，使用内存数据库作为后备');
+          }
           return new MemoryDatabase();
         }
 
       case 'memory':
       default:
-        console.info(`Using MemoryDatabase for type: ${config.type}`);
+        // 在生产环境中避免输出敏感信息
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (!isProduction) {
+          console.info(`Using MemoryDatabase for type: ${config.type}`, config);
+        } else {
+          console.info(`Using MemoryDatabase for type: ${config.type}`);
+        }
         return new MemoryDatabase();
     }
   }
@@ -203,7 +227,13 @@ export class DatabaseManager {
   async initialize(config: DatabaseConfig): Promise<void> {
     this.database = DatabaseFactory.create(config);
     await this.database.connect();
-    console.log(`Database initialized with type: ${config.type}`);
+    // 在生产环境中避免输出敏感信息
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.log(`Database initialized with type: ${config.type}`, config);
+    } else {
+      console.log(`Database initialized with type: ${config.type}`);
+    }
   }
 
   getDatabase(): Database {

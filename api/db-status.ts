@@ -37,27 +37,40 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // 检查数据库初始化状态
-    const isInitialized = dbManager.isInitialized();
-    
-    if (!isInitialized) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: '数据库未初始化',
-          connectionStatus: {
-            connected: false,
-            type: null,
-            isRealConnection: false,
-            message: 'Database not initialized'
-          },
-          hint: '请检查数据库配置和环境变量',
-        }),
-        {
-          status: 503,
-          headers: corsHeaders,
-        }
-      );
+    // 检查数据库初始化状态，如果没有初始化，尝试初始化
+    if (!dbManager.isInitialized()) {
+      console.log('Database not initialized, initializing now in db-status endpoint...');
+      const dbType = (process.env.DB_TYPE || 'memory') as any;
+      const config = {
+        type: dbType,
+        settings: dbType === 'neon' ? { 
+          connectionString: process.env.NEON_CONNECTION_STRING || '' 
+        } : null
+      };
+      
+      try {
+        await dbManager.initialize(config);
+        console.log(`Database initialized with type: ${dbType} via GET /api/db-status`);
+      } catch (initError) {
+        console.error('Failed to initialize database in GET /api/db-status:', initError);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: '数据库初始化失败',
+            connectionStatus: {
+              connected: false,
+              type: null,
+              isRealConnection: false,
+              message: 'Database initialization failed'
+            },
+            hint: '请检查数据库配置和环境变量',
+          }),
+          {
+            status: 503,
+            headers: corsHeaders,
+          }
+        );
+      }
     }
 
     // 获取数据库实例并检查连接状态
@@ -72,10 +85,10 @@ export default async function handler(req: Request) {
     
     // 获取当前配置的数据库类型
     const connectionStatus = {
-      connected: isInitialized,
+      connected: true,
       type: process.env.DB_TYPE || 'memory',
       isRealConnection: (process.env.DB_TYPE && process.env.DB_TYPE !== 'memory') || false,
-      message: isInitialized ? `数据库连接正常 (类型: ${process.env.DB_TYPE || 'memory'})` : '数据库未初始化'
+      message: `数据库连接正常 (类型: ${process.env.DB_TYPE || 'memory'})`
     };
 
     // 如果是真实连接（非内存），提供更详细的检查

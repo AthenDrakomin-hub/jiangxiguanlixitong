@@ -283,7 +283,30 @@ const ModernSettings: React.FC<SettingsProps> = (props) => {
   // Check system status
   const checkSystemStatus = async () => {
     try {
-      // Check if database is initialized
+      // Check database status via API call to get accurate status
+      const response = await fetch('/api/db-config');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setSystemStatus({
+            dbStatus: result.status,
+            dbConnected: result.initialized,
+            dbType: result.type,
+            dbUrl: result.realConnection ? process.env.NEON_CONNECTION_STRING || 'N/A' : 'N/A',
+          });
+          
+          // Update system health based on actual API response
+          setSystemHealth({
+            database: result.initialized ? 'ok' : 'error',
+            api: 'ok',
+            storage: result.realConnection ? 'ok' : 'warning',
+            lastChecked: new Date().toISOString(),
+          });
+          return;
+        }
+      }
+      
+      // Fallback: Check if database is initialized locally
       const isInitialized = dbManager.isInitialized();
       
       setSystemStatus({
@@ -344,12 +367,35 @@ const ModernSettings: React.FC<SettingsProps> = (props) => {
 
       // Update database configuration if changed
       try {
-        // Update environment variables for database configuration
-        // Note: In a real application, this would require server-side configuration
-        // For now, we'll just update the local state
-        console.log('数据库配置已更新:', dbConfig);
+        // Update database configuration via API
+        const dbConfigResponse = await fetch('/api/db-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: dbConfig.type,
+            connectionString: dbConfig.connectionString,
+            host: dbConfig.host,
+            port: dbConfig.port,
+            user: dbConfig.user,
+            password: dbConfig.password,
+            database: dbConfig.database
+          }),
+        });
+        
+        if (dbConfigResponse.ok) {
+          const dbConfigResult = await dbConfigResponse.json();
+          if (dbConfigResult.success) {
+            console.log('数据库配置已更新:', dbConfigResult.message);
+          } else {
+            console.warn('数据库配置更新警告:', dbConfigResult.message);
+            // 不抛出错误，因为这可能只是配置未改变
+          }
+        } else {
+          console.error('数据库配置更新失败:', dbConfigResponse.status);
+        }
       } catch (dbConfigError) {
         console.error('更新数据库配置时出错:', dbConfigError);
+        alert('更新数据库配置时发生错误: ' + (dbConfigError instanceof Error ? dbConfigError.message : '未知错误'));
       }
 
       // Notify Parent
@@ -558,6 +604,407 @@ const ModernSettings: React.FC<SettingsProps> = (props) => {
           <p className="mt-2 text-xs text-purple-700">系统状态更新时间</p>
         </div>
       </div>
+
+      {/* Cloud Database Management Console - Only show if admin */}
+      {(typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || 
+         window.location.hostname === '127.0.0.1' || 
+         sessionStorage.getItem('jx_auth') === 'true')) && (
+        <div className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-blue-50 p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-indigo-900">
+            <Cloud className="text-indigo-600" size={20} /> 云端数据库管理控制台
+          </h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-indigo-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-indigo-800">数据初始化</h4>
+              <p className="mb-3 text-sm text-slate-600">初始化系统基础数据（房间、菜品、支付方式等）</p>
+              <button
+                onClick={async () => {
+                  if (window.confirm('确定要初始化系统数据吗？此操作将创建默认房间、菜品等基础数据。')) {
+                    try {
+                      const result = await apiClient.post('/seed', {});
+                      if (result.success) {
+                        alert(`数据初始化成功！\n${result.message}\n统计: ${JSON.stringify(result.stats)}`);
+                      } else {
+                        alert(`数据初始化失败: ${result.message}`);
+                      }
+                    } catch (error) {
+                      alert(`初始化过程中发生错误: ${error.message}`);
+                    }
+                  }
+                }}
+                className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+              >
+                初始化数据
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-indigo-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-indigo-800">数据库连接测试</h4>
+              <p className="mb-3 text-sm text-slate-600">测试云端数据库连接状态</p>
+              <button
+                onClick={async () => {
+                  try {
+                    const result = await apiClient.get('/test-connection');
+                    if (result.success) {
+                      alert(`数据库连接正常！\n${result.message}\n类型: ${result.connection.type}`);
+                    } else {
+                      alert(`数据库连接异常: ${result.error}`);
+                    }
+                  } catch (error) {
+                    alert(`连接测试失败: ${error.message}`);
+                  }
+                }}
+                className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+              >
+                测试连接
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-indigo-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-indigo-800">数据库状态</h4>
+              <p className="mb-3 text-sm text-slate-600">检查云端数据库当前状态</p>
+              <button
+                onClick={async () => {
+                  try {
+                    const result = await apiClient.get('/db-status');
+                    if (result.success) {
+                      alert(`数据库状态正常！\n类型: ${result.connectionStatus.type}\n连接: ${result.connectionStatus.message}`);
+                    } else {
+                      alert(`数据库状态异常: ${result.message}`);
+                    }
+                  } catch (error) {
+                    alert(`状态检查失败: ${error.message}`);
+                  }
+                }}
+                className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+              >
+                检查状态
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-indigo-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-indigo-800">数据备份</h4>
+              <p className="mb-3 text-sm text-slate-600">创建系统数据快照备份</p>
+              <button
+                onClick={async () => {
+                  try {
+                    // 获取当前系统数据
+                    const hotelRooms = await apiClient.fetchCollection('hotel_rooms');
+                    const dishes = await apiClient.fetchCollection('dishes');
+                    const orders = await apiClient.fetchCollection('orders');
+                    
+                    // 创建快照数据
+                    const snapshotData = {
+                      data: {
+                        hotel_rooms: hotelRooms,
+                        dishes: dishes,
+                        orders: orders,
+                      },
+                      description: `系统快照 ${new Date().toLocaleString()}`,
+                      createdAt: new Date().toISOString(),
+                    };
+                    
+                    // 发送快照请求
+                    const result = await apiClient.post('/snapshot', {
+                      action: 'create',
+                      snapshot: snapshotData
+                    });
+                    if (result.success) {
+                      alert(`数据备份成功！\n${result.message}\n备份ID: ${result.id}`);
+                    } else {
+                      alert(`数据备份失败: ${result.message}`);
+                    }
+                  } catch (error) {
+                    alert(`备份过程中发生错误: ${error.message}`);
+                  }
+                }}
+                className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+              >
+                创建备份
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Snapshot Restore */}
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <h4 className="mb-2 font-semibold text-amber-800 flex items-center gap-2">
+            <Database size={16} className="text-amber-600" /> 快速快照恢复
+          </h4>
+          <p className="text-sm text-amber-700 mb-3">从存储的快照中恢复数据</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="输入快照ID进行恢复"
+              className="flex-1 rounded-lg border border-amber-300 px-3 py-2 text-sm"
+              id="snapshotIdInput"
+            />
+            <button
+              onClick={async () => {
+                const snapshotId = (document.getElementById('snapshotIdInput') as HTMLInputElement)?.value;
+                if (!snapshotId) {
+                  alert('请输入快照ID');
+                  return;
+                }
+                
+                if (window.confirm(`确定要从快照 ${snapshotId} 恢复数据吗？此操作不可逆！`)) {
+                  try {
+                    const response = await fetch('/api/snapshot', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'restore',
+                        snapshotId: snapshotId
+                      }),
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                      alert(`数据恢复成功！\n${result.message}\nID: ${result.id}`);
+                    } else {
+                      alert(`数据恢复失败: ${result.message}`);
+                    }
+                  } catch (error) {
+                    alert(`恢复过程中发生错误: ${error.message}`);
+                  }
+                }
+              }}
+              className="rounded-lg bg-amber-600 px-4 py-2 text-white text-sm hover:bg-amber-700"
+            >
+              恢复快照
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cloud Sync Button - Only show if admin */}
+      {(typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || 
+         window.location.hostname === '127.0.0.1' || 
+         sessionStorage.getItem('jx_auth') === 'true')) && (
+        <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-emerald-900">
+            <Cloud className="text-emerald-600" size={20} /> 云端同步管理
+          </h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-emerald-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-emerald-800">数据同步</h4>
+              <p className="mb-3 text-sm text-slate-600">将本地数据同步到云端</p>
+              <button
+                onClick={async () => {
+                  if (window.confirm('确定要将本地数据同步到云端吗？此操作会覆盖云端数据。')) {
+                    try {
+                      // 获取所有本地数据
+                      const allData = await apiClient.fetchAll();
+                      
+                      // 准备同步结果
+                      const syncResults: Record<string, any> = {};
+                      
+                      // 同步每个数据集合
+                      for (const [collection, items] of Object.entries(allData)) {
+                        if (Array.isArray(items) && items.length > 0) {
+                          try {
+                            // 清除云端现有数据
+                            // 注意：这里我们使用批量删除的方式，或者可以先删除再创建
+                            // 由于API支持单个删除，我们遍历删除每个项目
+                            // 但为了简化，这里使用批量创建/更新
+                            
+                            let successCount = 0;
+                            for (const item of items) {
+                              try {
+                                // 如果项目有ID，尝试更新；否则创建
+                                if (item.id) {
+                                  await apiClient.update(collection.replace(/([A-Z])/g, '_$1').toLowerCase(), item.id, item);
+                                } else {
+                                  await apiClient.create(collection.replace(/([A-Z])/g, '_$1').toLowerCase(), item);
+                                }
+                                successCount++;
+                              } catch (updateError) {
+                                console.error(`同步${collection}项目失败:`, updateError);
+                              }
+                            }
+                            
+                            syncResults[collection] = {
+                              total: items.length,
+                              synced: successCount,
+                              skipped: items.length - successCount
+                            };
+                          } catch (syncError) {
+                            console.error(`同步集合${collection}失败:`, syncError);
+                            syncResults[collection] = {
+                              total: items.length,
+                              synced: 0,
+                              error: syncError instanceof Error ? syncError.message : '未知错误'
+                            };
+                          }
+                        }
+                      }
+                      
+                      // 显示同步结果
+                      let resultMessage = "数据同步完成！\n\n";
+                      for (const [collection, result] of Object.entries(syncResults)) {
+                        if (result.error) {
+                          resultMessage += `${collection}: 同步失败 - ${result.error}\n`;
+                        } else {
+                          resultMessage += `${collection}: ${result.synced}/${result.total} 项已同步\n`;
+                        }
+                      }
+                      
+                      alert(resultMessage);
+                    } catch (error) {
+                      alert(`数据同步过程中发生错误: ${error.message}`);
+                    }
+                  }
+                }}
+                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+              >
+                同步到云端
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-emerald-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-emerald-800">数据备份</h4>
+              <p className="mb-3 text-sm text-slate-600">创建云端数据快照</p>
+              <button
+                onClick={async () => {
+                  try {
+                    // 获取当前系统数据
+                    const hotelRooms = await apiClient.fetchCollection('hotel_rooms');
+                    const dishes = await apiClient.fetchCollection('dishes');
+                    const orders = await apiClient.fetchCollection('orders');
+                    const expenses = await apiClient.fetchCollection('expenses');
+                    const inventory = await apiClient.fetchCollection('inventory');
+                    const ktvRooms = await apiClient.fetchCollection('ktv_rooms');
+                    const signBillAccounts = await apiClient.fetchCollection('sign_bill_accounts');
+                    const paymentMethods = await apiClient.fetchCollection('payment_methods');
+                    
+                    // 创建快照数据
+                    const snapshotData = {
+                      data: {
+                        hotel_rooms: hotelRooms,
+                        dishes: dishes,
+                        orders: orders,
+                        expenses: expenses,
+                        inventory: inventory,
+                        ktv_rooms: ktvRooms,
+                        sign_bill_accounts: signBillAccounts,
+                        payment_methods: paymentMethods,
+                      },
+                      description: `云端数据备份 ${new Date().toLocaleString()}`,
+                      createdAt: new Date().toISOString(),
+                      backupType: 'full'
+                    };
+                    
+                    // 发送快照请求
+                    const result = await apiClient.post('/snapshot', {
+                      action: 'create',
+                      snapshot: snapshotData
+                    });
+                    if (result.success) {
+                      alert(`云端数据备份成功！\n${result.message}\n备份ID: ${result.id}`);
+                    } else {
+                      alert(`云端数据备份失败: ${result.message}`);
+                    }
+                  } catch (error) {
+                    alert(`备份过程中发生错误: ${error.message}`);
+                  }
+                }}
+                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+              >
+                创建备份
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-emerald-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-emerald-800">数据恢复</h4>
+              <p className="mb-3 text-sm text-slate-600">从云端快照恢复数据</p>
+              <input
+                type="text"
+                placeholder="输入快照ID"
+                className="w-full rounded-lg border border-emerald-300 px-3 py-2 mb-2 text-sm"
+                id="restoreSnapshotId"
+              />
+              <button
+                onClick={async () => {
+                  const snapshotId = (document.getElementById('restoreSnapshotId') as HTMLInputElement)?.value;
+                  if (!snapshotId) {
+                    alert('请输入快照ID');
+                    return;
+                  }
+                  
+                  if (window.confirm(`确定要从快照 ${snapshotId} 恢复数据吗？此操作不可逆！`)) {
+                    try {
+                      const result = await apiClient.post('/snapshot', {
+                        action: 'restore',
+                        snapshotId: snapshotId
+                      });
+                      if (result.success) {
+                        alert(`数据恢复成功！\n${result.message}\nID: ${result.id}`);
+                      } else {
+                        alert(`数据恢复失败: ${result.message}`);
+                      }
+                    } catch (error) {
+                      alert(`恢复过程中发生错误: ${error.message}`);
+                    }
+                  }
+                }}
+                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+              >
+                恢复数据
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-emerald-200 bg-white p-4">
+              <h4 className="mb-2 font-semibold text-emerald-800">状态检查</h4>
+              <p className="mb-3 text-sm text-slate-600">检查云端数据同步状态</p>
+              <button
+                onClick={async () => {
+                  try {
+                    // 检查各种云端服务状态
+                    const [dbStatus, apiHealth] = await Promise.allSettled([
+                      fetch('/api/db-status').then(r => r.json()),
+                      fetch('/api/health').then(r => r.json()).catch(() => ({ success: false, message: '健康检查端点不存在' }))
+                    ]);
+                    
+                    let statusMessage = "云端服务状态：\n\n";
+                    
+                    if (dbStatus.status === 'fulfilled') {
+                      statusMessage += `数据库: ${dbStatus.value.success ? '正常' : '异常'}\n`;
+                      statusMessage += `类型: ${dbStatus.value.connectionStatus?.type || '未知'}\n`;
+                    } else {
+                      statusMessage += "数据库: 连接失败\n";
+                    }
+                    
+                    if (apiHealth.status === 'fulfilled') {
+                      statusMessage += `API健康: ${apiHealth.value.success ? '正常' : '异常'}\n`;
+                    } else {
+                      statusMessage += "API健康: 未配置\n";
+                    }
+                    
+                    // 检查数据量
+                    const collections = ['hotel_rooms', 'dishes', 'orders'];
+                    for (const collection of collections) {
+                      try {
+                        const data = await apiClient.fetchCollection(collection);
+                        statusMessage += `${collection}: ${data.length} 条记录\n`;
+                      } catch (e) {
+                        statusMessage += `${collection}: 检查失败\n`;
+                      }
+                    }
+                    
+                    alert(statusMessage);
+                  } catch (error) {
+                    alert(`状态检查过程中发生错误: ${error.message}`);
+                  }
+                }}
+                className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+              >
+                检查状态
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 1. Store Information */}
@@ -774,7 +1221,9 @@ const ModernSettings: React.FC<SettingsProps> = (props) => {
                     <Server size={16} className="text-blue-500" />
                     <span className="text-sm">数据库类型</span>
                   </div>
-                  <span className="text-sm text-slate-600">{systemStatus.dbType}</span>
+                  <span className={`text-sm font-medium ${systemStatus.dbType === 'memory' ? 'text-yellow-600' : 'text-green-600'}`}>
+                    {systemStatus.dbType === 'memory' ? 'Memory (开发)' : 'Neon (云端)'}
+                  </span>
                 </div>
                 
                 <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3">

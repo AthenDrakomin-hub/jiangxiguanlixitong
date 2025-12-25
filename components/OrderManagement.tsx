@@ -28,11 +28,13 @@ import { apiClient } from '../services/apiClient.js';
 interface OrderManagementProps {
   orders: Order[];
   setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
+  systemSettings?: SystemSettings;
 }
 
 const OrderManagement: React.FC<OrderManagementProps> = ({
   orders,
   setOrders,
+  systemSettings,
 }) => {
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'All'>('All');
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -495,7 +497,7 @@ const OrderManagement: React.FC<OrderManagementProps> = ({
                       </div>
                       <div className="text-xs text-slate-400">
                         参考价 Reference: ≈ ¥
-                        {(order.totalAmount / 8.2).toFixed(1)} {/* TODO: 从设置中加载汇率 */}
+                        {(order.totalAmount / (systemSettings?.exchangeRate || 8.2)).toFixed(1)}
                       </div>
                     </div>
 

@@ -30,6 +30,58 @@ export default async function handler(req: Request) {
     if (req.method === 'POST') {
       const body = await req.json();
       const { snapshot, action, snapshotId, compareWith } = body;
+      
+      // 对于敏感操作（restore）添加权限校验
+      if (action === 'restore') {
+        const authHeader = req.headers.get('Authorization');
+        const adminUser = process.env.VITE_ADMIN_USER || 'admin';
+        const adminPass = process.env.VITE_ADMIN_PASS || 'admin123';
+        
+        // 验证Basic认证头
+        if (!authHeader || !authHeader.startsWith('Basic ')) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: '恢复操作需要管理员权限',
+            }),
+            {
+              status: 401,
+              headers: corsHeaders,
+            }
+          );
+        }
+        
+        // 解码Base64认证信息
+        try {
+          const base64Credentials = authHeader.split(' ')[1];
+          const credentials = atob(base64Credentials);
+          const [username, password] = credentials.split(':');
+          
+          if (username !== adminUser || password !== adminPass) {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                message: '恢复操作需要管理员权限',
+              }),
+              {
+                status: 401,
+                headers: corsHeaders,
+              }
+            );
+          }
+        } catch (error) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              message: '恢复操作需要管理员权限',
+            }),
+            {
+              status: 401,
+              headers: corsHeaders,
+            }
+          );
+        }
+      }
 
       // 根据操作类型执行不同的快照操作
       switch (action) {
@@ -47,6 +99,15 @@ export default async function handler(req: Request) {
             );
           }
           
+          // 获取Git Commit信息（如果可用）
+          const gitCommitHash = process.env.VERCEL_GIT_COMMIT_SHA || 
+                               process.env.GITHUB_SHA || 
+                               process.env.CI_COMMIT_SHA || 
+                               'unknown';
+          const gitCommitMessage = process.env.VERCEL_GIT_COMMIT_MESSAGE || 'unknown';
+          const gitCommitAuthor = process.env.VERCEL_GIT_COMMIT_AUTHOR_NAME || 'unknown';
+          const gitRepositoryUrl = process.env.VERCEL_GIT_REPO_URL || 'unknown';
+          
           // 保存快照到数据库
           const db = dbManager.getDatabase();
           const snapshotKey = `snapshot:${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -54,6 +115,11 @@ export default async function handler(req: Request) {
             ...snapshot,
             id: snapshotKey,
             createdAt: new Date().toISOString(),
+            gitCommitHash, // 关联Git Commit Hash
+            gitCommitMessage, // 关联Git Commit Message
+            gitCommitAuthor, // 关联Git Commit Author
+            gitRepositoryUrl, // 关联Git Repository URL
+            description: body.description || '数据快照',
           });
           
           return new Response(
@@ -126,6 +192,39 @@ export default async function handler(req: Request) {
                 await dbRestore.set(`${collection}:${item.id}`, item);
               }
             }
+          }
+          
+          // 记录审计日志
+          try {
+            const auditLog = {
+              action: 'snapshot_restore',
+              userId: 'system', // 在API中可能无法获取用户ID，这里使用system
+              snapshotId: snapshotId,
+              details: {
+                snapshotId: snapshotId,
+                restoredAt: new Date().toISOString(),
+                restoredBy: 'API',
+              },
+              timestamp: new Date().toISOString(),
+            };
+            
+            // 尝试记录审计日志，但不阻塞恢复操作
+            const auditResponse = await fetch(`${req.url.replace(/\/snapshot$/, '/audit-log')}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(auditLog),
+            });
+          } catch (auditError) {
+            // 在生产环境中避免输出可能包含敏感信息的错误详情
+            const isProduction = process.env.NODE_ENV === 'production';
+            if (!isProduction) {
+              console.error('记录审计日志失败:', auditError);
+            } else {
+              console.error('记录审计日志失败:', auditError instanceof Error ? auditError.message : '未知错误');
+            }
+            // 不抛出错误，继续执行
           }
           
           return new Response(
@@ -235,7 +334,13 @@ export default async function handler(req: Request) {
       }
     );
   } catch (error) {
-    console.error('快照API错误:', error);
+    // 在生产环境中避免输出可能包含敏感信息的错误详情
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.error('快照API错误:', error);
+    } else {
+      console.error('快照API错误:', error instanceof Error ? error.message : '未知错误');
+    }
     return new Response(
       JSON.stringify({
         success: false,

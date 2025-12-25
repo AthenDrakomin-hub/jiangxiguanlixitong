@@ -39,14 +39,41 @@ type CollectionName = (typeof COLLECTIONS)[number] | string;
 
 export const apiClient = {
   async get<T = any>(endpoint: string): Promise<T> {
+    // 在生产环境中，避免在日志中记录可能包含敏感信息的数据
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.log(`API GET request to ${endpoint}`);
+    } else {
+      // 生产环境中只记录端点，减少日志量
+      console.log(`API GET: ${endpoint}`);
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    const result = await response.json();
+    
+    if (!isProduction) {
+      console.log(`API GET response from ${endpoint}`, result);
+    } else {
+      // 生产环境中只记录响应状态，不记录数据内容
+      console.log(`API GET response from ${endpoint}: ${response.status}`);
+    }
+    
+    return result;
   },
 
   async post<T>(endpoint: string, data: any): Promise<T> {
+    // 在生产环境中，避免在日志中记录可能包含敏感信息的数据
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.log(`API POST request to ${endpoint}`, data);
+    } else {
+      // 生产环境中只记录端点，不记录数据内容，特别是Base64数据
+      console.log(`API POST request to ${endpoint}`);
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
@@ -61,6 +88,15 @@ export const apiClient = {
   },
 
   async put<T>(endpoint: string, data: T): Promise<T> {
+    // 在生产环境中，避免在日志中记录可能包含敏感信息的数据
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.log(`API PUT request to ${endpoint}`, data);
+    } else {
+      // 生产环境中只记录端点，不记录数据内容
+      console.log(`API PUT request to ${endpoint}`);
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: {
@@ -75,13 +111,31 @@ export const apiClient = {
   },
 
   async delete<T = any>(endpoint: string): Promise<T> {
+    // 在生产环境中，避免在日志中记录可能包含敏感信息的数据
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction) {
+      console.log(`API DELETE request to ${endpoint}`);
+    } else {
+      // 生产环境中只记录端点，减少日志量
+      console.log(`API DELETE: ${endpoint}`);
+    }
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    const result = await response.json();
+    
+    if (!isProduction) {
+      console.log(`API DELETE response from ${endpoint}`, result);
+    } else {
+      // 生产环境中只记录响应状态，不记录数据内容
+      console.log(`API DELETE response from ${endpoint}: ${response.status}`);
+    }
+    
+    return result;
   },
 
   /**

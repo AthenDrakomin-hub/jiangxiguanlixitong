@@ -6,6 +6,7 @@
  */
 
 import { dbManager } from '../lib/database.js';
+import { DatabaseConfig, StorageType } from '../types.js';
 
 export const config = {
   runtime: 'edge',
@@ -34,16 +35,31 @@ export default async function handler(req: Request) {
   }
 
   try {
-    // 检查数据库初始化状态
+    // 检查数据库初始化状态，如果没有初始化，则先初始化
     if (!dbManager.isInitialized()) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Database not initialized',
-          details: 'Database manager not initialized',
-        }),
-        { status: 503, headers: corsHeaders }
-      );
+      console.log('Database not initialized, initializing now...');
+      const dbType = (process.env.DB_TYPE || 'memory') as StorageType;
+      const config: DatabaseConfig = {
+        type: dbType,
+        settings: dbType === 'neon' ? { 
+          connectionString: process.env.NEON_CONNECTION_STRING || '' 
+        } : null
+      };
+      
+      try {
+        await dbManager.initialize(config);
+        console.log(`Database initialized with type: ${dbType}`);
+      } catch (initError) {
+        console.error('Failed to initialize database:', initError);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Failed to initialize database',
+            details: initError instanceof Error ? initError.message : 'Unknown initialization error',
+          }),
+          { status: 503, headers: corsHeaders }
+        );
+      }
     }
 
     // 获取数据库实例
@@ -72,7 +88,11 @@ export default async function handler(req: Request) {
       JSON.stringify({
         success: true,
         message: 'Database connection and operations successful',
-        connection: { connected: true, type: 'database' },
+        connection: { 
+          connected: true, 
+          type: process.env.DB_TYPE || 'memory',
+          isRealConnection: (process.env.DB_TYPE && process.env.DB_TYPE !== 'memory') || false
+        },
         testData: retrievedValue,
         dataMatches,
         testWrite: !!retrievedValue,
@@ -82,6 +102,7 @@ export default async function handler(req: Request) {
       { status: 200, headers: corsHeaders }
     );
   } catch (error) {
+    console.error('Database connection test failed:', error);
     return new Response(
       JSON.stringify({
         success: false,

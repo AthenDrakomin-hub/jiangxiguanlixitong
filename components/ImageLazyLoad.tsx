@@ -14,7 +14,7 @@ const ImageLazyLoad: React.FC<ImageLazyLoadProps> = ({
   src,
   alt,
   className = '',
-  placeholderColor = '#f1f5f9', // 默认浅灰色占位符
+  placeholderColor = '#e2e8f0', // 默认浅灰色占位符 - 使用更标准的灰色
   blurDataURL,
   width,
   height,

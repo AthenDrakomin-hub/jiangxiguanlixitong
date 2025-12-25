@@ -29,9 +29,10 @@ interface KTVSystemProps {
   rooms: KTVRoom[];
   setRooms: React.Dispatch<React.SetStateAction<KTVRoom[]>>;
   dishes: Dish[];
+  systemSettings?: SystemSettings;
 }
 
-const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
+const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes, systemSettings }) => {
   const [selectedRoom, setSelectedRoom] = useState<KTVRoom | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
@@ -712,8 +713,7 @@ const KTVSystem: React.FC<KTVSystemProps> = ({ rooms, setRooms, dishes }) => {
                       ₱{calculateTotal(selectedRoom).total.toFixed(0)}
                       <div className="mt-2 text-base font-normal text-slate-500">
                         参考价 Reference: ≈ ¥
-                        {/* TODO: 从系统设置读取汇率 */}
-                        {(calculateTotal(selectedRoom).total / 8.2).toFixed(1)}
+                        {(calculateTotal(selectedRoom).total / (systemSettings?.exchangeRate || 8.2)).toFixed(1)}
                       </div>
                     </div>
 

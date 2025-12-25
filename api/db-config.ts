@@ -126,16 +126,34 @@ export default async function handler(req: Request) {
 
     // GET 请求：返回当前数据库状态
     if (req.method === 'GET') {
-      const isInitialized = dbManager.isInitialized();
+      // 检查数据库初始化状态，如果没有初始化，尝试初始化
+      if (!dbManager.isInitialized()) {
+        const dbType = (process.env.DB_TYPE || 'memory') as StorageType;
+        const config: DatabaseConfig = {
+          type: dbType,
+          settings: dbType === 'neon' ? { 
+            connectionString: process.env.NEON_CONNECTION_STRING || '' 
+          } : null
+        };
+        
+        try {
+          await dbManager.initialize(config);
+          console.log(`Database initialized with type: ${dbType} via GET /api/db-config`);
+        } catch (initError) {
+          console.error('Failed to initialize database in GET /api/db-config:', initError);
+        }
+      }
       
-      // 在实际实现中，这里应该返回当前配置的数据库类型
-      // 当前简化实现返回内存数据库类型
+      const isInitialized = dbManager.isInitialized();
+      const currentDbType = isInitialized ? process.env.DB_TYPE || 'memory' : 'not_initialized';
+      
       return new Response(
         JSON.stringify({
           success: true,
           initialized: isInitialized,
           status: isInitialized ? 'connected' : 'disconnected',
-          type: isInitialized ? 'memory' : 'not_initialized', // 在完整实现中，这应该是实际的数据库类型
+          type: currentDbType,
+          realConnection: (currentDbType && currentDbType !== 'memory') || false
         }),
         {
           status: 200,

@@ -443,7 +443,7 @@ const App = () => {
                 </div>
               }
             >
-              <OrderManagement orders={orders} setOrders={setOrders} />
+              <OrderManagement orders={orders} setOrders={setOrders} systemSettings={systemSettings} />
             </Suspense>
           );
         case 'finance':
@@ -522,6 +522,7 @@ const App = () => {
                 rooms={ktvRooms}
                 setRooms={setKtvRooms}
                 dishes={dishes}
+                systemSettings={systemSettings}
               />
             </Suspense>
           );

@@ -13,6 +13,7 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 - `npm run db:migrate` - Run database migration using Neon database
 - `npm run test:neon` - Test Neon database connection
 - `npm run init:system` - Initialize system with default data (users, rooms, etc.)
+- `npm run dev` - Start development server to test API endpoints locally
 
 ### Environment Setup
 - The project uses Vercel Edge Runtime with database abstraction layer supporting multiple backends
@@ -70,6 +71,35 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 - **User Management**: Role-based access control with permissions
 - **Notification System**: Desktop and audio notifications for new orders
 
+### API Endpoints
+- **Database Configuration**: `/api/db-config` - Configure and test database connections
+- **Database Status**: `/api/db-status` - Check database connection status
+- **Connection Test**: `/api/test-connection` - Test database read/write operations
+- **Data Seeding**: `/api/seed` - Initialize system with default data
+- **User Management**: `/api/users` - CRUD operations for user accounts
+- **Business Entities**: `/api/{entity}` - Generic CRUD for dishes, orders, expenses, etc.
+
+### Cloud Deployment and API Usage
+After deploying to Vercel, use these commands to interact with your deployed application:
+
+```bash
+# Verify database configuration
+curl -X GET https://your-vercel-project.vercel.app/api/db-config
+
+# Test database connection (includes auto-initialization if needed)
+curl -X GET https://your-vercel-project.vercel.app/api/test-connection
+
+# Initialize system data
+curl -X POST https://your-vercel-project.vercel.app/api/seed
+
+# Verify data initialization
+curl -X GET https://your-vercel-project.vercel.app/api/hotel_rooms
+curl -X GET https://your-vercel-project.vercel.app/api/dishes
+curl -X GET https://your-vercel-project.vercel.app/api/users
+```
+
+Replace `your-vercel-project.vercel.app` with your actual Vercel deployment URL.
+
 ### Database Layer Architecture
 - Database abstraction layer with factory pattern implementation
 - Support for multiple database types through `Database` interface
@@ -96,3 +126,16 @@ This file provides guidance to Qoder (qoder.com) when working with code in this 
 - Defined in `/types.ts` with interfaces for all major entities (Dish, Order, Expense, Ingredient, KTVRoom, SignBillAccount, HotelRoom, etc.)
 - Order status enum with multiple states for order lifecycle management
 - Comprehensive type definitions for API responses and database operations
+
+### Version Management Strategy
+- Data State Versioning: Automatic snapshot creation with Git Commit Hash association
+- Audit Logging: All sensitive operations (sync, restore, backup) are logged with user, timestamp, and details
+- API Security: Basic authentication required for sensitive operations (seed, restore)
+- Frontend Cache Management: Automatic cache clearing after data operations
+- Production Logging: Sensitive data (Base64 images) masked in production logs
+
+### Deployment Commands
+- `git tag -a v2.1.0 -m "江西酒店管理系统 - 运维增强版"` - Create release tag with versioned features
+- Deploy to Vercel with automatic environment variable injection and security headers
+- Post-deployment: Access system panel and run "状态检查" to verify cloud connectivity
+- First sync: Click "数据同步" to populate production database with initial data

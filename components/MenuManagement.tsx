@@ -47,7 +47,7 @@ interface MenuManagementProps {
   dishes: Dish[];
   setDishes: React.Dispatch<React.SetStateAction<Dish[]>>;
   categories: Category[];
-  setCategories?: React.Dispatch<React.SetStateAction<Category[]>>;
+  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
   // 产品备注: 为inventory属性指定明确的类型，避免使用any
   inventory: Ingredient[];
 }
@@ -408,8 +408,12 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
 
   const handleAddCategory = () => {
     if (newCategory && !categories.includes(newCategory)) {
-      // 注意：这里应该通过父组件传递的函数来更新分类
-      // 由于当前组件没有接收 setCategories 函数，我们暂时只更新本地状态
+      if (setCategories) {
+        setCategories(prev => [...prev, newCategory]);
+      } else {
+        // 后备方案：如果setCategories未传递，使用本地状态
+        setNewCategory('');
+      }
       setNewCategory('');
     }
   };
@@ -424,8 +428,9 @@ const MenuManagement: React.FC<MenuManagementProps> = ({
       return;
     }
 
-    // 注意：这里应该通过父组件传递的函数来更新分类
-    // 由于当前组件没有接收 setCategories 函数，我们暂时只更新本地状态
+    if (setCategories) {
+      setCategories(prev => prev.filter(c => c !== cat));
+    }
 
     // Reset form category if it was the removed category
     if (formData.category === cat) {
