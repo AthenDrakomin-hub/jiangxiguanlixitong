@@ -324,8 +324,7 @@ const ModernSettings: React.FC = () => {
           </div>
         </div>
       </div>
-        </div>
-      </div>
+    </div>
 
       <div className="flex justify-end">
         <button
