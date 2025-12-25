@@ -1,4 +1,4 @@
-import { Database } from '../lib/database.js';
+import { dbManager } from '../lib/database.js';
 import { SystemDictionary } from '../types.js';
 
 export interface DictionaryQuery {
@@ -10,9 +10,9 @@ export interface DictionaryQuery {
 export const dictionaryAPI = {
   // 获取词库条目
   async getDictionaryEntries(query?: DictionaryQuery): Promise<SystemDictionary[]> {
-    const db = await Database.getInstance();
+    const db = dbManager.getDatabase();
     
-    let entries = await db.fetchCollection<SystemDictionary>('system_dictionary');
+    let entries = await db.getAll<SystemDictionary>('system_dictionary');
     
     if (query) {
       if (query.category) {
@@ -39,13 +39,13 @@ export const dictionaryAPI = {
 
   // 获取单个词库条目
   async getDictionaryEntry(key_code: string): Promise<SystemDictionary | null> {
-    const db = await Database.getInstance();
-    return await db.findById<SystemDictionary>('system_dictionary', key_code);
+    const db = dbManager.getDatabase();
+    return await db.get<SystemDictionary>(`system_dictionary:${key_code}`);
   },
 
   // 创建词库条目
   async createDictionaryEntry(entry: Omit<SystemDictionary, 'createdAt' | 'updatedAt'>): Promise<SystemDictionary> {
-    const db = await Database.getInstance();
+    const db = dbManager.getDatabase();
     
     const newEntry: SystemDictionary = {
       ...entry,
@@ -58,9 +58,9 @@ export const dictionaryAPI = {
 
   // 更新词库条目
   async updateDictionaryEntry(key_code: string, updates: Partial<SystemDictionary>): Promise<SystemDictionary> {
-    const db = await Database.getInstance();
+    const db = dbManager.getDatabase();
     
-    const existing = await db.findById<SystemDictionary>('system_dictionary', key_code);
+    const existing = await db.get<SystemDictionary>(`system_dictionary:${key_code}`);
     if (!existing) {
       throw new Error(`Dictionary entry with key_code ${key_code} not found`);
     }
@@ -77,16 +77,16 @@ export const dictionaryAPI = {
 
   // 删除词库条目
   async deleteDictionaryEntry(key_code: string): Promise<boolean> {
-    const db = await Database.getInstance();
-    return await db.delete('system_dictionary', key_code);
+    const db = dbManager.getDatabase();
+    return await db.remove('system_dictionary', key_code);
   },
 
   // 初始化默认词库
   async initializeDefaultDictionary(): Promise<void> {
-    const db = await Database.getInstance();
+    const db = dbManager.getDatabase();
     
     // 检查是否已有数据
-    const existingEntries = await db.fetchCollection<SystemDictionary>('system_dictionary');
+    const existingEntries = await db.getAll<SystemDictionary>('system_dictionary');
     if (existingEntries.length > 0) {
       return; // 已有数据，不再初始化
     }
