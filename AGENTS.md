@@ -139,3 +139,10 @@ Replace `your-vercel-project.vercel.app` with your actual Vercel deployment URL.
 - Deploy to Vercel with automatic environment variable injection and security headers
 - Post-deployment: Access system panel and run "状态检查" to verify cloud connectivity
 - First sync: Click "数据同步" to populate production database with initial data
+
+### Database Migration to Production
+- Local development: Use `DB_TYPE=memory` for rapid development and testing
+- Production deployment: Switch to `DB_TYPE=neon` with Neon PostgreSQL for data persistence
+- Initialize production data: Run `/api/seed` endpoint (requires authentication) to populate all tables
+- Data validation: All entities (dishes, orders, expenses, inventory, hotel_rooms, ktv_rooms, sign_bill_accounts, payment_methods) are now fully supported with validation rules
+- Migration path: Use `/api/migrate` to transfer data from memory to Neon database when needed

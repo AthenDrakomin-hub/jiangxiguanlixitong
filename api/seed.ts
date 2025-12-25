@@ -194,6 +194,112 @@ export default async function handler(req: Request) {
       },
     };
 
+    // 初始化支付方式
+    const paymentMethods = [
+      { name: '现金', code: 'CASH', enabled: true },
+      { name: 'GCash', code: 'GCASH', enabled: true },
+      { name: 'Maya', code: 'MAYA', enabled: true },
+      { name: '支付宝', code: 'ALIPAY', enabled: false },
+      { name: '微信支付', code: 'WECHAT', enabled: false },
+    ];
+
+    // 初始化菜品
+    const dishes = [
+      { 
+        name: '宫保鸡丁', 
+        category: '热菜', 
+        price: 45, 
+        description: '经典川菜，酸甜可口', 
+        available: true,
+        spiciness: 2
+      },
+      { 
+        name: '麻婆豆腐', 
+        category: '热菜', 
+        price: 32, 
+        description: '嫩滑豆腐配麻辣肉末', 
+        available: true,
+        spiciness: 3
+      },
+      { 
+        name: '白切鸡', 
+        category: '凉菜', 
+        price: 58, 
+        description: '嫩滑鸡肉配秘制蘸料', 
+        available: true,
+        spiciness: 1
+      },
+      { 
+        name: '西湖牛肉羹', 
+        category: '汤类', 
+        price: 28, 
+        description: '鲜美牛肉汤，营养丰富', 
+        available: true,
+        spiciness: 0
+      },
+      { 
+        name: '扬州炒饭', 
+        category: '主食', 
+        price: 35, 
+        description: '经典炒饭，粒粒分明', 
+        available: true,
+        spiciness: 0
+      },
+      { 
+        name: '青岛啤酒', 
+        category: '酒水', 
+        price: 15, 
+        description: '清爽啤酒', 
+        available: true,
+        spiciness: 0
+      },
+      { 
+        name: '可乐', 
+        category: '酒水', 
+        price: 12, 
+        description: '冰镇可乐', 
+        available: true,
+        spiciness: 0
+      },
+      { 
+        name: '春卷', 
+        category: '小吃', 
+        price: 22, 
+        description: '酥脆春卷', 
+        available: true,
+        spiciness: 1
+      },
+    ];
+
+    // 初始化库存
+    const inventory = [
+      { name: '大米', category: '主食', quantity: 50, unit: '公斤', minStock: 10, pricePerUnit: 8 },
+      { name: '鸡肉', category: '肉类', quantity: 30, unit: '公斤', minStock: 5, pricePerUnit: 40 },
+      { name: '豆腐', category: '豆制品', quantity: 20, unit: '块', minStock: 5, pricePerUnit: 3 },
+      { name: '青椒', category: '蔬菜', quantity: 15, unit: '公斤', minStock: 3, pricePerUnit: 12 },
+      { name: '啤酒', category: '酒水', quantity: 100, unit: '瓶', minStock: 20, pricePerUnit: 10 },
+    ];
+
+    // 初始化签单账户
+    const signBillAccounts = [
+      { 
+        accountName: 'VIP客户', 
+        creditLimit: 10000, 
+        currentBalance: 0, 
+        status: 'active',
+        contactPerson: '张经理',
+        contactPhone: '13800138000'
+      },
+      { 
+        accountName: '公司账户', 
+        creditLimit: 5000, 
+        currentBalance: 0, 
+        status: 'active',
+        contactPerson: '李总',
+        contactPhone: '13900139000'
+      },
+    ];
+
     // 使用管道批量写入数据
     const pipeline = [];
     
@@ -205,6 +311,26 @@ export default async function handler(req: Request) {
     // 创建KTV房间
     for (const ktv of ktvRooms) {
       pipeline.push(db.create('ktv_rooms', ktv));
+    }
+    
+    // 创建支付方式
+    for (const method of paymentMethods) {
+      pipeline.push(db.create('payment_methods', method));
+    }
+    
+    // 创建菜品
+    for (const dish of dishes) {
+      pipeline.push(db.create('dishes', dish));
+    }
+    
+    // 创建库存
+    for (const item of inventory) {
+      pipeline.push(db.create('inventory', item));
+    }
+    
+    // 创建签单账户
+    for (const account of signBillAccounts) {
+      pipeline.push(db.create('sign_bill_accounts', account));
     }
     
     // 创建系统设置（使用固定ID）

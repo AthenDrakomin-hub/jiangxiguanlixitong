@@ -165,19 +165,29 @@ const SignBillSystem: React.FC<SignBillSystemProps> = ({
       
       await apiClient.update('sign_bill_accounts', account.id, updatedAccount);
 
-      // TODO: 记录交易历史到 expenses 或单独的 transactions 表
+      // 记录交易历史到 expenses 表
       const transactionRecord = {
+        category: isSettle ? 'SignBillSettlement' : 'SignBillCharge',
+        amount: amount,
+        description: `${isSettle ? '还款' : '记账'} - ${account.name} (${account.id})`,
+        date: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
         accountId: account.id,
         accountName: account.name,
-        type: transactionModal.type,
-        amount: amount,
+        transactionType: transactionModal.type,
         paymentMethod: isSettle ? settleMethod : null,
-        timestamp: new Date().toISOString(),
         previousDebt: account.currentDebt,
         newDebt: newDebt,
       };
       
-      console.log('交易记录:', transactionRecord);
+      // 保存交易记录到expenses表
+      try {
+        await apiClient.create('expenses', transactionRecord);
+        console.log('交易记录已保存:', transactionRecord);
+      } catch (error) {
+        console.error('保存交易记录失败:', error);
+        // 即使保存交易记录失败，也不影响主要业务流程
+      }
 
       setAccounts((prev) =>
         prev.map((acc) =>

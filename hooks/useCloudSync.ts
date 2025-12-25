@@ -99,7 +99,7 @@ export const useCloudSync = () => {
       localStorage.removeItem('app_data_cache_timestamp');
       
       // 4. 返回结果
-      const resultMessage = "数据同步完成！\n\n";
+      let resultMessage = "数据同步完成！\n\n";
       for (const [collection, result] of Object.entries(syncResults)) {
         if (result.error) {
           resultMessage += `${collection}: 同步失败 - ${result.error}\n`;
