@@ -544,9 +544,6 @@ const App = () => {
                 setExpenses={setExpenses}
                 inventory={inventory}
                 setInventory={setInventory}
-
-                setKtvRooms={setKtvRooms}
-
                 hotelRooms={hotelRooms}
                 setHotelRooms={setHotelRooms}
                 onSettingsChange={(newSettings) => {
@@ -554,8 +551,6 @@ const App = () => {
                 }}
               />
             </Suspense>
-          );
-
           );
 
         case 'hotel':
