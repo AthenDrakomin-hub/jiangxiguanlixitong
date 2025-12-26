@@ -74,7 +74,6 @@ export default async function handler(req: Request) {
     }
 
     // 获取数据库实例并检查连接状态
-    let dbType = null;
     try {
       const db = dbManager.getDatabase();
       // 尝试执行一个简单的操作来验证连接

@@ -191,6 +191,11 @@ export class MemoryDatabase implements Database {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
 
+  private getEntityType(key: string): string {
+    // 从键中提取实体类型，例如 'dishes:123' -> 'dishes'
+    return key.split(':')[0];
+  }
+
   private validateData(key: string, value: any): void {
     // 从键中提取实体类型
     const entityType = key.split(':')[0];
@@ -487,6 +492,11 @@ export class VirtualDatabase implements Database {
 
   private generateId(): string {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
+  private getEntityType(key: string): string {
+    // 从键中提取实体类型，例如 'dishes:123' -> 'dishes'
+    return key.split(':')[0];
   }
 
   private validateData(key: string, value: any): void {
