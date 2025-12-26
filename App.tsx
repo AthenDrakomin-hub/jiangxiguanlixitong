@@ -12,6 +12,9 @@ import {
   SystemSettings,
   Page,
   OrderStatus,
+  User,
+  Role,
+  Permission,
 } from './types.js';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
@@ -19,6 +22,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { useAppData } from './hooks/useAppData';
 import { setLanguage, getCurrentLanguage } from './utils/i18n.js';
 import { dictionaryService } from './services/dictService.js';
+import { PermissionProvider } from './contexts/PermissionContext.js';
 
 const Dashboard = React.lazy(() => import('./components/Dashboard'));
 const MenuManagement = React.lazy(() => import('./components/MenuManagement'));
@@ -59,22 +63,10 @@ const App = () => {
     return 'cashier';
   });
 
-  // Auth State - 在开发环境中自动认证
+  // Auth State - 强制所有环境都需要正式认证
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // 在开发环境中自动通过认证
     if (typeof window !== 'undefined') {
-      // 检查是否是开发环境
-      const isDev =
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.port !== '';
-
-      // 在开发环境中自动认证，生产环境中检查sessionStorage
-      if (isDev) {
-        return true;
-      }
-
-      // 生产环境中检查认证状态
+      // 所有环境都检查认证状态，不再区分开发/生产环境
       return sessionStorage.getItem('jx_auth') === 'true';
     }
     return false;
@@ -112,8 +104,11 @@ const App = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [inventory, setInventory] = useState<Ingredient[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   const [hotelRooms, setHotelRooms] = useState<HotelRoom[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [userPermissions, setUserPermissions] = useState<Permission[]>([]);
 
   // Global Settings State
   const [systemSettings, setSystemSettings] = useState<SystemSettings>({
@@ -182,6 +177,9 @@ const App = () => {
       setOrders(data.orders);
       setExpenses(data.expenses);
       setInventory(data.inventory);
+      setUsers(data.users);
+      setRoles(data.roles || []);
+      setUserPermissions(data.permissions || []);
 
       setHotelRooms(data.hotelRooms);
     }
@@ -649,7 +647,11 @@ const App = () => {
                 </div>
               }
             >
-              <DataViewer />
+              <DataViewer
+                orders={orders}
+                expenses={expenses}
+                users={users}
+              />
             </Suspense>
           );
         case 'partner_accounts':
@@ -715,10 +717,11 @@ const App = () => {
   }
 
   return (
-    <ErrorBoundary>
-      <div className="flex min-h-screen bg-slate-50">
-        {/* Mobile Header */}
-        <div className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between bg-slate-900 px-4 shadow-md md:hidden">
+    <PermissionProvider initialUser={isAuthenticated ? { id: 'current', username: 'current', role: userRole, isActive: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } : null} initialRoles={roles} initialPermissions={userPermissions}>
+      <ErrorBoundary>
+        <div className="flex min-h-screen bg-slate-50">
+          {/* Mobile Header */}
+          <div className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between bg-slate-900 px-4 shadow-md md:hidden">
           <div className="flex items-center gap-2 font-bold text-white">
             <span className="text-lg">江西酒店 Admin</span>
           </div>
@@ -787,6 +790,7 @@ const App = () => {
         <div className="flex-1 pt-16 md:ml-0 md:pt-0">{renderContent()}</div>
       </div>
     </ErrorBoundary>
+      </PermissionProvider>
   );
 };
 

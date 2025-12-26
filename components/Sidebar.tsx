@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Page } from '../types.js';
 import { t } from '../utils/i18n.js';
+import { usePermissions } from '../contexts/PermissionContext.js';
 
 interface SidebarProps {
   currentPage: Page;
@@ -39,6 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   userRole = 'staff', // 默认为普通员工角色
 }) => {
+  const { canAccessPage } = usePermissions();
   interface MenuItem {
     id: Page;
     label: string;
@@ -73,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'kitchen', label: t('kitchen'), icon: ChefHat },
   ];
 
-  // 后台管理菜单项 - 仅对管理员或经理开放
+  // 后台管理菜单项 - 需要特定权限
   const backOfficeItems: MenuItem[] = [
     { id: 'qrcode', label: t('qrcode'), icon: QrCode },
     { id: 'menu', label: t('menu'), icon: Utensils },
@@ -86,8 +88,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dictionary', label: t('dictionary'), icon: Database },
   ];
 
-  // 根据用户角色决定是否显示后台管理菜单
-  const shouldShowBackOffice = userRole === 'admin' || userRole === 'manager';
+  // 根据用户权限决定是否显示后台管理菜单
+  const shouldShowBackOffice = canAccessPage('settings') || canAccessPage('permissions');
 
   return (
     <>

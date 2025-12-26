@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import useDebounce from '../hooks/useDebounce';
 import {
   ShoppingBag,
   Plus,
@@ -56,7 +57,8 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [cart, setCart] = useState<{ dish: Dish; quantity: number }[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const searchTerm = useDebounce(searchInput, 300);
   const [notes, setNotes] = useState('');
 
   // Payment State
@@ -207,8 +209,9 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
       </body>
       </html>
     `;
-
-    // Write content to the print window
+    
+    // Use document.open/write/close pattern for security
+    printWindow.document.open();
     printWindow.document.write(receiptHTML);
     printWindow.document.close();
 
@@ -216,7 +219,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
     printWindow.onload = () => {
       printWindow.focus();
       printWindow.print();
-      // printWindow.close(); // Optionally close after printing
+      // Note: We don't close the window immediately to allow for proper printing
     };
   };
 
@@ -263,6 +266,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
 
     if (h5PageSettings?.enableCustomStyling) {
       styleElement = document.createElement('style');
+      styleElement.id = 'customer-order-custom-styles'; // Add ID for easier removal
       styleElement.innerHTML = `
         .custom-header {
           background-color: ${h5PageSettings.customHeaderColor} !important;
@@ -534,19 +538,12 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
       }
 
       // Post message to React Native WebView if available
+      const webView = (window as any).ReactNativeWebView as { postMessage: (message: string) => void } | undefined;
       if (
         typeof window !== 'undefined' &&
-        (
-          window as Window & {
-            ReactNativeWebView?: { postMessage: (message: string) => void };
-          }
-        ).ReactNativeWebView
+        webView
       ) {
-        (
-          window as Window & {
-            ReactNativeWebView?: { postMessage: (message: string) => void };
-          }
-        ).ReactNativeWebView!.postMessage(
+        webView.postMessage(
           JSON.stringify({
             type: 'NEW_ORDER',
             order: newOrder,
@@ -774,8 +771,8 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                 <input
                   type="text"
                   placeholder={t('search_placeholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="transition-smooth w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
@@ -792,7 +789,7 @@ const CustomerOrder: React.FC<CustomerOrderProps> = ({
                         key={dish.id}
                         onClick={() => {
                           setActiveCategory(dish.category);
-                          setSearchTerm(dish.name);
+                          setSearchInput(dish.name);
                         }}
                         className="card-hover flex flex-shrink-0 flex-col items-center gap-1 rounded-lg border border-slate-200 bg-white p-2 shadow-sm"
                       >

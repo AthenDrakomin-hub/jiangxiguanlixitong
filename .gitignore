@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-dist/
 build/
 
 # Environment variables
@@ -33,7 +32,6 @@ coverage/
 *.tsbuildinfo
 .next/
 .nuxt/
-dist/
 
 # Vercel
 .vercel/

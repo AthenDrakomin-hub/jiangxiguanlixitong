@@ -80,7 +80,7 @@ const FrontDeskCashier: React.FC<FrontDeskCashierProps> = ({
 
     const pendingAmount = pendingOrders.reduce((sum, order) => {
       const orderTotal = order.items.reduce((itemSum, item) => 
-        sum + (item.price * item.quantity), 0);
+        itemSum + (item.price * item.quantity), 0);
       return sum + orderTotal;
     }, 0);
 

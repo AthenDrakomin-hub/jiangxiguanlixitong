@@ -1,4 +1,5 @@
 import { dbManager } from '../lib/database.js';
+import { monitoringService } from '../services/monitoring.js';
 
 export const config = {
   runtime: 'edge',
@@ -9,6 +10,7 @@ export const config = {
  * 泛用型业务处理器：支持简单的 CRUD 操作
  */
 async function genericBusinessHandler(req: Request, entityName: string) {
+  const startTime = Date.now();
   const method = req.method;
   const url = new URL(req.url);
   const id = url.searchParams.get('id');
@@ -16,7 +18,7 @@ async function genericBusinessHandler(req: Request, entityName: string) {
 
   // CORS 头设置
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://www.jiangxijiudian.store',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',
@@ -54,6 +56,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
         const key = `${entityName}:${id}`;
         const item = await database.get(key);
         if (item) {
+          const duration = Date.now() - startTime;
+          monitoringService.recordApiPerformance(`${method} /api/${entityName}/:id`, duration, 200);
           return new Response(
             JSON.stringify({
               success: true,
@@ -66,6 +70,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
             }
           );
         } else {
+          const duration = Date.now() - startTime;
+          monitoringService.recordApiPerformance(`${method} /api/${entityName}/:id (not found)`, duration, 404);
           return new Response(
             JSON.stringify({
               success: false,
@@ -81,6 +87,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
         // 获取所有项目
         const database = dbManager.getDatabase();
         const items = await database.getAll(entityName);
+        const duration = Date.now() - startTime;
+        monitoringService.recordApiPerformance(`${method} /api/${entityName}`, duration, 200);
         return new Response(
           JSON.stringify({
             success: true,
@@ -99,6 +107,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
       const database = dbManager.getDatabase();
       const body = await req.json();
       const newItem = await database.create(entityName, body);
+      const duration = Date.now() - startTime;
+      monitoringService.recordApiPerformance(`${method} /api/${entityName}`, duration, 201);
       return new Response(
         JSON.stringify({
           success: true,
@@ -117,6 +127,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
       const body = await req.json();
       const updatedItem = await database.update(entityName, id, body);
       if (updatedItem) {
+        const duration = Date.now() - startTime;
+        monitoringService.recordApiPerformance(`${method} /api/${entityName}/:id`, duration, 200);
         return new Response(
           JSON.stringify({
             success: true,
@@ -129,6 +141,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
           }
         );
       } else {
+        const duration = Date.now() - startTime;
+        monitoringService.recordApiPerformance(`${method} /api/${entityName}/:id (not found)`, duration, 404);
         return new Response(
           JSON.stringify({
             success: false,
@@ -146,6 +160,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
       const database = dbManager.getDatabase();
       const deleted = await database.remove(entityName, id);
       if (deleted) {
+        const duration = Date.now() - startTime;
+        monitoringService.recordApiPerformance(`${method} /api/${entityName}/:id`, duration, 200);
         return new Response(
           JSON.stringify({
             success: true,
@@ -157,6 +173,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
           }
         );
       } else {
+        const duration = Date.now() - startTime;
+        monitoringService.recordApiPerformance(`${method} /api/${entityName}/:id (not found)`, duration, 404);
         return new Response(
           JSON.stringify({
             success: false,
@@ -170,6 +188,8 @@ async function genericBusinessHandler(req: Request, entityName: string) {
       }
     }
 
+    const duration = Date.now() - startTime;
+    monitoringService.recordApiPerformance(`${method} /api/${entityName} (method not allowed)`, duration, 405);
     return new Response(
       JSON.stringify({
         success: false,
@@ -184,7 +204,14 @@ async function genericBusinessHandler(req: Request, entityName: string) {
       }
     );
   } catch (error) {
-    console.error(`[Business Handler Error] ${entityName}:`, error);
+    const duration = Date.now() - startTime;
+    monitoringService.error(`[Business Handler Error] ${entityName}`, error, {
+      method,
+      entityName,
+      duration,
+      id
+    });
+    monitoringService.recordApiPerformance(`${method} /api/${entityName} (error)`, duration, 500);
     return new Response(
       JSON.stringify({
         success: false,
@@ -207,7 +234,7 @@ async function authHandler(req: Request) {
   // CORS 头设置
   const corsHeaders = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://www.jiangxijiudian.store',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
@@ -294,16 +321,19 @@ async function authHandler(req: Request) {
 }
 
 export default async function handler(req: Request) {
+  const startTime = Date.now();
   const url = new URL(req.url);
   const path = url.pathname.replace(/\/$/, "").toLowerCase();
   const method = req.method;
 
   // Handle preflight
   if (method === 'OPTIONS') {
+    const duration = Date.now() - startTime;
+    monitoringService.recordApiPerformance(`${method} ${path}`, duration, 204);
     return new Response(null, { 
       status: 204, 
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': 'https://www.jiangxijiudian.store',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       }
@@ -316,10 +346,17 @@ export default async function handler(req: Request) {
     try {
       await dbManager.initialize({ type: dbType as any });
     } catch (error) {
-      console.error('Database initialization failed in main handler:', error);
+      const duration = Date.now() - startTime;
+      monitoringService.error('Database initialization failed in main handler', error, {
+        path,
+        method,
+        dbType,
+        duration
+      });
+      monitoringService.recordApiPerformance(`${method} ${path} (db init failed)`, duration, 503);
       const corsHeaders = {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': 'https://www.jiangxijiudian.store',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       };
@@ -343,7 +380,10 @@ export default async function handler(req: Request) {
   try {
     // 1. 固定功能路由
     if (path === '/api/auth/login') {
-      return await authHandler(req);
+      const result = await authHandler(req);
+      const duration = Date.now() - startTime;
+      monitoringService.recordApiPerformance(`${method} ${path}`, duration, result.status);
+      return result;
     }
 
     // 2. 业务实体路由匹配
@@ -356,9 +396,15 @@ export default async function handler(req: Request) {
       'orders',
       'expenses',
       'sign_bill_accounts',
-      'users'
+      'users',
+      'roles',
+      'permissions',
+      'partner_accounts',
+      'categories',
+      'system_dictionary'
     ];
 
+    // 首先尝试基于路径段的精确匹配
     for (const entity of businessEntities) {
       if (path === `/api/${entity}` || path.startsWith(`/api/${entity}/`)) {
         // 提取ID（如果存在）
@@ -381,7 +427,25 @@ export default async function handler(req: Request) {
       }
     }
 
+    // 3. 备用方案：在整个URL中搜索已知实体关键字（用于处理重写后的请求）
+    for (const entity of businessEntities) {
+      if (req.url.toLowerCase().includes(`/${entity}`.toLowerCase())) {
+        // 检查是否包含ID参数
+        const urlObj = new URL(req.url);
+        const id = urlObj.searchParams.get('id');
+        
+        if (id) {
+          const newReq = new Request(req);
+          return await genericBusinessHandler(newReq, entity);
+        } else {
+          return await genericBusinessHandler(req, entity);
+        }
+      }
+    }
+
     // 3. 兜底 404
+    const duration = Date.now() - startTime;
+    monitoringService.recordApiPerformance(`${method} ${path} (not found)`, duration, 404);
     return new Response(
       JSON.stringify({ 
         error: 'API_ROUTE_NOT_FOUND', 
@@ -393,13 +457,19 @@ export default async function handler(req: Request) {
         status: 404,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': 'https://www.jiangxijiudian.store',
         }
       }
     );
 
   } catch (error: any) {
-    console.error(`[Gateway Critical Error] ${path}:`, error);
+    const duration = Date.now() - startTime;
+    monitoringService.error(`[Gateway Critical Error] ${path}`, error, {
+      path,
+      method,
+      duration
+    });
+    monitoringService.recordApiPerformance(`${method} ${path} (error)`, duration, 500);
     return new Response(
       JSON.stringify({ 
         error: 'GATEWAY_INTERNAL_ERROR', 
@@ -410,7 +480,7 @@ export default async function handler(req: Request) {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': 'https://www.jiangxijiudian.store',
         }
       }
     );

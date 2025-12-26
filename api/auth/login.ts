@@ -3,22 +3,26 @@
 
 import { dbManager } from '../../lib/database.js';
 import { User } from '../../types.js';
+import { monitoringService } from '../../services/monitoring.js';
 
 export const config = {
   runtime: 'edge',
 };
 
 export default async function handler(req: Request) {
+  const startTime = Date.now();
   // CORS 头设置
   const corsHeaders = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://www.jiangxijiudian.store',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    const duration = Date.now() - startTime;
+    monitoringService.recordApiPerformance(`OPTIONS /api/auth/login`, duration, 200);
     return new Response(null, {
       status: 200,
       headers: corsHeaders,
@@ -26,6 +30,8 @@ export default async function handler(req: Request) {
   }
 
   if (req.method !== 'POST') {
+    const duration = Date.now() - startTime;
+    monitoringService.recordApiPerformance(`${req.method} /api/auth/login (method not allowed)`, duration, 405);
     return new Response(
       JSON.stringify({
         success: false,
@@ -48,6 +54,8 @@ export default async function handler(req: Request) {
     const { username, password } = await req.json();
 
     if (!username || !password) {
+      const duration = Date.now() - startTime;
+      monitoringService.recordApiPerformance('POST /api/auth/login (validation failed)', duration, 400);
       return new Response(
         JSON.stringify({
           success: false,
@@ -68,6 +76,13 @@ export default async function handler(req: Request) {
     const user = allUsers.find((u: User) => u.username === username && u.isActive);
     
     if (!user) {
+      const duration = Date.now() - startTime;
+      monitoringService.recordApiPerformance('POST /api/auth/login (user not found)', duration, 401);
+      monitoringService.warn('Failed login attempt', {
+        username,
+        ip: req.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: req.headers.get('user-agent') || 'unknown'
+      });
       return new Response(
         JSON.stringify({
           success: false,
@@ -90,6 +105,13 @@ export default async function handler(req: Request) {
       .join('');
     
     if (user.password !== passwordHash && user.password !== password) {
+      const duration = Date.now() - startTime;
+      monitoringService.recordApiPerformance('POST /api/auth/login (invalid password)', duration, 401);
+      monitoringService.warn('Failed login attempt with wrong password', {
+        username: user.username,
+        ip: req.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: req.headers.get('user-agent') || 'unknown'
+      });
       return new Response(
         JSON.stringify({
           success: false,
@@ -103,6 +125,14 @@ export default async function handler(req: Request) {
     }
 
     // 登录成功，返回用户信息
+    const duration = Date.now() - startTime;
+    monitoringService.recordApiPerformance('POST /api/auth/login', duration, 200);
+    monitoringService.info('Successful login', {
+      username: user.username,
+      role: user.role,
+      ip: req.headers.get('x-forwarded-for') || 'unknown',
+      userAgent: req.headers.get('user-agent') || 'unknown'
+    });
     return new Response(
       JSON.stringify({
         success: true,
@@ -119,7 +149,13 @@ export default async function handler(req: Request) {
       }
     );
   } catch (error) {
-    console.error('Login error:', error);
+    const duration = Date.now() - startTime;
+    monitoringService.error('Login error', error, {
+      ip: req.headers.get('x-forwarded-for') || 'unknown',
+      userAgent: req.headers.get('user-agent') || 'unknown',
+      duration
+    });
+    monitoringService.recordApiPerformance('POST /api/auth/login (error)', duration, 500);
     return new Response(
       JSON.stringify({
         success: false,

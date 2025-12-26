@@ -109,22 +109,13 @@ const PermissionManagement: React.FC = () => {
       setLoading(true);
       
       // 从 API 加载真实数据
-      const [usersResponse, rolesResponse] = await Promise.all([
-        apiClient.get('/users'),
-        apiClient.get('/roles'),
+      const [usersData, rolesData] = await Promise.all([
+        apiClient.fetchCollection<User>('users'),
+        apiClient.fetchCollection<Role>('roles'),
       ]);
       
-      if (usersResponse.success) {
-        setUsers(usersResponse.data || []);
-      }
-      
-      if (rolesResponse.success) {
-        setRoles(rolesResponse.data || []);
-      } else {
-        console.error('获取用户数据失败:', usersResponse.message);
-        // 如果API失败，使用默认数据
-        setUsers([]);
-      }
+      setUsers(usersData || []);
+      setRoles(rolesData || []);
     } catch (error) {
       console.error('加载权限数据失败:', error);
       alert('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));

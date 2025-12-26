@@ -11,20 +11,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <!-- Tailwind CSS CDN (Play CDN for No-Build) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              transparent: 'transparent',
-              current: 'currentColor',
-            },
-          },
-        },
-      };
-    </script>
+    <!-- Production-ready pre-compiled Tailwind CSS -->
+    <link rel="stylesheet" href="/tailwind.css">
     <!-- Import Map: 从 esm.sh CDN 加载所有依赖 -->
     <script type="importmap">
       {

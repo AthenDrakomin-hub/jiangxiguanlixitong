@@ -12,6 +12,9 @@ import {
   HotelRoom,
   PaymentMethod,
   SystemSettings,
+  User,
+  Role,
+  Permission,
 } from '../types.js';
 
 /**
@@ -27,6 +30,9 @@ interface AppData {
   hotelRooms: HotelRoom[];
   paymentMethods: PaymentMethod[];
   systemSettings: SystemSettings | null;
+  users: User[];
+  roles: Role[];
+  permissions: Permission[];
 }
 
 /**
@@ -45,6 +51,9 @@ export const useAppData = (cacheDuration: number = 5 * 60 * 1000) => {
     hotelRooms: [],
     paymentMethods: [],
     systemSettings: null,
+    users: [],
+    roles: [],
+    permissions: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -80,6 +89,9 @@ export const useAppData = (cacheDuration: number = 5 * 60 * 1000) => {
           hotelRooms: (response.hotelRooms as HotelRoom[]) || [],
           paymentMethods: (response.paymentMethods as PaymentMethod[]) || [],
           systemSettings: (response.systemSettings as unknown as SystemSettings) || null,
+          users: (response.users as User[]) || [],
+          roles: (response.roles as Role[]) || [],
+          permissions: (response.permissions as Permission[]) || [],
         };
 
         // Cache the data if caching is enabled

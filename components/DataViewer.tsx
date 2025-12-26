@@ -30,7 +30,7 @@ interface AuditLog {
   severity: 'info' | 'warning' | 'error';
 }
 
-const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
+const DataViewer: React.FC<DataViewerProps> = ({ orders = [], expenses = [], users = [] }) => {
   const [activeTab, setActiveTab] = useState<'orders' | 'finance' | 'audit'>('orders');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
@@ -71,7 +71,7 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
         order.id.includes(searchTerm) ||
         (order.roomNumber && order.roomNumber.includes(searchTerm)) ||
         (order.table && order.table.includes(searchTerm)) ||
-        order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        (order.items && order.items.length > 0 && order.items.some(item => item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())));
       
       const matchesDate = !dateRange || 
         (new Date(order.createdAt) >= new Date(dateRange.start) && 
@@ -85,8 +85,8 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
   const filteredExpenses = useMemo(() => {
     return expenses.filter(expense => {
       const matchesSearch = searchTerm === '' || 
-        expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        expense.category.toLowerCase().includes(searchTerm.toLowerCase());
+        (expense.description && expense.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (expense.category && expense.category.toString().toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesDate = !dateRange || 
         (new Date(expense.date) >= new Date(dateRange.start) && 
@@ -114,7 +114,7 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
 
   // Calculate order total
   const getOrderTotal = (order: Order) => {
-    return order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return (order.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
   // Format currency
@@ -341,7 +341,7 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
                     })}
                   
                   {/* Expense records */}
-                  {filteredExpenses.map(expense => (
+                  {filteredExpenses && filteredExpenses.map(expense => (
                     <tr key={`expense_${expense.id}`} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="px-4 py-3 font-medium">{expense.id}</td>
                       <td className="px-4 py-3">
@@ -359,16 +359,16 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
                         {expense.category}
                       </td>
                       <td className="px-4 py-3">
-                        {formatDate(expense.createdAt)}
+                        {formatDate(expense.date || expense.createdAt)}
                       </td>
                       <td className="px-4 py-3">
-                        {expense.id} {/* In a real implementation, this would be the user who added the expense */}
+                        {t('system')}
                       </td>
                     </tr>
                   ))}
                   
-                  {filteredOrders.filter(order => order.status === 'COMPLETED').length === 0 && 
-                   filteredExpenses.length === 0 && (
+                  {filteredOrders && filteredOrders.filter(order => order.status === 'COMPLETED').length === 0 && 
+                   filteredExpenses && filteredExpenses.length === 0 && (
                     <tr>
                       <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
                         {t('no_finance_records')}
@@ -397,7 +397,7 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAuditLogs.length > 0 ? (
+                  {filteredAuditLogs && filteredAuditLogs.length > 0 ? (
                     filteredAuditLogs.map(log => {
                       const severityClass = 
                         log.severity === 'error' ? 'bg-red-100 text-red-800' :
@@ -483,7 +483,7 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
               <div>
                 <h4 className="mb-2 font-semibold">{t('order_items')}</h4>
                 <div className="space-y-2">
-                  {showOrderDetail.items.map((item, index) => (
+                  {showOrderDetail && showOrderDetail.items && showOrderDetail.items.map((item, index) => (
                     <div key={index} className="flex justify-between border-b pb-2">
                       <div>
                         <p className="font-medium">{item.name}</p>
@@ -502,7 +502,7 @@ const DataViewer: React.FC<DataViewerProps> = ({ orders, expenses, users }) => {
                     <div className="flex justify-between border-t pt-2">
                       <p className="font-semibold">{t('total')}</p>
                       <p className="font-semibold">
-                        {formatCurrency(getOrderTotal(showOrderDetail))}
+                        {showOrderDetail ? formatCurrency(getOrderTotal(showOrderDetail)) : '0'}
                       </p>
                     </div>
                   </div>

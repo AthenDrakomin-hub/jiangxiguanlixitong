@@ -22,7 +22,7 @@ const getApiBaseUrl = (): string => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-// Define collection names
+// Define collection names in snake_case for API consistency
 const COLLECTIONS = [
   'dishes',
   'orders',
@@ -32,6 +32,12 @@ const COLLECTIONS = [
   'hotel_rooms',
   'payment_methods',
   'system_settings',
+  'users',
+  'roles',
+  'permissions',
+  'partner_accounts',
+  'categories',
+  'system_dictionary'
 ] as const;
 
 type CollectionName = (typeof COLLECTIONS)[number] | string;
